@@ -74,6 +74,18 @@ done
 # Fixture apps give the tests known names to rank, independent of what the machine has installed.
 mkdir -p "$XDG_DATA_HOME/applications"
 cp "$root"/tests/shell/fixtures/applications/*.desktop "$XDG_DATA_HOME/applications/"
+# A fixture GNOME search provider, D-Bus-activated on the sandbox bus only.
+# The shell reads search-provider files from system data dirs only, so the fixture goes into a
+# sandbox dir that is prepended to XDG_DATA_DIRS for the nested session.
+mkdir -p "$sandbox/sysdata/gnome-shell/search-providers" "$XDG_DATA_HOME/dbus-1/services"
+cp "$root"/tests/shell/fixtures/search-providers/*.ini "$sandbox/sysdata/gnome-shell/search-providers/"
+export XDG_DATA_DIRS="$sandbox/sysdata:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+printf '[D-BUS Service]\nName=org.conjure.TestSearch\nExec=/usr/bin/gjs -m %s\n' \
+    "$root/tests/shell/fixtures/search-provider.js" > "$XDG_DATA_HOME/dbus-1/services/org.conjure.TestSearch.service"
+# The machine's own search providers stay off in the sandbox: starting them would launch real
+# apps and services (Nautilus can start the file indexer over the real home directory).
+system_providers="$(grep -h '^DesktopId=' /usr/share/gnome-shell/search-providers/*.ini 2>/dev/null \
+    | cut -d= -f2 | sort -u | sed "s/.*/'&'/" | paste -sd, -)"
 export CONJURE_TEST_ROOT="$root" CONJURE_TEST_UUID="$uuid"
 
 status=0
@@ -92,12 +104,13 @@ for script in "$@"; do
         gsettings set org.gnome.shell enabled-extensions "[$1]"
         gsettings set org.gnome.shell disable-user-extensions false
         gsettings set org.gnome.shell welcome-dialog-last-shown-version "999"
+        gsettings set org.gnome.desktop.search-providers disabled "[$4]"
         # Do not set enable-animations=false here: measured, it stops the headless shell from
         # ever reaching startup-complete (0/3 starts, against 3/3 without it).
         if [[ -n "$3" ]]; then bash "$3"; fi
         exec gnome-shell --headless --wayland --no-x11 --virtual-monitor 1600x1000 \
             --automation-script="$2"
-    ' _ "$enabled" "$script" "$setup" >"$log" 2>&1
+    ' _ "$enabled" "$script" "$setup" "$system_providers" >"$log" 2>&1
     rc=$?
     set -e
     reap_sandbox

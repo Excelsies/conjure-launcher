@@ -186,3 +186,14 @@ test('theme: every style is free of hard-coded hex colours and uses rgba()', () 
         assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, `${name} has a hex colour`);
     assert.match(s.rowSelected, /rgba\(1, 2, 3, 1\)/);
 });
+
+test('remote results rank below app name matches and above fuzzy secondary matches', async () => {
+    const { remoteResultScore } = await import('../lib/ranking.js');
+    const nameMatch = scoreApp('files', entry({ nameLower: 'files' }));
+    const fuzzyKeyword = scoreApp('brw', entry({ nameLower: 'zzz', keywordsLower: ['browser'] }));
+    const exactGeneric = scoreApp('web browser', entry({ nameLower: 'zzz', genericLower: 'web browser' }));
+    assert.ok(remoteResultScore(0, 0) < nameMatch);
+    assert.ok(remoteResultScore(5, 4) > fuzzyKeyword, `fuzzy keyword ${fuzzyKeyword}`);
+    assert.ok(exactGeneric > remoteResultScore(0, 0), 'an exact generic-name match outranks remote results');
+    assert.ok(remoteResultScore(0, 1) < remoteResultScore(0, 0) && remoteResultScore(1, 0) < remoteResultScore(0, 4));
+});

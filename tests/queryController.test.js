@@ -95,10 +95,32 @@ test('a rejected async provider is logged and the pending count still drops', as
 });
 
 test('prefixed queries go to one provider only, overview shows no results', () => {
-    const calc = { id: 'calc', trigger: 'calc', query: q => [{ id: q, title: `calc:${q}`, score: 1 }] };
+    const calc = { id: 'calc', trigger: 'calc', displayName: 'Calculator', query: q => [{ id: q, title: `calc:${q}`, score: 1 }] };
     const { qc, emitted } = setup([syncApps, calc]);
     qc.setQuery('/calc 1+1');
     assert.deepEqual(emitted.at(-1).titles, ['calc:1+1']);
     qc.setQuery('/');
     assert.equal(emitted.at(-1).kind, 'overview');
+    assert.deepEqual(emitted.at(-1).titles, ['/calc'], 'the overview lists triggered providers');
+});
+
+test('onCancel callbacks run once when the query goes stale, or at once if already stale', () => {
+    const tokens = [];
+    const runs = [];
+    const { qc } = setup([{ id: 'slow', query: (_q, t) => {
+        const i = tokens.push(t) - 1;
+        runs[i] = 0;
+        t.onCancel(() => runs[i]++);
+        return new Promise(() => {});
+    } }]);
+    qc.setQuery('a');
+    assert.deepEqual(runs, [0]);
+    qc.setQuery('ab');
+    assert.deepEqual(runs, [1, 0], 'the superseded query is cancelled, the new one is not');
+    qc.cancel();
+    qc.cancel();
+    assert.deepEqual(runs, [1, 1], 'each token is cancelled exactly once');
+    let late = 0;
+    tokens[0].onCancel(() => late++);
+    assert.equal(late, 1, 'registering on a stale token runs at once');
 });

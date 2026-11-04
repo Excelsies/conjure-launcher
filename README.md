@@ -23,6 +23,18 @@ Status: design phase. See `docs/design-brief.md` (awaiting approval) and
 | Ctrl+G | Toggle list / grid |
 | Esc | Leave the actions menu, or close |
 
+| Type | To get |
+|---|---|
+| `12*3`, `sqrt(2)*10` | The calculator result first (Enter copies it). `/calc …` for anything else |
+| `/emo heart` | Emoji (Enter copies) |
+| `/win term` | Open windows, most recent first (Enter switches) |
+| `/session sleep` | Lock, log out, suspend, switch user, restart, power off |
+| `/` | The list of providers; Enter fills in the prefix |
+| anything else | Apps, plus results from GNOME's search providers (files, Settings, ...) as enabled in GNOME Settings > Search. GNOME Calculator's provider is left out (the launcher has its own) |
+
+Calculator: `+ - * / % ^ !`, parentheses, `sqrt cbrt abs round floor ceil sin cos tan asin acos
+atan ln log log2 exp pow min max`, `pi tau e`. Trigonometry is in radians.
+
 Settings: `gnome-extensions prefs conjure-launcher@excelsies` (placement, search field position,
 width, opening view, grid, shortcut, history, colours).
 

@@ -83,7 +83,8 @@ export async function run() {
     t.equal('a query that matches nothing shows no rows', launcher.panel.rows.length, 0);
     panel.setText('/');
     await sleep(50);
-    t.equal('a bare "/" is the provider overview', launcher.panel.rows.length, 0);
+    t.equal('a bare "/" is the provider overview (providers, not apps)',
+        launcher.panel.rows.map(r => r.result.title), ['/calc', '/emo', '/win', '/session']);
     panel.setText('');
     await sleep(50);
 

@@ -4,6 +4,7 @@
 
 import GLib from 'gi://GLib';
 import Shell from 'gi://Shell';
+import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -142,7 +143,7 @@ export class Launcher {
             defaultView: this._settings.get_string('default-view'),
             grid: this._settings.get_boolean('app-grid'),
             pinned: () => this._settings.get_strv('pinned'),
-            createIcon: (result, size) => this._providerFor(result)?.createIcon?.(result, size) ?? null,
+            createIcon: (result, size) => this._createIcon(result, size),
             onQuery: text => this._query.setQuery(text),
             onActivate: (result, opts) => this._activate(result, opts),
             onActions: result => this._providerFor(result)?.actions?.(result) ?? [],
@@ -199,6 +200,14 @@ export class Launcher {
             this._log(`closed (${reason})`);
     }
 
+    _createIcon(result, size) {
+        if (result.badge)
+            return new St.Label({ text: result.badge, style: `font-size: ${Math.round(size * 0.7)}px;`, y_align: 2 /* CENTER */ });
+        if (result.iconName)
+            return new St.Icon({ icon_name: result.iconName, icon_size: Math.round(size * 0.6) });
+        return this._providerFor(result)?.createIcon?.(result, size) ?? null;
+    }
+
     /** Add the per-result state the views need: pinned, recentIndex. */
     _decorate(results) {
         const pinned = new Set(this._settings.get_strv('pinned'));
@@ -247,6 +256,11 @@ export class Launcher {
     }
 
     _activate(result, { newWindow }) {
+        // A result that rewrites the input (the provider overview) keeps the launcher open.
+        if (typeof result.query === 'string') {
+            this._panel?.setText(result.query);
+            return;
+        }
         const provider = this._providerFor(result);
         // Close first so the modal grab is gone and the launched window can take focus.
         this._lifecycle.close('activate');

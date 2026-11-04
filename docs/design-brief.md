@@ -264,3 +264,43 @@ Phase 2 record (2026-11-04):
     ("no backdrop at all right after disable") is witnessed by I8.
 - Visual review (headless screenshots) found and fixed two defects: an invisible action icon on
   the selected row, and tabs of unequal width.
+
+## 17. Phase 3 record (2026-11-04)
+
+Providers: `/calc` (also global for input with a digit and an operator, function or constant),
+`/emo`, `/win`, `/session`, the `/` overview, and GNOME search providers in global search.
+
+- **Calculator (D4):** a recursive-descent parser over a fixed table of functions and constants.
+  It has no eval and no object lookups; input over 200 characters or nested deeper than 64 is
+  rejected. Results score 10000 (always first).
+- **Session actions:** run through GNOME's SystemActions, so GNOME's own confirmation dialogs
+  apply.
+  - Tests replace every activate* method with a recorder before anything runs, and abort if that
+    fails. The headless sandbox shares the machine's system bus, so a real suspend or power off
+    from a test would act on the real computer.
+- **GNOME search providers:**
+  - Loaded through the shell's remoteSearch.js, so GNOME's Search settings (enabled list and
+    order) apply. `excluded-search-providers` (default: GNOME Calculator) removes more.
+  - Budget: 80 ms debounce, then 500 ms for GetInitialResultSet and GetResultMetas together. A
+    newer query cancels the D-Bus calls.
+  - A late provider is named in the log once per session (every time with `debug`).
+  - Score: 1000 minus 20 per provider position minus the result position. That is below app
+    name matches and above fuzzy secondary matches; exact secondary matches can still outrank it
+    (pinned by a test).
+- **Test isolation:** every sandbox disables the machine's own search providers (starting
+  Nautilus could start the file indexer on the real home folder). A fixture provider
+  (tests/shell/fixtures) is D-Bus-activated on the sandbox bus. Its provider file sits in a
+  sandbox dir prepended to XDG_DATA_DIRS, because the shell reads provider files from system data
+  dirs only.
+
+Known gap: the 500 ms budget is measured on the fixture (cold start included), not on real
+providers. A provider that starts slowly (Nautilus on its first search after login, for
+example) may miss the first query and appear from the next keystroke. The log line says so when
+it happens. Raising the budget is a one-line change (TIMEOUT_MS) if this shows up in use.
+
+Mutation probes: calculator M24-M27 (M25 survived first; the test it exposed was added), emoji
+M28, session M29, and integration I9-I13 (debounce, timeout, exclusions, overview, grid
+fallback). All are killed.
+
+Visual review fixed two defects: symbolic result icons were invisible on the selected row, and
+provider results without an icon of their own were blank (they now show the provider app's icon).

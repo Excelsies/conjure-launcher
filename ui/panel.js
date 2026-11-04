@@ -50,7 +50,11 @@ class Item {
         if (result)
             icon = panel.createIcon(result, grid ? GRID_ICON_SIZE : ICON_SIZE);
         else if (action?.icon)
-            icon = this._actionIcon = new St.Icon({ icon_name: action.icon, icon_size: 16 });
+            icon = new St.Icon({ icon_name: action.icon, icon_size: 16 });
+        // Symbolic icons (actions, calculator, session...) are recoloured with the row's text
+        // colour so they stay visible on the selected and hovered fills.
+        if (action?.icon || result?.iconName)
+            this._symbolicIcon = icon;
         const iconSize = grid ? GRID_ICON_SIZE : action ? 24 : ICON_SIZE;
         this._iconBin = new St.Bin({ width: iconSize, height: iconSize, child: icon, x_align: Clutter.ActorAlign.CENTER });
         this.actor.add_child(this._iconBin);
@@ -93,8 +97,7 @@ class Item {
         this._title.set_style(`${s[`title${state}`]}${grid ? ' font-size: 13px; text-align: center;' : ''}`);
         this._subtitle.set_style(s[`subtitle${state}`]);
         this._pin?.set_style(s[`subtitle${state}`]);
-        // Symbolic action icons take the row's text colour, so they stay visible when selected.
-        this._actionIcon?.set_style(s[`title${state}`]);
+        this._symbolicIcon?.set_style(s[`title${state}`]);
     }
 }
 
@@ -338,12 +341,16 @@ export class LauncherPanel {
         this._list.destroy_all_children();
         this._items = [];
 
+        this._gridActive = false;
         if (this.menu) {
             this._renderMenu();
         } else {
             const visible = this._visibleResults();
             this._renderChips();
-            if (this.grid)
+            // Only app results have grid-sized icons; anything else falls back to the list
+            // (as in Noctalia).
+            this._gridActive = this.grid && visible.length > 0 && visible.every(r => r.providerId === 'apps');
+            if (this._gridActive)
                 this._renderGrid(visible);
             else
                 visible.forEach((result, i) => this._addItem(this._list, new Item(this, i, { result, layout: 'list' })));
@@ -565,7 +572,7 @@ export class LauncherPanel {
 
     _move(move) {
         const next = moveSelection(this.selectedIndex, move, {
-            count: this._items.length, grid: this.grid && !this.menu, page: this._pageStride(),
+            count: this._items.length, grid: Boolean(this._gridActive) && !this.menu, page: this._pageStride(),
         });
         if (next >= 0)
             this._select(next);
@@ -576,7 +583,7 @@ export class LauncherPanel {
         const state = event.get_state();
         const ctrl = (state & Clutter.ModifierType.CONTROL_MASK) !== 0;
         const shift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
-        const gridNav = this.grid && !this.menu;
+        const gridNav = Boolean(this._gridActive) && !this.menu;
 
         if (sym === Clutter.KEY_Escape) {
             if (this.menu)
@@ -652,6 +659,11 @@ export class LauncherPanel {
 
     get rows() {
         return this._items;
+    }
+
+    /** Test hook: the icon actor shown for an item (null when none). */
+    iconOf(item) {
+        return item._iconBin.child ?? null;
     }
 
     get activeCategory() {
