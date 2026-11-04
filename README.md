@@ -8,6 +8,24 @@ over the desktop. It replaces the "Show Apps" grid.
 Status: design phase. See `docs/design-brief.md` (awaiting approval) and
 `docs/noctalia-reference.md` (behaviour extracted from Noctalia).
 
+## Using it
+
+| Key | Action |
+|---|---|
+| Super+Space | Open or close the launcher |
+| Type | Search all apps (fuzzy) |
+| Up / Down, Tab / Shift+Tab, Ctrl+N / Ctrl+P | Move the selection (Left / Right too in the grid) |
+| Page Up / Page Down | Move by a page |
+| Enter | Open (or switch to) the app; Ctrl+Enter or middle-click opens a new window |
+| Shift+Enter, right-click | Actions: open, new window, the app's own actions, pin / unpin |
+| Ctrl+Tab / Ctrl+Shift+Tab, Ctrl+1..4 | Switch view: Recent, Pinned, All, Categories |
+| Ctrl+Left / Ctrl+Right | Previous / next category (Categories view) |
+| Ctrl+G | Toggle list / grid |
+| Esc | Leave the actions menu, or close |
+
+Settings: `gnome-extensions prefs conjure-launcher@excelsies` (placement, search field position,
+width, opening view, grid, shortcut, history, colours).
+
 ## Development
 
 | Command | What it does |

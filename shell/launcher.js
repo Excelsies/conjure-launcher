@@ -11,6 +11,7 @@ import { PanelLifecycle } from '../lib/lifecycle.js';
 import { QueryController } from '../lib/queryController.js';
 import { resolveTheme, styles, COLOUR_TOKENS } from '../lib/theme.js';
 import { panelRect } from '../lib/placement.js';
+import { togglePin } from '../lib/views.js';
 import { LauncherPanel, PANEL_HEIGHT } from '../ui/panel.js';
 import { UsageFile } from './usageFile.js';
 
@@ -27,6 +28,7 @@ export class Launcher {
         this._log = log;
         this._logError = logError;
         this._panel = null;
+        this._fading = new Set();  // closed panels still fading out; destroyed on disable
         this._signals = [];
 
         this._usage = new UsageFile(GLib.build_filenamev([GLib.get_user_state_dir(), 'conjure-launcher']),
@@ -38,6 +40,16 @@ export class Launcher {
             if (THEME_KEYS.includes(key)) {
                 this._styles = this._computeStyles();
                 this._panel?.applyStyles(this._styles);
+            } else if (key === 'app-grid') {
+                this._panel?.setGrid(settings.get_boolean('app-grid'));
+            } else if (key === 'pinned') {
+                this._requery();
+            } else if (key === 'history-clear-request') {
+                // Written by the preferences window (a separate process): the usage file is ours.
+                this._usage.model.clear();
+                this._usage.save();
+                this._log('launch history cleared');
+                this._requery();
             }
         })];
 
@@ -46,7 +58,7 @@ export class Launcher {
             prefixChar: () => settings.get_string('provider-prefix'),
             sortByUsage: () => settings.get_boolean('sort-by-usage'),
             usageCount: (pid, id) => this._usage.model.count(pid, id),
-            onResults: (results, info) => this._panel?.setResults(results, info),
+            onResults: (results, info) => this._panel?.setResults(this._decorate(results), info),
             logError,
         });
 
@@ -91,6 +103,9 @@ export class Launcher {
 
     destroy() {
         this._lifecycle.close('disable');
+        for (const panel of [...this._fading])
+            panel.destroy();
+        this._fading.clear();
         for (const id of this._settingsIds)
             this._settings.disconnect(id);
         this._settingsIds = [];
@@ -123,10 +138,19 @@ export class Launcher {
         });
         const panel = new LauncherPanel({
             styles: this._styles,
+            searchPosition: this._settings.get_string('search-position'),
+            defaultView: this._settings.get_string('default-view'),
+            grid: this._settings.get_boolean('app-grid'),
+            pinned: () => this._settings.get_strv('pinned'),
             createIcon: (result, size) => this._providerFor(result)?.createIcon?.(result, size) ?? null,
             onQuery: text => this._query.setQuery(text),
             onActivate: (result, opts) => this._activate(result, opts),
+            onActions: result => this._providerFor(result)?.actions?.(result) ?? [],
+            onRunAction: (result, actionId) => this._runAction(result, actionId),
+            onTogglePin: result => this._togglePin(result),
+            onToggleGrid: () => this._settings.set_boolean('app-grid', !this._settings.get_boolean('app-grid')),
             onCancel: reason => this._lifecycle.close(reason),
+            onGone: p => this._fading.delete(p),
         });
         panel.build(monitor, rect);
         this.lastRect = rect;
@@ -164,10 +188,58 @@ export class Launcher {
             obj.disconnect(id);
         this._signals = [];
         this._query.cancel();
-        this._panel?.destroy();
+        // The grab is already released (PanelLifecycle pops before onClose); what remains is the
+        // fade-out. disable() must not leave actors behind, so it skips the animation.
+        const animate = reason !== 'disable';
+        if (this._panel && animate)
+            this._fading.add(this._panel);
+        this._panel?.dismiss({ animate });
         this._panel = null;
         if (this._settings.get_boolean('debug'))
             this._log(`closed (${reason})`);
+    }
+
+    /** Add the per-result state the views need: pinned, recentIndex. */
+    _decorate(results) {
+        const pinned = new Set(this._settings.get_strv('pinned'));
+        return results.map(r => ({
+            ...r,
+            pinned: r.providerId === 'apps' && pinned.has(r.id),
+            recentIndex: this._usage.model.recentIndex(r.providerId, r.id),
+        }));
+    }
+
+    _requery() {
+        if (this._panel)
+            this._query.setQuery(this._panel.text);
+    }
+
+    _togglePin(result) {
+        if (result.providerId !== 'apps')
+            return;
+        const next = togglePin(this._settings.get_strv('pinned'), result.id);
+        if (!this._settings.set_strv('pinned', next))
+            this._logError(`could not save pinned apps (setting not writable)`, null);
+    }
+
+    _recordUsage(provider, result) {
+        if (provider.trackUsage && this._settings.get_boolean('track-usage')) {
+            this._usage.model.record(provider.id, result.id);
+            this._usage.save();
+        }
+    }
+
+    _runAction(result, actionId) {
+        const provider = this._providerFor(result);
+        this._lifecycle.close('activate');
+        try {
+            provider.runAction(result, actionId);
+        } catch (e) {
+            this._logError(`action ${actionId} on ${result.providerId}:${result.id} failed`, e);
+            Main.notifyError('Conjure Launcher', `Could not run "${actionId}" for ${result.title}: ${e.message}`);
+            return;
+        }
+        this._recordUsage(provider, result);
     }
 
     _providerFor(result) {
@@ -189,9 +261,6 @@ export class Launcher {
             Main.notifyError('Conjure Launcher', `Could not open ${result.title}: ${e.message}`);
             return;
         }
-        if (provider.trackUsage && this._settings.get_boolean('track-usage')) {
-            this._usage.model.record(provider.id, result.id);
-            this._usage.save();
-        }
+        this._recordUsage(provider, result);
     }
 }

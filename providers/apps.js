@@ -8,6 +8,7 @@ import Shell from 'gi://Shell';
 import * as ParentalControlsManager from 'resource:///org/gnome/shell/misc/parentalControlsManager.js';
 
 import { scoreApp, MAX_APP_RESULTS } from '../lib/appScore.js';
+import { categoryFor } from '../lib/views.js';
 import { isMatch } from '../lib/fzy.js';
 
 function lower(s) {
@@ -47,9 +48,11 @@ export class AppsProvider {
             const name = info.get_display_name() ?? info.get_name() ?? id;
             const raw = typeof info.get_string === 'function' ? info.get_string('Name') : null;
             const exec = info.get_executable() ?? '';
+            const categoryTokens = (info.get_categories?.() ?? '').split(';').filter(Boolean);
             entries.push({
                 id,
                 name,
+                category: categoryFor(categoryTokens),
                 subtitle: info.get_generic_name?.() || info.get_description() || '',
                 score: {
                     nameLower: lower(name),
@@ -69,7 +72,7 @@ export class AppsProvider {
     query(text) {
         this._entries ??= this._load();
         const pattern = text.trim().toLowerCase();
-        const toResult = (e, score) => ({ id: e.id, title: e.name, subtitle: e.subtitle, score });
+        const toResult = (e, score) => ({ id: e.id, title: e.name, subtitle: e.subtitle, category: e.category, score });
 
         if (!pattern)
             return this._entries.map(e => toResult(e, 0));
@@ -86,6 +89,40 @@ export class AppsProvider {
 
     createIcon(result, size) {
         return this._appSys.lookup_app(result.id)?.create_icon_texture(size) ?? null;
+    }
+
+    /**
+     * Context-menu entries: open, a new window when supported, then the app's desktop actions.
+     * @returns {{id: string, label: string, icon?: string}[]}
+     */
+    actions(result) {
+        const app = this._appSys.lookup_app(result.id);
+        if (!app)
+            return [];
+        const out = [{ id: 'open', label: app.state === Shell.AppState.RUNNING ? 'Switch To' : 'Open', icon: 'media-playback-start-symbolic' }];
+        if (app.can_open_new_window())
+            out.push({ id: 'new-window', label: 'New Window', icon: 'window-new-symbolic' });
+        const info = app.get_app_info();
+        for (const action of info?.list_actions?.() ?? []) {
+            if (action === 'new-window')
+                continue;  // already offered above, with GNOME's own handling
+            out.push({ id: `action:${action}`, label: info.get_action_name(action) ?? action });
+        }
+        return out;
+    }
+
+    runAction(result, actionId) {
+        const app = this._appSys.lookup_app(result.id);
+        if (!app)
+            throw new Error(`app ${result.id} is no longer installed`);
+        if (actionId === 'open')
+            app.activate();
+        else if (actionId === 'new-window')
+            app.open_new_window(-1);
+        else if (actionId.startsWith('action:'))
+            app.launch_action(actionId.slice('action:'.length), global.get_current_time(), -1);
+        else
+            throw new Error(`unknown action ${actionId}`);
     }
 
     /**

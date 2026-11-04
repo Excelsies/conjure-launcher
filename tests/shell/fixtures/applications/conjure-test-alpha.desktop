@@ -4,4 +4,10 @@ Name=Conjure Test Alpha
 GenericName=Fixture Viewer
 Keywords=zebrafish;
 Exec=true
+Categories=GTK;Network;
+Actions=private;
 Icon=application-x-executable
+
+[Desktop Action private]
+Name=New Private Fixture
+Exec=true

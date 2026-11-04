@@ -32,6 +32,33 @@
       <default>'bottom'</default>
       <summary>Where the panel opens: bottom centre (default), centre, or top centre of the screen</summary>
     </key>
+    <key name="search-position" type="s">
+      <choices>
+        <choice value="bottom"/>
+        <choice value="top"/>
+      </choices>
+      <default>'bottom'</default>
+      <summary>Search field at the bottom (default) or top of the panel</summary>
+    </key>
+    <key name="default-view" type="s">
+      <choices>
+        <choice value="recent"/>
+        <choice value="pinned"/>
+        <choice value="all"/>
+        <choice value="categories"/>
+      </choices>
+      <default>'recent'</default>
+      <summary>View shown when the launcher opens; its tab comes first</summary>
+    </key>
+    <key name="app-grid" type="b">
+      <default>false</default>
+      <summary>Show results as a grid of icons instead of a list (Ctrl+G toggles)</summary>
+    </key>
+    <key name="history-clear-request" type="x">
+      <default>0</default>
+      <summary>Internal: written by the preferences window to ask the extension to clear launch history</summary>
+      <description>Unix time of the latest request. The extension clears its history whenever the value changes.</description>
+    </key>
     <key name="provider-prefix" type="s">
       <default>'/'</default>
       <summary>Character that starts a provider trigger such as /calc</summary>

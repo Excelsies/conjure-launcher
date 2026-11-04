@@ -215,3 +215,52 @@ Known gaps:
 - **First ~300 ms after enable:** Mutter applies the cleared app-grid key asynchronously, so a
   press in that window can still open the app grid (measured headless). Not reachable by a person
   at login or unlock.
+
+## 16. Phase 2 spec (2026-11-04)
+
+Decisions (answered 2026-11-04; do not re-ask):
+- **[D9] Search field position:** bottom by default (Noctalia's code default); `search-position`
+  setting offers `top`.
+- **[D10] Opening view:** Recent by default; `default-view` setting offers pinned, all, categories.
+- **[D11] Layout:** list by default; grid (5 columns) via the `app-grid` setting or Ctrl+G.
+- **[D12] Toolbar:** no avatar, no power button, no sort/grid/settings buttons. "We only want the
+  launcher." Session actions stay a `/session` provider (Phase 3). Settings live in prefs.
+
+Behaviour (from Noctalia `applyActiveCategory` and `onInputChanged` @ 60861c9):
+- Tabs: Recent / Pinned / All / Categories, with the default view first. Ctrl+Tab and
+  Ctrl+Shift+Tab cycle them, Ctrl+1..4 select one, and clicking works too.
+- Typing switches to All (Noctalia does the same): views shape only the empty-query screen.
+- All (empty query): pinned apps first in pinned order, then the rest by score.
+  Pinned: only pinned apps, in pinned order. Recent: launched apps, newest first.
+  Categories: a chip row of the non-empty categories (Ctrl+Left/Right or click); an app's
+  category is the first of its desktop Categories that maps to one of Noctalia's nine.
+- Context menu (Shift+Enter or right-click) replaces the list inline. It offers Open, New Window
+  (when the app supports it), the app's desktop actions, and Pin/Unpin. Esc returns to the
+  results; it does not close the launcher.
+- Grid: Up/Down move by a row, Left/Right by one.
+- Animations: open slides up 16px and fades in (200 ms, ease-out-cubic). Close fades and slides
+  down (200 ms, ease-in-quad). A view change slides the results by min(12% width, 72px) and
+  fades from 0.78. All of these honour GNOME's enable-animations setting.
+
+State:
+| State | Writer | Readers | Reset |
+|---|---|---|---|
+| `pinned` (as) | context menu, prefs | views, ranking order | user (Unpin) |
+| `app-grid` (b) | Ctrl+G, prefs | panel | user |
+| `history-clear-request` (x, unix time) | prefs "Clear history" | extension clears the usage model and saves | each request is a new value, so nothing to reset |
+| Active view and category | panel | panel | every open starts at `default-view` |
+
+- Pinned ids that are no longer installed are skipped in every view, not deleted: an app that
+  is reinstalled keeps its pin.
+
+Invariant 2 extended: the close animation runs on actors that no longer hold the grab. The
+grab is popped first and the actor is made non-reactive, then it animates out. `disable()`
+destroys immediately, with no animation.
+
+Phase 2 record (2026-11-04):
+- Mutation probes: views M21-M23 and integration I5, I6 and I8 all killed.
+  - I7 (disable fades instead of destroying) is an equivalent mutant. Fading panels are tracked
+    and destroyed on disable, so no actor outlives `disable()` either way. The strict check
+    ("no backdrop at all right after disable") is witnessed by I8.
+- Visual review (headless screenshots) found and fixed two defects: an invisible action icon on
+  the selected row, and tabs of unequal width.

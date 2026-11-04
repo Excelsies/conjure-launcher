@@ -44,6 +44,8 @@ export async function run() {
     t.check('empty query lists installed apps', panel.rows.length > 0, `${panel.rows.length} rows`);
 
     // --- Placement: bottom centre of the screen, inside the work area (decision D7) ---
+    // Measure after the 200 ms open slide, which moves the panel by translation_y.
+    await waitFor(() => panel.panelActor.translation_y === 0 && panel.panelActor.opacity === 255, 1000);
     const actor = panel.panelActor;
     const [ax, ay] = actor.get_transformed_position();
     const mon = Main.layoutManager.primaryMonitor;
@@ -108,7 +110,8 @@ export async function run() {
     await pressKeys(Clutter.KEY_Escape);
     t.check('Escape closes', await waitFor(() => !launcher.isOpen, 1000));
     t.check('Escape releases the grab', grabReleased(), `modalCount ${Main.modalCount}`);
-    t.check('the panel actors are destroyed', !Main.uiGroup.get_children().some(a => a.name === 'conjure-launcher-backdrop'));
+    t.check('the panel actors are destroyed after the fade-out', await waitFor(() =>
+        !Main.uiGroup.get_children().some(a => a.name === 'conjure-launcher-backdrop'), 2000));
 
     await pressKeys(Clutter.KEY_Super_L, Clutter.KEY_space);
     await waitFor(() => launcher.isOpen);

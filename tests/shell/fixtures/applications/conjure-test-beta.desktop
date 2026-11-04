@@ -3,4 +3,5 @@ Type=Application
 Name=Conjure Test Beta
 GenericName=Alpha Helper
 Exec=true
+Categories=Game;
 Icon=application-x-executable
