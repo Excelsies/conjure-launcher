@@ -63,3 +63,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Gogh
+
+Ten of the colour themes in `lib/palettes.js` (One Half Black, Moonfly, Gotham, Jellybeans, Night
+Owl, Aura, Oxocarbon, Oceanic Next, Molokai, Tomorrow Night) are mapped from terminal palettes in the
+Gogh collection (https://github.com/Gogh-Co/Gogh), as bundled with Ptyxis 50.1. Gogh is dual-licensed
+under the MIT License and the Apache License 2.0; these are used under the MIT License.

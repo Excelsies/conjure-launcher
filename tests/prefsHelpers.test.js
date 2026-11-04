@@ -20,3 +20,13 @@ test('round trip for every default token', () => {
     for (const [name, hex] of Object.entries(COLOUR_TOKENS))
         assert.equal(rgbaToHex(hexToRgba(hex, '#000000')), hex, name);
 });
+
+test('swatchMarkup: one block per role, normalised hex, invalid values skipped', async () => {
+    const { swatchMarkup, SWATCH_ROLES } = await import('../lib/prefsHelpers.js');
+    const html = swatchMarkup({ ...COLOUR_TOKENS, primary: '#ABC' });
+    assert.equal((html.match(/<span /g) ?? []).length, SWATCH_ROLES.length);
+    assert.match(html, /background="#aabbcc"/);
+    const hostile = swatchMarkup({ ...COLOUR_TOKENS, primary: '"><b>x</b><span x="' });
+    assert.equal((hostile.match(/<span /g) ?? []).length, SWATCH_ROLES.length - 1);
+    assert.doesNotMatch(hostile, /<b>/);
+});

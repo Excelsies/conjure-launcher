@@ -454,3 +454,7 @@ Phase 6 record (2026-11-04):
     4.5:1 for text on the accent, on the background and on the hover fill; 3:1 for secondary text.
   - Nord's hover text is corrected by the rule in lib/palettes.js.
   - Light variants are left out: as the launcher draws them, each fails a contrast pair.
+  - **Amended (owner, 2026-11-04):** the dropdown shows swatches on every row (the separate preview
+    row is gone). Ten darker themes are added from the Gogh collection as bundled with Ptyxis (MIT).
+    They are mapped to the nine roles by one documented rule, and every one is darker than the
+    original set's median background and passes the same contrast floor.

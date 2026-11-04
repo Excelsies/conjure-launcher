@@ -88,9 +88,14 @@ Settings: `gnome-extensions prefs conjure-launcher@excelsies`. They cover placem
 (focused window, pointer or primary), search field position, width, opening view, grid,
 auto-paste, the wallpaper folder, the shortcut, history and colours.
 
-Colour themes (Settings → Appearance): Noctalia (the default), Ayu, Catppuccin, Dracula, Eldritch,
-Gruvbox, Kanagawa, Nord, Rosé Pine and Tokyo Night. Each one is checked for readable contrast as the
-launcher draws it. Adjusting any single colour after picking a theme shows "Custom".
+Colour themes (Settings → Appearance), each shown with its swatches in the list:
+- Noctalia's palettes: Noctalia (the default), Ayu, Catppuccin, Dracula, Eldritch, Gruvbox, Kanagawa,
+  Nord, Rosé Pine and Tokyo Night.
+- Ten darker ones from the Gogh collection: One Half Black, Moonfly, Gotham, Jellybeans, Night Owl,
+  Aura, Oxocarbon, Oceanic Next, Molokai and Tomorrow Night.
+
+Each theme is checked for readable contrast as the launcher draws it. Adjusting any single colour
+after picking a theme shows "Custom".
 
 Auto-paste (off by default) pastes copied calculator results and emoji into the window you were
 in, and never into any other window.

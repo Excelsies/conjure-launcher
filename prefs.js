@@ -11,7 +11,7 @@ import Gtk from 'gi://Gtk';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import { COLOUR_TOKENS } from './lib/theme.js';
-import { rgbaToHex, hexToRgba } from './lib/prefsHelpers.js';
+import { rgbaToHex, hexToRgba, swatchMarkup } from './lib/prefsHelpers.js';
 import { upsertEntry, removeEntry, errorsFor, suggestId } from './lib/commandsDoc.js';
 import { CommandsStore } from './common/commandsStore.js';
 import { PALETTES, matchPalette, paletteValues } from './lib/palettes.js';
@@ -339,36 +339,68 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         const page = new Adw.PreferencesPage({ title: 'Appearance', icon_name: 'applications-graphics-symbolic', name: 'appearance' });
 
         // Colour themes (D17): picking one writes all nine colour keys; editing any colour below
-        // shows "Custom". The list reflects the settings, so it also follows changes made elsewhere.
+        // shows "Custom". A menu button opens a tall list (taller than GTK's dropdown allows) where
+        // every theme shows its swatches and the active one is ticked. The list follows the
+        // settings, so changes made elsewhere show here too.
         const themes = new Adw.PreferencesGroup({ title: 'Colour theme' });
-        const names = [...PALETTES.map(p => p.name), 'Custom'];
-        const themeRow = new Adw.ComboRow({ title: 'Theme', subtitle: 'Noctalia\'s built-in palettes', model: Gtk.StringList.new(names) });
-        const preview = new Gtk.Label({ use_markup: true, valign: Gtk.Align.CENTER });
-        const previewRow = new Adw.ActionRow({ title: 'Preview', subtitle: 'Accent, background, field, text, hover' });
-        previewRow.add_suffix(preview);
-        themes.add(themeRow);
-        themes.add(previewRow);
-        page.add(themes);
-        let syncingTheme = false;
+        const themeRow = new Adw.ActionRow({ title: 'Theme', subtitle: 'Noctalia and Gogh palettes' });
         const currentValues = () => Object.fromEntries(Object.keys(COLOUR_TOKENS).map(t => [t, settings.get_string(`theme-${t}`)]));
+        const currentColours = () => Object.fromEntries(Object.keys(COLOUR_TOKENS).map(t => [t, settings.get_string(`theme-${t}`) || COLOUR_TOKENS[t]]));
+
+        const buttonName = new Gtk.Label();
+        const buttonSwatches = new Gtk.Label({ use_markup: true });
+        const buttonBox = new Gtk.Box({ spacing: 10 });
+        buttonBox.append(buttonName);
+        buttonBox.append(buttonSwatches);
+        buttonBox.append(new Gtk.Image({ icon_name: 'pan-down-symbolic' }));
+        const menu = new Gtk.MenuButton({ child: buttonBox, valign: Gtk.Align.CENTER, css_classes: ['flat'] });
+
+        const list = new Gtk.ListBox({ selection_mode: Gtk.SelectionMode.NONE, css_classes: ['navigation-sidebar'] });
+        const entries = [...PALETTES.map(p => ({ id: p.id, name: p.name, colours: p.colours })), { id: null, name: 'Custom' }];
+        const rows = entries.map(entry => {
+            const check = new Gtk.Image({ icon_name: 'object-select-symbolic', opacity: 0 });
+            const name = new Gtk.Label({ label: entry.name, xalign: 0, hexpand: true });
+            const sw = new Gtk.Label({ use_markup: true });
+            const box = new Gtk.Box({ spacing: 12, margin_start: 6, margin_end: 6, margin_top: 3, margin_bottom: 3 });
+            box.append(check);
+            box.append(name);
+            box.append(sw);
+            const row = new Gtk.ListBoxRow({ child: box, activatable: entry.id !== null });
+            row._entry = entry;
+            row._check = check;
+            row._sw = sw;
+            list.append(row);
+            return row;
+        });
+        list.connect('row-activated', (_l, row) => {
+            const id = row._entry.id;
+            if (!id)
+                return;  // "Custom" is shown, not chosen
+            for (const [token, value] of Object.entries(paletteValues(id)))
+                settings.set_string(`theme-${token}`, value);
+            menu.popdown();
+        });
+        // Tall enough for every theme on a typical screen; scrolls only when the screen is shorter.
+        const scroller = new Gtk.ScrolledWindow({
+            child: list, hscrollbar_policy: Gtk.PolicyType.NEVER, propagate_natural_height: true,
+            max_content_height: 860, min_content_width: 380,
+        });
+        menu.popover = new Gtk.Popover({ child: scroller });
+        themeRow.add_suffix(menu);
+        themeRow.activatable_widget = menu;
+        themes.add(themeRow);
+        page.add(themes);
+
         const syncTheme = () => {
             const id = matchPalette(currentValues());
-            syncingTheme = true;
-            themeRow.selected = id ? PALETTES.findIndex(p => p.id === id) : names.length - 1;
-            syncingTheme = false;
-            const value = t => settings.get_string(`theme-${t}`) || COLOUR_TOKENS[t];
-            preview.set_markup(['primary', 'surface', 'surface-container', 'on-surface', 'hover']
-                .map(t => `<span background="${GLib.markup_escape_text(value(t), -1)}">\u2003\u2003</span>`).join(' '));
+            const active = entries.find(e => e.id === id) ?? entries[entries.length - 1];
+            buttonName.label = active.name;
+            buttonSwatches.set_markup(swatchMarkup(active.colours ?? currentColours()));
+            for (const row of rows) {
+                row._check.opacity = row._entry === active ? 1 : 0;
+                row._sw.set_markup(swatchMarkup(row._entry.colours ?? currentColours()));
+            }
         };
-        themeRow.connect('notify::selected', () => {
-            if (syncingTheme)
-                return;
-            const p = PALETTES[themeRow.selected];
-            if (!p)
-                return;  // "Custom" is shown, not chosen
-            for (const [token, value] of Object.entries(paletteValues(p.id)))
-                settings.set_string(`theme-${token}`, value);
-        });
         for (const token of Object.keys(COLOUR_TOKENS))
             watch(settings, `theme-${token}`, themeRow, syncTheme);
 

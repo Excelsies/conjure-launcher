@@ -24,8 +24,9 @@ function contrast(a, b) {
 const FLOOR = [['on-primary', 'primary', 4.5], ['on-surface', 'surface', 4.5], ['on-hover', 'hover', 4.5],
     ['on-surface', 'surface-container', 4.5], ['on-surface-variant', 'surface', 3.0]];
 
-test('ten palettes, the current one first, ids unique', () => {
-    assert.equal(PALETTES.length, 10);
+test('twenty palettes (Noctalia set plus ten darker ones), the current one first, ids unique', () => {
+    assert.equal(PALETTES.length, 20);
+    assert.equal(PALETTES.filter(p => p.source === 'gogh').length, 10);
     assert.equal(PALETTES[0].id, DEFAULT_PALETTE_ID);
     assert.equal(new Set(PALETTES.map(p => p.id)).size, PALETTES.length);
 });
@@ -65,4 +66,12 @@ test('a hand-picked colour makes it Custom (no match); matching ignores case and
     assert.equal(matchPalette({ ...dracula, primary: '#123456' }), null);
     assert.equal(matchPalette(Object.fromEntries(Object.entries(dracula).map(([k, v]) => [k, ` ${v.toUpperCase()} `]))), 'dracula');
     assert.throws(() => paletteValues('nope'));
+});
+
+test('the added themes are darker than the median of the original set', () => {
+    const lum = p => luminance(p.colours['surface']);
+    const original = PALETTES.filter(p => p.source !== 'gogh').map(lum).sort((a, b) => a - b);
+    const median = original[Math.floor(original.length / 2)];
+    for (const p of PALETTES.filter(x => x.source === 'gogh'))
+        assert.ok(lum(p) < median, `${p.name} background is not darker than the original median`);
 });
