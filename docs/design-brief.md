@@ -453,7 +453,8 @@ Phase 6 record (2026-11-04):
   - Every shipped palette must pass a contrast floor as the launcher draws it, enforced by a test:
     4.5:1 for text on the accent, on the background and on the hover fill; 3:1 for secondary text.
   - Nord's hover text is corrected by the rule in lib/palettes.js.
-  - Light variants are left out: as the launcher draws them, each fails a contrast pair.
+  - Light variants are left out: as the launcher draws them, each fails a contrast pair. The owner
+    confirmed (2026-11-04) that no light themes are wanted: "we have plenty".
   - **Amended (owner, 2026-11-04):** the dropdown shows swatches on every row (the separate preview
     row is gone). Ten darker themes are added from the Gogh collection as bundled with Ptyxis (MIT).
     They are mapped to the nine roles by one documented rule, and every one is darker than the
