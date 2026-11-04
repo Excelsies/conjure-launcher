@@ -1,0 +1,9 @@
+{
+    "uuid": "conjure-launcher@excelsies",
+    "name": "Conjure Launcher",
+    "description": "A keyboard-first launcher for GNOME Shell: fuzzy search across apps, windows, session actions, a calculator, emoji and GNOME search providers. Opens on Super+Space in place of the Show Apps grid.",
+    "shell-version": ["50", "51"],
+    "url": "https://github.com/Excelsies/conjure-launcher",
+    "settings-schema": "org.gnome.shell.extensions.conjure-launcher",
+    "version-name": "0.1.0"
+}

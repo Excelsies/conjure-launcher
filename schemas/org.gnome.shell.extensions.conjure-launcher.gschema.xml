@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.conjure-launcher" path="/org/gnome/shell/extensions/conjure-launcher/">
+    <key name="toggle-launcher" type="as">
+      <default><![CDATA[['<Super>space']]]></default>
+      <summary>Open or close the launcher</summary>
+    </key>
+    <key name="saved-toggle-application-view" type="as">
+      <default>[]</default>
+      <summary>Internal: GNOME's toggle-application-view binding saved before it was cleared</summary>
+      <description>Only meaningful when has-saved-toggle-application-view is true. Restored on disable.</description>
+    </key>
+    <key name="has-saved-toggle-application-view" type="b">
+      <default>false</default>
+      <summary>Internal: whether saved-toggle-application-view holds a value to restore</summary>
+    </key>
+    <key name="pinned" type="as">
+      <default>[]</default>
+      <summary>Pinned app ids, in display order</summary>
+    </key>
+    <key name="width" type="i">
+      <range min="560" max="1100"/>
+      <default>760</default>
+      <summary>Panel width in logical pixels</summary>
+    </key>
+    <key name="provider-prefix" type="s">
+      <default>'/'</default>
+      <summary>Character that starts a provider trigger such as /calc</summary>
+    </key>
+    <key name="track-usage" type="b">
+      <default>true</default>
+      <summary>Record launches for the Recent view and ranking</summary>
+    </key>
+    <key name="sort-by-usage" type="b">
+      <default>true</default>
+      <summary>Boost frequently used results</summary>
+    </key>
+    <key name="theme-primary" type="s">
+      <default>''</default>
+      <summary>Theme token: primary</summary>
+      <description>Accent fill for the selected row. Empty uses the built-in default (#fff59b). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+    </key>
+    <key name="theme-on-primary" type="s">
+      <default>''</default>
+      <summary>Theme token: on-primary</summary>
+      <description>Text and glyphs on the primary fill. Empty uses the built-in default (#0e0e43). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+    </key>
+    <key name="theme-surface" type="s">
+      <default>''</default>
+      <summary>Theme token: surface</summary>
+      <description>Panel background. Empty uses the built-in default (#070722). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+    </key>
+    <key name="theme-surface-container" type="s">
+      <default>''</default>
+      <summary>Theme token: surface-container</summary>
+      <description>Card and toolbar background. Empty uses the built-in default (#11112d). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+    </key>
+    <key name="theme-on-surface" type="s">
+      <default>''</default>
+      <summary>Theme token: on-surface</summary>
+      <description>Primary text. Empty uses the built-in default (#f3edf7). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+    </key>
+    <key name="theme-on-surface-variant" type="s">
+      <default>''</default>
+      <summary>Theme token: on-surface-variant</summary>
+      <description>Secondary text (subtitles, hints). Empty uses the built-in default (#7c80b4). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+    </key>
+    <key name="theme-outline-variant" type="s">
+      <default>''</default>
+      <summary>Theme token: outline-variant</summary>
+      <description>1px card borders. Empty uses the built-in default (#21215f). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+    </key>
+    <key name="theme-hover" type="s">
+      <default>''</default>
+      <summary>Theme token: hover</summary>
+      <description>Hovered row fill. Empty uses the built-in default (#9bfece). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+    </key>
+    <key name="theme-on-hover" type="s">
+      <default>''</default>
+      <summary>Theme token: on-hover</summary>
+      <description>Text on the hovered row. Empty uses the built-in default (#0e0e43). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+    </key>
+    <key name="theme-radius-scale" type="d">
+      <range min="0.0" max="3.0"/>
+      <default>1.0</default>
+      <summary>Theme token: multiplier for all corner radii</summary>
+    </key>
+    <key name="theme-font-family" type="s">
+      <default>''</default>
+      <summary>Theme token: font family</summary>
+      <description>Empty uses the system interface font.</description>
+    </key>
+    <key name="theme-overrides-locked" type="b">
+      <default>false</default>
+      <summary>Ask integrations not to change theme tokens</summary>
+      <description>Advisory: integrations that write theme-* keys must check this first and leave the tokens alone when it is true. See docs/theming.md.</description>
+    </key>
+    <key name="debug" type="b">
+      <default>false</default>
+      <summary>Log per-query provider timings</summary>
+    </key>
+  </schema>
+</schemalist>
