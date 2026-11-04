@@ -83,7 +83,7 @@ export async function run() {
 
     // --- Provider overview ---
     await type('/');
-    t.equal('a bare "/" lists the providers', titles(), ['/calc', '/emo', '/win', '/session']);
+    t.equal('a bare "/" lists the providers', titles(), ['/calc', '/emo', '/win', '/session', '/wall']);
     await type('/em');
     t.equal('the overview filters as you type', titles(), ['/emo']);
     await pressKeys(Clutter.KEY_Return);

@@ -4,7 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mkdir -p "$root/dist"
 extra=()
-for d in lib providers ui shell; do
+for d in lib providers ui shell data bin; do
     [[ -d "$root/$d" ]] && [[ -n "$(ls -A "$root/$d")" ]] && extra+=(--extra-source="$root/$d")
 done
 gnome-extensions pack "$root" --force --out-dir="$root/dist" \

@@ -124,3 +124,18 @@ test('onCancel callbacks run once when the query goes stale, or at once if alrea
     tokens[0].onCancel(() => late++);
     assert.equal(late, 1, 'registering on a stale token runs at once');
 });
+
+test('a scope sends every query, prefixes included, to that provider only', () => {
+    const scoped = { id: 'dmenu', query: q => [{ id: q, title: `d:${q}`, score: 1 }] };
+    const calc = { id: 'calc', trigger: 'calc', query: () => [{ id: 'c', title: 'calc', score: 9 }] };
+    const { qc, emitted } = setup([syncApps, calc]);
+    qc.setScope(scoped);
+    qc.setQuery('/calc 1');
+    assert.deepEqual(emitted.at(-1).titles, ['d:/calc 1']);
+    assert.equal(emitted.at(-1).kind, 'scoped');
+    qc.setQuery('/');
+    assert.deepEqual(emitted.at(-1).titles, ['d:/'], 'no provider overview in a scope');
+    qc.setScope(null);
+    qc.setQuery('x');
+    assert.deepEqual(emitted.at(-1).titles, ['app:x']);
+});

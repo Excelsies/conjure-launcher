@@ -304,3 +304,74 @@ fallback). All are killed.
 
 Visual review fixed two defects: symbolic result icons were invisible on the selected row, and
 provider results without an icon of their own were blank (they now show the provider app's icon).
+
+## 18. Phase 4 spec (2026-11-04)
+
+Decisions (answered 2026-11-04; do not re-ask):
+- **[D13] Command entries:** defined in `~/.config/conjure-launcher/commands.json` now. A prefs
+  editor for the same file comes in a final Phase 6, so there is one source of truth.
+- **[D14] dmenu CLI:** `bin/conjure-dmenu`; `tools/install.sh` symlinks it into `~/.local/bin`.
+- **[D15] Wallpapers:** `/wall` reads `<XDG Pictures>/Wallpapers` recursively by default (setting
+  `wallpaper-dir`) and sets both `picture-uri` and `picture-uri-dark`.
+- **[D16] Auto-paste (Phase 5):** off by default.
+
+### Command entries
+- Each entry has `id`, `label`, `prefix` (the trigger word), `icon`, `command` (prints one
+  candidate per line, with "title<TAB>subtitle" allowed), `exec` (with `{selection}` and
+  `{query}`), `global` and `freeform`.
+- Each entry is validated on its own; an invalid one is dropped and logged with its index and
+  reason. A prefix that collides with a built-in or another entry is invalid.
+- **Invariant 3 extended: candidate text never becomes shell syntax.** `exec` runs as
+  `sh -c <exec> conjure-launcher <selection> <query>`. `{selection}` and `{query}` are rewritten
+  to `"$1"` and `"$2"` before `sh` sees them, and the values travel as arguments, so a candidate
+  such as `a; rm -rf ~` is a single argument. The command and exec strings come only from the
+  user's own file.
+- A missing `exec` copies the selection to the clipboard (Noctalia). `freeform` adds the typed
+  text as a result (score 2048).
+- `command` runs at most once per launcher open per entry, with a 2 s timeout (then it is
+  killed), output capped at 1 MiB and 500 candidates. Closing the launcher kills a command
+  still running.
+- The file is watched and reloaded 200 ms after a change. An unreadable or invalid file keeps
+  the last good entries and logs the path and error. A missing file means no entries.
+
+### dmenu mode
+- The extension owns `org.excelsies.ConjureLauncher` on the session bus while enabled, with
+  `Dmenu(prompt s, candidates as) -> (selection s, picked b)`.
+- The launcher opens scoped to the candidates: no tabs, the prompt as the hint, at most 500
+  results. Enter returns the raw line; with no match, Enter returns the typed text.
+- Every close path answers the pending call: Esc and the other closes return `picked=false`,
+  `disable()` returns an error, and a newer Dmenu call cancels the older one. **A client is never
+  left hanging.**
+- `conjure-dmenu [-p prompt]` reads stdin and prints the choice. It exits 0 on a pick, 1 on
+  cancel and 2 when the extension is not running.
+- Trust: any process of the same user on the session bus can open a menu and read the choice.
+  That is the same trust boundary as any other user process; it cannot run commands through this.
+
+### Wallpapers
+- `/wall` lists images (jpg, jpeg, png, webp, svg, avif, jxl) up to 4 directories deep and at
+  most 5000 files, enumerated asynchronously once per open. Matching is fuzzy on "file name +
+  folder", showing at most 50, with the image as the icon.
+
+### State
+| State | Writer | Readers | Reset |
+|---|---|---|---|
+| commands.json entries | user (file), Phase 6 prefs | command providers | reload on file change |
+| Per-open candidate cache, running subprocess | command provider | provider | cleared on close; subprocess force-exited |
+| Pending Dmenu invocation | D-Bus service | launcher close paths | answered exactly once, on any close or disable |
+| `wallpaper-dir` (s) | prefs | wallpaper provider | user |
+
+Phase 4 record (2026-11-04):
+- **Command process groups:** commands run under `setsid`, and timeout and close kill the whole
+  process group. Killing only the shell left its background children running (found while
+  writing the close test).
+- **Config folder:** `~/.config/conjure-launcher` is created at enable so the file watch works at
+  once. Without the folder, GLib polls about every 4 s, which made reloads (and a first version of
+  the test) slow and flaky.
+- **Deviation from Noctalia:** a freeform entry's typed text is listed after real matches. In
+  Noctalia it scores 2048, above every match, so Enter on "st" would run with "st" instead of the
+  visible "staging".
+- **Mutation probes:** M30 (values pasted into the script), M31 (no own session), M32 (prefix
+  collisions), and I14-I18 (group kill, close hook, dmenu answered on close and on disable, last
+  good entries kept) are all killed.
+  - I15 first survived because its test was vacuous: a stale cache skipped the rerun, so there
+    was nothing to kill. The test now asserts the command is running before Esc.

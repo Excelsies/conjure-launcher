@@ -16,6 +16,9 @@ import { EmojiProvider } from './providers/emoji.js';
 import { WindowsProvider } from './providers/windows.js';
 import { SessionProvider } from './providers/session.js';
 import { SearchProvidersBridge } from './providers/searchProviders.js';
+import { WallpaperProvider } from './providers/wallpaper.js';
+import { CommandsRegistry } from './providers/commands.js';
+import { ConjureDBusService } from './shell/dbusService.js';
 
 const LOG_PREFIX = '[conjure-launcher]';
 
@@ -33,9 +36,14 @@ export default class ConjureLauncherExtension extends Extension {
             new EmojiProvider(GLib.build_filenamev([this.path, 'data', 'emoji.json']), logError),
             new WindowsProvider(),
             new SessionProvider(),
+            new WallpaperProvider(this._settings),
             new SearchProvidersBridge({ settings: this._settings, log, logError }),
         ];
+        // Built-in triggers, fixed before user command entries are added to the same list.
+        const reserved = this._providers.map(p => p.trigger).filter(Boolean);
+        this.commands = new CommandsRegistry({ providers: this._providers, reservedPrefixes: () => reserved, log, logError });
         this.launcher = new Launcher({ settings: this._settings, providers: this._providers, log, logError });
+        this.dbus = new ConjureDBusService({ dmenu: (prompt, lines) => this.launcher.dmenu(prompt, lines), logError });
         this.keybindings = new KeybindingManager({
             settings: this._settings, onToggle: () => this.launcher?.toggle(), log, logError,
         });
@@ -44,10 +52,14 @@ export default class ConjureLauncherExtension extends Extension {
     }
 
     disable() {
+        this.dbus?.destroy();
+        this.dbus = null;
         this.keybindings?.disable();
         this.keybindings = null;
         this.launcher?.destroy();
         this.launcher = null;
+        this.commands?.destroy();
+        this.commands = null;
         for (const p of this._providers ?? [])
             p.destroy?.();
         this._providers = null;

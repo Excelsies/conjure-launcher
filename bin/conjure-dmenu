@@ -1,0 +1,57 @@
+#!/usr/bin/gjs -m
+// conjure-dmenu [-p PROMPT]: read choices from stdin (one per line; "title<TAB>subtitle" shows the
+// subtitle, the whole line is printed), let the user pick one in Conjure Launcher, print it.
+// Exit status: 0 picked, 1 cancelled, 2 Conjure Launcher not running or another error.
+
+import Gio from 'gi://Gio';
+import GioUnix from 'gi://GioUnix';
+import GLib from 'gi://GLib';
+import System from 'system';
+
+const BUS_NAME = 'org.excelsies.ConjureLauncher';
+const OBJECT_PATH = '/org/excelsies/ConjureLauncher';
+const NO_TIMEOUT = 0x7fffffff;
+
+function usage(code) {
+    printerr('usage: conjure-dmenu [-p PROMPT] < choices');
+    System.exit(code);
+}
+
+let prompt = '';
+const args = [...ARGV];
+while (args.length) {
+    const a = args.shift();
+    if (a === '-p' || a === '--prompt')
+        prompt = args.shift() ?? usage(2);
+    else if (a.startsWith('--prompt='))
+        prompt = a.slice('--prompt='.length);
+    else if (a === '-h' || a === '--help')
+        usage(0);
+    else
+        usage(2);
+}
+
+const stdin = new Gio.DataInputStream({ base_stream: new GioUnix.InputStream({ fd: 0, close_fd: false }) });
+const lines = [];
+for (;;) {
+    const [line] = stdin.read_line_utf8(null);
+    if (line === null)
+        break;
+    if (line.trim())
+        lines.push(line);
+}
+
+try {
+    const reply = Gio.DBus.session.call_sync(BUS_NAME, OBJECT_PATH, BUS_NAME, 'Dmenu',
+        new GLib.Variant('(sas)', [prompt, lines]), new GLib.VariantType('(sb)'),
+        Gio.DBusCallFlags.NO_AUTO_START, NO_TIMEOUT, null);
+    const [selection, picked] = reply.deepUnpack();
+    if (!picked)
+        System.exit(1);
+    print(selection);
+    System.exit(0);
+} catch (e) {
+    const missing = e.matches?.(Gio.DBusError, Gio.DBusError.SERVICE_UNKNOWN) || e.matches?.(Gio.DBusError, Gio.DBusError.NAME_HAS_NO_OWNER);
+    printerr(missing ? 'conjure-dmenu: Conjure Launcher is not running (is the extension enabled?)' : `conjure-dmenu: ${e.message}`);
+    System.exit(2);
+}

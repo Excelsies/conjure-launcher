@@ -84,7 +84,7 @@ export async function run() {
     panel.setText('/');
     await sleep(50);
     t.equal('a bare "/" is the provider overview (providers, not apps)',
-        launcher.panel.rows.map(r => r.result.title), ['/calc', '/emo', '/win', '/session']);
+        launcher.panel.rows.map(r => r.result.title), ['/calc', '/emo', '/win', '/session', '/wall']);
     panel.setText('');
     await sleep(50);
 

@@ -24,4 +24,13 @@ else
     ln -s "$root" "$dest"
     echo "installed: $dest -> $root"
 fi
+# dmenu CLI on PATH (decision D14). Only ever replaces our own symlink.
+bindir="$HOME/.local/bin"
+mkdir -p "$bindir"
+if [[ -L "$bindir/conjure-dmenu" || ! -e "$bindir/conjure-dmenu" ]]; then
+    ln -sfn "$root/bin/conjure-dmenu" "$bindir/conjure-dmenu"
+    echo "installed: $bindir/conjure-dmenu"
+else
+    echo "warning: $bindir/conjure-dmenu exists and is not a symlink; left alone" >&2
+fi
 echo "enable with: gnome-extensions enable $uuid  (takes effect after the next shell start)"

@@ -32,6 +32,51 @@ Status: design phase. See `docs/design-brief.md` (awaiting approval) and
 | `/` | The list of providers; Enter fills in the prefix |
 | anything else | Apps, plus results from GNOME's search providers (files, Settings, ...) as enabled in GNOME Settings > Search. GNOME Calculator's provider is left out (the launcher has its own) |
 
+| `/wall sunset` | Images in `~/Pictures/Wallpapers` (setting `wallpaper-dir`); Enter sets the background |
+| `/<your prefix>` | Your own command entries (below) |
+
+### Command entries
+
+Define your own providers in `~/.config/conjure-launcher/commands.json`. It is reloaded whenever
+you save it; invalid entries are skipped and named in the log.
+
+```json
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "ssh", "prefix": "ssh", "label": "SSH hosts", "icon": "network-server-symbolic",
+      "command": "grep -oP '^Host \\K[^*\\s]+' ~/.ssh/config",
+      "exec": "ptyxis -- ssh {selection}",
+      "freeform": true
+    },
+    { "id": "web", "prefix": "g", "label": "Web search", "exec": "xdg-open https://duckduckgo.com/?q={query}" }
+  ]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `id`, `prefix` | a-z, 0-9 and `-`. `prefix` is the trigger word (`/ssh`); built-in ones cannot be reused |
+| `command` | Prints one candidate per line (`title<TAB>subtitle` is allowed). Runs once per open; 2 s limit |
+| `exec` | Runs on Enter. `{selection}` is the chosen line, `{query}` the typed text. **Do not put quotes around them**: they are passed safely as separate arguments, never pasted into the command |
+| no `exec` | Enter copies the selection |
+| `freeform` | Also offer the typed text itself (listed after real matches) |
+| `global` | Also show this entry's candidates in normal search |
+| `label`, `icon` | Display name and a symbolic icon name |
+
+### dmenu mode
+
+`tools/install.sh` puts `conjure-dmenu` in `~/.local/bin`. Scripts pipe choices in and read the
+pick back, like `rofi -dmenu`:
+
+```sh
+choice=$(printf 'red\ngreen\nblue\n' | conjure-dmenu -p 'Pick a colour') && echo "$choice"
+```
+
+Exit status: 0 picked (the whole line is printed), 1 cancelled, 2 Conjure Launcher not running.
+With no match, Enter returns what you typed.
+
 Calculator: `+ - * / % ^ !`, parentheses, `sqrt cbrt abs round floor ceil sin cos tan asin acos
 atan ln log log2 exp pow min max`, `pi tau e`. Trigonometry is in radians.
 

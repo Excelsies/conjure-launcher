@@ -15,6 +15,7 @@ import { panelRect } from '../lib/placement.js';
 import { togglePin } from '../lib/views.js';
 import { LauncherPanel, PANEL_HEIGHT } from '../ui/panel.js';
 import { UsageFile } from './usageFile.js';
+import { DmenuProvider } from '../providers/dmenu.js';
 
 const THEME_KEYS = [...Object.keys(COLOUR_TOKENS).map(k => `theme-${k}`), 'theme-radius-scale', 'theme-font-family'];
 
@@ -30,6 +31,7 @@ export class Launcher {
         this._logError = logError;
         this._panel = null;
         this._fading = new Set();  // closed panels still fading out; destroyed on disable
+        this._dmenu = null;        // {resolve, reject, prompt} while a Dmenu call is pending
         this._signals = [];
 
         this._usage = new UsageFile(GLib.build_filenamev([GLib.get_user_state_dir(), 'conjure-launcher']),
@@ -94,6 +96,32 @@ export class Launcher {
         return this._lifecycle.toggle();
     }
 
+    /**
+     * dmenu mode: open scoped to the candidates; resolves {picked, selection} exactly once.
+     * A newer call answers the older one as not picked; disable rejects.
+     */
+    dmenu(prompt, lines) {
+        return new Promise((resolve, reject) => {
+            this._finishDmenu({ picked: false, selection: '' });
+            this._lifecycle.close('dmenu');
+            this._dmenu = { resolve, reject, prompt };
+            this._query.setScope(new DmenuProvider(lines));
+            if (!this._lifecycle.open())
+                this._finishDmenu(null, new Error('the launcher could not open'));
+        });
+    }
+
+    _finishDmenu(answer, error = null) {
+        const pending = this._dmenu;
+        if (!pending)
+            return;
+        this._dmenu = null;
+        if (error)
+            pending.reject(error);
+        else
+            pending.resolve(answer);
+    }
+
     open() {
         return this._lifecycle.open();
     }
@@ -139,6 +167,8 @@ export class Launcher {
         });
         const panel = new LauncherPanel({
             styles: this._styles,
+            scoped: Boolean(this._dmenu),
+            prompt: this._dmenu?.prompt ?? '',
             searchPosition: this._settings.get_string('search-position'),
             defaultView: this._settings.get_string('default-view'),
             grid: this._settings.get_boolean('app-grid'),
@@ -189,6 +219,14 @@ export class Launcher {
             obj.disconnect(id);
         this._signals = [];
         this._query.cancel();
+        this._query.setScope(null);
+        // A dmenu call still waiting gets its answer on every close path (design brief 18).
+        if (reason === 'disable')
+            this._finishDmenu(null, new Error('Conjure Launcher was disabled'));
+        else
+            this._finishDmenu({ picked: false, selection: '' });
+        for (const p of this._providers)
+            p.onClose?.();
         // The grab is already released (PanelLifecycle pops before onClose); what remains is the
         // fade-out. disable() must not leave actors behind, so it skips the animation.
         const animate = reason !== 'disable';
@@ -256,6 +294,13 @@ export class Launcher {
     }
 
     _activate(result, { newWindow }) {
+        if (this._dmenu) {
+            const pending = this._dmenu;
+            this._dmenu = null;
+            this._lifecycle.close('activate');
+            pending.resolve({ picked: true, selection: result.raw });
+            return;
+        }
         // A result that rewrites the input (the provider overview) keeps the launcher open.
         if (typeof result.query === 'string') {
             this._panel?.setText(result.query);

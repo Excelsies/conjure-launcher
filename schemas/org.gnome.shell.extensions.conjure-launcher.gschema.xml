@@ -64,6 +64,11 @@
       <summary>GNOME search providers left out of the launcher</summary>
       <description>Desktop ids. GNOME Calculator is excluded by default because the launcher has its own calculator; providers turned off in GNOME's Search settings are left out as well.</description>
     </key>
+    <key name="wallpaper-dir" type="s">
+      <default>''</default>
+      <summary>Folder the /wall provider lists (searched 4 levels deep)</summary>
+      <description>Empty means the Wallpapers folder inside your Pictures folder. A leading ~/ is your home folder.</description>
+    </key>
     <key name="provider-prefix" type="s">
       <default>'/'</default>
       <summary>Character that starts a provider trigger such as /calc</summary>

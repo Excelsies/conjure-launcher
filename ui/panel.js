@@ -56,7 +56,9 @@ class Item {
         if (action?.icon || result?.iconName)
             this._symbolicIcon = icon;
         const iconSize = grid ? GRID_ICON_SIZE : action ? 24 : ICON_SIZE;
-        this._iconBin = new St.Bin({ width: iconSize, height: iconSize, child: icon, x_align: Clutter.ActorAlign.CENTER });
+        // Rows with no icon at all (dmenu candidates) drop the slot instead of leaving a gap.
+        this._iconBin = new St.Bin({ width: iconSize, height: iconSize, child: icon, x_align: Clutter.ActorAlign.CENTER,
+            visible: Boolean(icon) || grid });
         this.actor.add_child(this._iconBin);
 
         const labels = new St.BoxLayout({
@@ -113,7 +115,8 @@ export class LauncherPanel {
      *          onTogglePin: (result) => void,
      *          onToggleGrid: () => void,
      *          onCancel: (reason: string) => void,
-     *          onGone?: (panel: LauncherPanel) => void}} opts
+     *          onGone?: (panel: LauncherPanel) => void,
+     *          scoped?: boolean, prompt?: string}} opts   scoped = dmenu mode
      */
     constructor(opts) {
         this._opts = opts;
@@ -164,12 +167,16 @@ export class LauncherPanel {
         this._compact = rect.width < COMPACT_NAV_WIDTH;
 
         this._toolbar = new St.BoxLayout({ x_expand: true });
-        this._entry = new St.Entry({ hint_text: 'Search apps, or type / for providers', can_focus: true, x_expand: true });
+        this._entry = new St.Entry({
+            hint_text: this._opts.scoped ? (this._opts.prompt || 'Choose') : 'Search apps, or type / for providers',
+            can_focus: true, x_expand: true,
+        });
         this._entry.clutter_text.connect('text-changed', () => this._onTextChanged());
         this._entry.clutter_text.connect('key-press-event', (_a, event) => this._onKey(event));
         this._toolbar.add_child(this._entry);
 
-        this._nav = new St.BoxLayout({ x_expand: true });
+        // dmenu mode shows only the candidates: no tabs, no categories.
+        this._nav = new St.BoxLayout({ x_expand: true, visible: !this._opts.scoped });
         this._nav.layout_manager.homogeneous = true;  // equal-width tabs, whatever their labels
         this._tabButtons = new Map();
         for (const view of this.tabs) {
@@ -307,6 +314,8 @@ export class LauncherPanel {
     }
 
     _visibleResults() {
+        if (this._opts.scoped)
+            return this._ranked;
         const query = this.text;
         const view = query.trim() ? 'all' : this.view;
         const cats = availableCategories(this._ranked);
@@ -317,7 +326,7 @@ export class LauncherPanel {
     }
 
     _renderChips() {
-        const show = !this.text.trim() && this.view === 'categories' && !this.menu;
+        const show = !this._opts.scoped && !this.text.trim() && this.view === 'categories' && !this.menu;
         this._chips.visible = show;
         this._chips.destroy_all_children();
         if (!show)
@@ -422,7 +431,7 @@ export class LauncherPanel {
     // --- view, category, grid, menu -----------------------------------------
 
     setView(view, { animate = true } = {}) {
-        if (!this.tabs.includes(view) || (view === this.view && !this.text.trim()))
+        if (this._opts.scoped || !this.tabs.includes(view) || (view === this.view && !this.text.trim()))
             return;
         const from = this.tabs.indexOf(this.text.trim() ? 'all' : this.view);
         this.view = view;
@@ -593,7 +602,7 @@ export class LauncherPanel {
             return Clutter.EVENT_STOP;
         }
         if (ENTER_KEYS.has(sym)) {
-            if (shift && !this.menu)
+            if (shift && !this.menu && !this._opts.scoped)
                 this.openMenu(this._items[this.selectedIndex]?.result);
             else
                 this.activateIndex(this.selectedIndex, { newWindow: ctrl });
