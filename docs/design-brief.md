@@ -445,3 +445,12 @@ Phase 6 record (2026-11-04):
   by automation, because the preferences run in a separate GTK process. What Save does, the
   document model and the store, is covered by the unit and GJS tests. "Open file" (Gtk.FileLauncher)
   is not exercised. Version 0.6.0.
+
+- **[D17] Colour themes (owner request, 2026-11-04):** "include the one we have and add several more".
+  Ten dark palettes from Noctalia's built-in set (Noctalia, Ayu, Catppuccin, Dracula, Eldritch, Gruvbox,
+  Kanagawa, Nord, Rosé Pine, Tokyo Night), picked in Settings > Appearance. They write the same theme-*
+  keys, and Noctalia writes empty values (the default).
+  - Every shipped palette must pass a contrast floor as the launcher draws it, enforced by a test:
+    4.5:1 for text on the accent, on the background and on the hover fill; 3:1 for secondary text.
+  - Nord's hover text is corrected by the rule in lib/palettes.js.
+  - Light variants are left out: as the launcher draws them, each fails a contrast pair.

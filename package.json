@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "test": "node --test \"tests/**/*.test.js\"",
     "check": "pnpm run lint && pnpm test && pnpm run test:gjs && glib-compile-schemas --strict --dry-run schemas",
-    "test:shell": "tools/shell-test.sh tests/shell/launcher.js tests/shell/defaults.js tests/shell/views.js tests/shell/providers.js tests/shell/phase4.js tests/shell/phase5.js",
+    "test:shell": "tools/shell-test.sh tests/shell/launcher.js tests/shell/defaults.js tests/shell/views.js tests/shell/providers.js tests/shell/phase4.js tests/shell/phase5.js tests/shell/prefs.js",
     "test:shell:container": "tools/container-shell-test.sh",
     "test:gjs": "for f in tests/gjs/*.gjs.js; do gjs -m \"$f\" || exit 1; done"
   },

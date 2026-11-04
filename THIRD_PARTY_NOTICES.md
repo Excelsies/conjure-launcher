@@ -36,6 +36,9 @@ THE SOFTWARE.
 Behaviour (provider model, query routing, scoring weights, views, categories, defaults and
 palette) is ported from https://github.com/noctalia-dev/noctalia at commit 60861c9.
 `data/emoji.json` is Noctalia's `assets/emoji.json`, minified (same entries and fields).
+The colour themes in `lib/palettes.js` are Noctalia's built-in dark palettes
+(`src/theme/builtin_palettes.cpp`), reduced to the nine colours the launcher uses; one text colour is
+adjusted for contrast, as noted in that file.
 
 ```
 MIT License

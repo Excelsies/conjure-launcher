@@ -129,6 +129,16 @@ for script in "$@"; do
     reap_sandbox
     if [[ -n "${CONJURE_TEST_VERBOSE:-}" ]]; then cat "$log"; fi
     grep -E '(: |^)(ok|not ok|#) |\[conjure-launcher\]|JS ERROR|JS WARNING|Extension .*(error|Error)' "$log" || true
+    # Runtime criticals (test-harness pattern 8): a green script must not hide errors the platform
+    # only logs. Allowed, with reasons: our own "[conjure-launcher]" lines (tests inject failures on
+    # purpose and the extension logs them) and the harness's own "Script failed" line.
+    crit="$(grep -E 'CRITICAL \*\*|JS ERROR|JS WARNING|Failed to set text .* from markup' "$log" \
+        | grep -v -E '\[conjure-launcher\]|Script failed' || true)"
+    if [[ -n "$crit" ]]; then
+        echo "FAILED ($(basename "$script")): runtime criticals in the shell log:"
+        sed 's/^/    /' <<<"$crit" | head -n 20
+        (( rc == 0 )) && rc=3
+    fi
     if (( rc != 0 )); then
         echo "FAILED ($(basename "$script"), exit $rc); last lines of the shell log:"
         tail -n 25 "$log"

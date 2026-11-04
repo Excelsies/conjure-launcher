@@ -14,6 +14,7 @@ import { COLOUR_TOKENS } from './lib/theme.js';
 import { rgbaToHex, hexToRgba } from './lib/prefsHelpers.js';
 import { upsertEntry, removeEntry, errorsFor, suggestId } from './lib/commandsDoc.js';
 import { CommandsStore } from './common/commandsStore.js';
+import { PALETTES, matchPalette, paletteValues } from './lib/palettes.js';
 
 const TOKEN_LABELS = {
     'primary': ['Accent', 'Selected row and active tab'],
@@ -109,9 +110,10 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         content.add(walls);
         page.add(content);
 
+        // Group descriptions are Pango markup: literal < and & must be escaped, or GTK drops the text.
         const keys = new Adw.PreferencesGroup({
             title: 'Shortcut',
-            description: 'GTK accelerator syntax, e.g. <Super>space. If the app grid used the same shortcut, it gets it back when you change this.',
+            description: 'GTK accelerator syntax, e.g. &lt;Super&gt;space. If the app grid used the same shortcut, it gets it back when you change this.',
         });
         const shortcut = new Adw.EntryRow({ title: 'Open the launcher', show_apply_button: true });
         watch(settings, 'toggle-launcher', shortcut, () => {
@@ -146,7 +148,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
 
         const head = new Adw.PreferencesGroup({
             title: 'Command entries',
-            description: 'Your own providers: type /<prefix> in the launcher. Saved in ~/.config/conjure-launcher/commands.json; changes apply as soon as you save.',
+            description: 'Your own providers: type /&lt;prefix&gt; in the launcher. Saved in ~/.config/conjure-launcher/commands.json; changes apply as soon as you save.',
         });
         const status = new Adw.ActionRow({ title: '', visible: false, css_classes: ['error'], use_markup: false });
         head.add(status);
@@ -244,7 +246,8 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
     _saveCommands(window, store, next, refresh) {
         const r = store.save(next);
         if (!r.ok)
-            window.add_toast(new Adw.Toast({ title: r.conflict ? 'commands.json changed on disk; reloaded it. Please try again.' : `Not saved: ${r.error}`, timeout: 5 }));
+            // Toast titles are Pango markup; the error text can hold < or & (paths, messages).
+        window.add_toast(new Adw.Toast({ title: GLib.markup_escape_text(r.conflict ? 'commands.json changed on disk; reloaded it. Please try again.' : `Not saved: ${r.error}`, -1), timeout: 5 }));
         refresh();
         return r.ok;
     }
@@ -334,6 +337,40 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
 
     _appearancePage(settings) {
         const page = new Adw.PreferencesPage({ title: 'Appearance', icon_name: 'applications-graphics-symbolic', name: 'appearance' });
+
+        // Colour themes (D17): picking one writes all nine colour keys; editing any colour below
+        // shows "Custom". The list reflects the settings, so it also follows changes made elsewhere.
+        const themes = new Adw.PreferencesGroup({ title: 'Colour theme' });
+        const names = [...PALETTES.map(p => p.name), 'Custom'];
+        const themeRow = new Adw.ComboRow({ title: 'Theme', subtitle: 'Noctalia\'s built-in palettes', model: Gtk.StringList.new(names) });
+        const preview = new Gtk.Label({ use_markup: true, valign: Gtk.Align.CENTER });
+        const previewRow = new Adw.ActionRow({ title: 'Preview', subtitle: 'Accent, background, field, text, hover' });
+        previewRow.add_suffix(preview);
+        themes.add(themeRow);
+        themes.add(previewRow);
+        page.add(themes);
+        let syncingTheme = false;
+        const currentValues = () => Object.fromEntries(Object.keys(COLOUR_TOKENS).map(t => [t, settings.get_string(`theme-${t}`)]));
+        const syncTheme = () => {
+            const id = matchPalette(currentValues());
+            syncingTheme = true;
+            themeRow.selected = id ? PALETTES.findIndex(p => p.id === id) : names.length - 1;
+            syncingTheme = false;
+            const value = t => settings.get_string(`theme-${t}`) || COLOUR_TOKENS[t];
+            preview.set_markup(['primary', 'surface', 'surface-container', 'on-surface', 'hover']
+                .map(t => `<span background="${GLib.markup_escape_text(value(t), -1)}">\u2003\u2003</span>`).join(' '));
+        };
+        themeRow.connect('notify::selected', () => {
+            if (syncingTheme)
+                return;
+            const p = PALETTES[themeRow.selected];
+            if (!p)
+                return;  // "Custom" is shown, not chosen
+            for (const [token, value] of Object.entries(paletteValues(p.id)))
+                settings.set_string(`theme-${token}`, value);
+        });
+        for (const token of Object.keys(COLOUR_TOKENS))
+            watch(settings, `theme-${token}`, themeRow, syncTheme);
 
         const colours = new Adw.PreferencesGroup({
             title: 'Colours',
