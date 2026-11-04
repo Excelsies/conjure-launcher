@@ -12,8 +12,8 @@ Status: design phase. See `docs/design-brief.md` (awaiting approval) and
 
 | Command | What it does |
 |---|---|
-| `npm install` | Install the lint and test tools (dev only; nothing ships to the shell) |
-| `npm run check` | ESLint, unit tests (`tests/**/*.test.js`) and schema validation; CI runs the same |
+| `pnpm install` | Install the lint and test tools (dev only; nothing ships to the shell). pnpm is pinned in `package.json`; `corepack enable` provides it |
+| `pnpm run check` | ESLint, unit tests (`tests/**/*.test.js`) and schema validation; CI runs the same |
 | `tools/install.sh` | Symlink this checkout into `~/.local/share/gnome-shell/extensions/` |
 | `tools/devkit.sh` | Run a nested GNOME Shell with only this extension enabled, using a temporary settings database. Needs `sudo apt install mutter-dev-bin` |
 | `tools/pack.sh` | Build the installable zip into `dist/` |
