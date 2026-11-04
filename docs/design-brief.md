@@ -33,15 +33,25 @@ Status: APPROVED 2026-11-04 with decisions D1-D6 (section 12).
 | dmenu CLI over D-Bus | `bin/conjure-launcher-dmenu`, D-Bus interface | separable |
 
 ## 4. Invariants
-1. **The user's `toggle-application-view` binding is always recoverable.** On enable we save the
-   original value to our schema (`saved-toggle-application-view`) and only then clear it. On disable
-   we restore it from the saved copy and erase the copy.
-   - If a saved copy exists at enable time, the previous session died without disabling. We keep
-     that copy and do not overwrite it with the cleared value.
-   - Enforced in `shell/keybinding.js`.
+1. **The user's `toggle-application-view` binding is always recoverable, and only what collides
+   is taken.** (Revised 2026-11-04 after the headless test showed GNOME's default is `<Super>a`.)
+   - On enable, only the accelerators in `toggle-application-view` that equal one of ours
+     (`toggle-launcher`, compared after normalising modifier names) are removed. If none collide,
+     nothing is saved or changed.
+   - When something is removed, the original value is saved to our schema
+     (`saved-toggle-application-view` plus a presence flag) before GNOME's key is written.
+   - On disable, the saved value is put back only if GNOME's key still holds exactly what we left
+     there. If the user changed it meanwhile, their value is kept. The copy is then erased.
+   - If a saved copy exists at enable time and GNOME's key still holds what we would have left,
+     the previous session died without disabling: the copy is kept, not overwritten.
+   - Rebinding `toggle-launcher` restores and re-takes with the new accelerators.
+   - Other bindings that hold one of our accelerators (for example GNOME's default
+     `switch-input-source` on `<Super>space`) are logged with their schema and key and NOT changed;
+     changing them is the user's decision.
+   - Enforced in `lib/takeover.js` (pure, tested against fakes) and `shell/keybinding.js`.
 2. **The modal grab is always released.** Every close path (Esc, activation, click outside, focus
-   loss, monitor change, screen lock, `disable()`) goes through a single `close()` that pops the modal
-   and is idempotent. Enforced in `shell/modal.js`.
+   loss, monitor change, opening the overview, screen lock, `disable()`) goes through a single
+   `close()` that pops the modal and is idempotent. Enforced in `lib/lifecycle.js`.
 3. **Nothing that is untrusted is executed.**
    - Commands come only from the user's own settings.
    - Calculator input is never passed to a shell.
@@ -164,3 +174,30 @@ Decisions ledger (answered 2026-11-04; do not re-ask):
 Estimated size: 3-4k lines of JS. That is less than Noctalia's 6.5k lines of C++, because GNOME
 already provides app discovery and launching (`Shell.AppSystem`), search providers, and the
 clipboard (`St.Clipboard`).
+
+## 15. Phase 1 record (2026-11-04)
+
+Deviations from Noctalia, chosen deliberately:
+- **Enter follows GNOME, not Noctalia.** Enter focuses the app or starts it (`app.activate()`, as
+  the app grid does). Ctrl+Enter or middle-click opens a new window when the app is already
+  running. Noctalia always runs the desktop entry.
+- **Space never activates.** Noctalia binds Space to "validate"; in a search field it has to type
+  a space ("visual studio").
+- **The search field is at the top** (Noctalia's code default is bottom; its example config says
+  top). The setting is Phase 2.
+- **Tab / Shift+Tab move the selection** (Noctalia cycles focus; Phase 1 has one focusable widget).
+
+Known gaps:
+- **CI does not run the shell integration tests.** GitHub's runner images ship GNOME 46, which
+  cannot load a Shell 50 extension. A GNOME 50 container (`ci/shell-tests.Dockerfile`) runs them,
+  but about half of the shell starts stall before `startup-complete` (measured 2 of 6 full runs
+  passing). Already done: logind/UPower mocks, a system bus, removing the PipeWire-dependent
+  screencast service, and reaping leftover helpers between scripts. The stall's root cause is not
+  found. Until it is, run `pnpm test:shell` locally before pushing.
+- **The dock's "Show Apps" button is not intercepted.** Only Super+Space is taken over (D2).
+- **Rebinding while crashed:** if the shell dies after `toggle-launcher` was rebound and before
+  disable, the next restore compares against the new accelerators. The saved copy is still kept,
+  so nothing is lost, but the app-grid key may need resetting by hand. Rare; not handled.
+- **First ~300 ms after enable:** Mutter applies the cleared app-grid key asynchronously, so a
+  press in that window can still open the app grid (measured headless). Not reachable by a person
+  at login or unlock.

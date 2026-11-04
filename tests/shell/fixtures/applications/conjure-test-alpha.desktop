@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Conjure Test Alpha
+GenericName=Fixture Viewer
+Keywords=zebrafish;
+Exec=true
+Icon=application-x-executable

@@ -9,6 +9,8 @@ const gjsGlobals = {
     logError: 'readonly',
     print: 'readonly',
     printerr: 'readonly',
+    TextDecoder: 'readonly',
+    TextEncoder: 'readonly',
 };
 
 export default [

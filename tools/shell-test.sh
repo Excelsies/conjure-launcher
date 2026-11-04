@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# Run a GNOME Shell automation script (tests/shell/*.js) in a headless shell:
+# no window, no input devices, its own D-Bus session, and temporary XDG config/data/state/cache
+# directories, so neither the running desktop nor the real settings or launch history are
+# touched. The extension is linked into the temporary data dir only.
+#
+# usage: tools/shell-test.sh tests/shell/<script>.js [more scripts...]
+#        CONJURE_TEST_VERBOSE=1 prints each script's full shell log.
+# exit:  0 when every script passed; non-zero otherwise.
+set -euo pipefail
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+uuid="$(python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["uuid"])' "$root/metadata.json")"
+(( $# > 0 )) || { echo "usage: $0 tests/shell/<script>.js..." >&2; exit 2; }
+
+glib-compile-schemas --strict "$root/schemas"
+
+sandbox="$(mktemp -d "${TMPDIR:-/var/tmp}/conjure-shelltest.XXXXXX")"
+# Helpers spawned by the nested session (mesa shader cache, gvfsd-metadata, ibus,
+# portals) can outlive the shell for a few seconds and keep writing into the sandbox. Wait (up
+# to 15 s) until no process still has the sandbox in its environment, then remove it. A cleanup
+# problem is reported without replacing the script's own exit status.
+sandbox_pids() {
+    # The marker is set only on the nested session's command, never in this script's own
+    # environment, so this pipeline does not match itself. -a: environ is NUL-separated, and
+    # without it grep treats the file as binary and reports no match.
+    grep -l -a -s -F -- "CONJURE_SANDBOX=$sandbox" /proc/[0-9]*/environ 2>/dev/null | cut -d/ -f3 || true
+}
+# Wait for the nested session's helpers to exit; after the grace period, terminate the ones
+# that remain. Only processes carrying this run's CONJURE_SANDBOX marker are ever signalled.
+# Called between scripts too: leftover helpers otherwise pile up and exhaust per-user limits
+# (measured: "Cannot initialize inotify: Too many open files" stalled the next shell's startup).
+reap_sandbox() {
+    local i pids
+    for i in $(seq 1 20); do
+        pids="$(sandbox_pids)"
+        [[ -z "$pids" ]] && return 0
+        sleep 0.5
+    done
+    echo "note: terminating leftover sandbox processes: $(echo $pids)" >&2
+    kill -TERM $pids 2>/dev/null || true
+    sleep 1
+    pids="$(sandbox_pids)"
+    [[ -n "$pids" ]] && kill -KILL $pids 2>/dev/null || true
+    return 0
+}
+cleanup() {
+    local rc=$?
+    reap_sandbox
+    rm -rf "$sandbox" 2>/dev/null || { sleep 1; rm -rf "$sandbox" 2>/dev/null; } || true
+    [[ -e "$sandbox" ]] && echo "warning: could not remove $sandbox" >&2
+    exit "$rc"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM HUP
+
+export XDG_CONFIG_HOME="$sandbox/config" XDG_DATA_HOME="$sandbox/data"
+export XDG_STATE_HOME="$sandbox/state" XDG_CACHE_HOME="$sandbox/cache"
+mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME/gnome-shell/extensions"
+ln -s "$root" "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
+# Fixture apps give the tests known names to rank, independent of what the machine has installed.
+mkdir -p "$XDG_DATA_HOME/applications"
+cp "$root"/tests/shell/fixtures/applications/*.desktop "$XDG_DATA_HOME/applications/"
+export CONJURE_TEST_ROOT="$root" CONJURE_TEST_UUID="$uuid"
+
+status=0
+for script in "$@"; do
+    script="$(realpath "$script")"
+    log="$sandbox/$(basename "$script" .js).log"
+    echo "== $(basename "$script")"
+    set +e
+    # Optional <script>.setup.sh seeds settings (inside the sandbox) before the shell starts.
+    setup="${script%.js}.setup.sh"
+    [[ -f "$setup" ]] || setup=""
+    # Each script gets a fresh settings database.
+    rm -rf "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" && mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME"
+    timeout --kill-after=5 90 env CONJURE_SANDBOX="$sandbox" dbus-run-session -- bash -c '
+        set -e
+        gsettings set org.gnome.shell enabled-extensions "[\"$1\"]"
+        gsettings set org.gnome.shell disable-user-extensions false
+        gsettings set org.gnome.shell welcome-dialog-last-shown-version "999"
+        # Do not set enable-animations=false here: measured, it stops the headless shell from
+        # ever reaching startup-complete (0/3 starts, against 3/3 without it).
+        if [[ -n "$3" ]]; then bash "$3"; fi
+        exec gnome-shell --headless --wayland --no-x11 --virtual-monitor 1600x1000 \
+            --automation-script="$2"
+    ' _ "$uuid" "$script" "$setup" >"$log" 2>&1
+    rc=$?
+    set -e
+    reap_sandbox
+    if [[ -n "${CONJURE_TEST_VERBOSE:-}" ]]; then cat "$log"; fi
+    grep -E '(: |^)(ok|not ok|#) |\[conjure-launcher\]|JS ERROR|JS WARNING|Extension .*(error|Error)' "$log" || true
+    if (( rc != 0 )); then
+        echo "FAILED ($(basename "$script"), exit $rc); last lines of the shell log:"
+        tail -n 25 "$log"
+        status=1
+    fi
+done
+exit "$status"

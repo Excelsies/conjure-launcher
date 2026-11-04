@@ -14,6 +14,8 @@ Status: design phase. See `docs/design-brief.md` (awaiting approval) and
 |---|---|
 | `pnpm install` | Install the lint and test tools (dev only; nothing ships to the shell). pnpm is pinned in `package.json`; `corepack enable` provides it |
 | `pnpm run check` | ESLint, unit tests (`tests/**/*.test.js`) and schema validation; CI runs the same |
+| `pnpm test:shell` | Headless GNOME Shell integration tests (`tests/shell`): no window, no input devices, its own D-Bus session and temporary XDG dirs. Runs under your uid, so it shares your per-user kernel limits (inotify) while it runs |
+| `pnpm test:shell:container` | The same tests in a GNOME Shell 50 container under a separate uid. **Experimental:** about half of container starts stall before `startup-complete` (see `docs/design-brief.md`, known gaps) |
 | `tools/install.sh` | Symlink this checkout into `~/.local/share/gnome-shell/extensions/` |
 | `tools/devkit.sh` | Run a nested GNOME Shell with only this extension enabled, using a temporary settings database. Needs `sudo apt install mutter-dev-bin` |
 | `tools/pack.sh` | Build the installable zip into `dist/` |

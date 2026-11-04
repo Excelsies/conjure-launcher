@@ -16,7 +16,28 @@ fi
 "$root/tools/install.sh" >/dev/null
 
 sandbox="$(mktemp -d "${TMPDIR:-/var/tmp}/conjure-devkit.XXXXXX")"
-cleanup() { rm -rf "$sandbox"; }
+# Helpers spawned by the nested session (mesa shader cache, gvfsd-metadata, ibus,
+# portals) can outlive the shell for a few seconds and keep writing into the sandbox. Wait (up
+# to 15 s) until no process still has the sandbox in its environment, then remove it. A cleanup
+# problem is reported without replacing the script's own exit status.
+sandbox_pids() {
+    # The marker is set only on the nested session's command, never in this script's own
+    # environment, so this pipeline does not match itself. -a: environ is NUL-separated, and
+    # without it grep treats the file as binary and reports no match.
+    grep -l -a -s -F -- "CONJURE_SANDBOX=$sandbox" /proc/[0-9]*/environ 2>/dev/null | cut -d/ -f3 || true
+}
+cleanup() {
+    local rc=$? i pids
+    for i in $(seq 1 30); do
+        pids="$(sandbox_pids)"
+        [[ -z "$pids" ]] && break
+        sleep 0.5
+    done
+    [[ -n "$pids" ]] && echo "warning: sandbox processes still running: $(echo $pids)" >&2
+    rm -rf "$sandbox" 2>/dev/null || { sleep 1; rm -rf "$sandbox" 2>/dev/null; } || true
+    [[ -e "$sandbox" ]] && echo "warning: could not remove $sandbox" >&2
+    exit "$rc"
+}
 trap cleanup EXIT
 # Signals end the script without running EXIT on their own; route them through it.
 trap 'exit 130' INT
@@ -25,7 +46,7 @@ export XDG_CONFIG_HOME="$sandbox/config"
 mkdir -p "$XDG_CONFIG_HOME"
 export SHELL_DEBUG=backtrace-warnings
 
-dbus-run-session -- bash -c '
+env CONJURE_SANDBOX="$sandbox" dbus-run-session -- bash -c '
     set -euo pipefail
     gsettings set org.gnome.shell enabled-extensions "[\"$1\"]"
     gsettings set org.gnome.shell disable-user-extensions false
