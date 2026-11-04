@@ -68,6 +68,8 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         const placement = new Adw.PreferencesGroup({ title: 'Placement' });
         placement.add(comboRow(settings, 'position', 'Position on screen', 'Where the launcher opens',
             [['bottom', 'Bottom centre'], ['center', 'Centre'], ['top', 'Top centre']]));
+        placement.add(comboRow(settings, 'monitor', 'Monitor', 'Which screen it opens on',
+            [['focused', 'Focused window'], ['pointer', 'Pointer'], ['primary', 'Primary']]));
         placement.add(comboRow(settings, 'search-position', 'Search field', 'Inside the launcher',
             [['bottom', 'Bottom'], ['top', 'Top']]));
         const width = Adw.SpinRow.new_with_range(560, 1100, 10);
@@ -88,6 +90,15 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         });
         prefix.connect('apply', () => settings.set_string('provider-prefix', prefix.text.trim()));
         content.add(prefix);
+        content.add(switchRow(settings, 'auto-paste', 'Paste copied results',
+            'After Enter copies a calculator result or emoji, paste it into the window you were in'));
+        const walls = new Adw.EntryRow({ title: 'Wallpaper folder for /wall (empty: Pictures/Wallpapers)', show_apply_button: true });
+        watch(settings, 'wallpaper-dir', walls, () => {
+            if (walls.text !== settings.get_string('wallpaper-dir'))
+                walls.text = settings.get_string('wallpaper-dir');
+        });
+        walls.connect('apply', () => settings.set_string('wallpaper-dir', walls.text.trim()));
+        content.add(walls);
         page.add(content);
 
         const keys = new Adw.PreferencesGroup({

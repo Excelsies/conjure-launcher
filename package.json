@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "test": "node --test \"tests/**/*.test.js\"",
     "check": "pnpm run lint && pnpm test && glib-compile-schemas --strict --dry-run schemas",
-    "test:shell": "tools/shell-test.sh tests/shell/launcher.js tests/shell/defaults.js tests/shell/views.js tests/shell/providers.js tests/shell/phase4.js",
+    "test:shell": "tools/shell-test.sh tests/shell/launcher.js tests/shell/defaults.js tests/shell/views.js tests/shell/providers.js tests/shell/phase4.js tests/shell/phase5.js",
     "test:shell:container": "tools/container-shell-test.sh"
   },
   "devDependencies": {

@@ -20,12 +20,16 @@ const MIN_CHARS = 2;
 
 function delay(ms, token) {
     return new Promise(resolve => {
-        const id = GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {
+        // Clear the id when the timer fires: removing a source that already ran is a GLib error.
+        let id = GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {
+            id = 0;
             resolve(true);
             return GLib.SOURCE_REMOVE;
         });
         token.onCancel(() => {
-            GLib.source_remove(id);
+            if (id)
+                GLib.source_remove(id);
+            id = 0;
             resolve(false);
         });
     });

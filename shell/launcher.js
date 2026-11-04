@@ -16,6 +16,7 @@ import { togglePin } from '../lib/views.js';
 import { LauncherPanel, PANEL_HEIGHT } from '../ui/panel.js';
 import { UsageFile } from './usageFile.js';
 import { DmenuProvider } from '../providers/dmenu.js';
+import { AutoPaste } from './autoPaste.js';
 
 const THEME_KEYS = [...Object.keys(COLOUR_TOKENS).map(k => `theme-${k}`), 'theme-radius-scale', 'theme-font-family'];
 
@@ -32,6 +33,8 @@ export class Launcher {
         this._panel = null;
         this._fading = new Set();  // closed panels still fading out; destroyed on disable
         this._dmenu = null;        // {resolve, reject, prompt} while a Dmenu call is pending
+        this._previousWindow = null;  // focused before opening; the only auto-paste target
+        this.autoPaste = new AutoPaste({ settings, log });
         this._signals = [];
 
         this._usage = new UsageFile(GLib.build_filenamev([GLib.get_user_state_dir(), 'conjure-launcher']),
@@ -131,6 +134,7 @@ export class Launcher {
     }
 
     destroy() {
+        this.autoPaste.destroy();
         this._lifecycle.close('disable');
         for (const panel of [...this._fading])
             panel.destroy();
@@ -155,7 +159,8 @@ export class Launcher {
     _push() {
         if (Main.overview.visible)
             Main.overview.hide();
-        const monitor = Main.layoutManager.focusMonitor ?? Main.layoutManager.primaryMonitor;
+        this._previousWindow = global.display.focus_window;
+        const monitor = this._chooseMonitor();
         if (!monitor)
             throw new Error('no monitor to open on');
         const rect = panelRect({
@@ -238,6 +243,20 @@ export class Launcher {
             this._log(`closed (${reason})`);
     }
 
+    /** The monitor to open on (setting "monitor"): focused (default), pointer, or primary. */
+    _chooseMonitor() {
+        const lm = Main.layoutManager;
+        const mode = this._settings.get_string('monitor');
+        if (mode === 'primary')
+            return lm.primaryMonitor;
+        if (mode === 'pointer')
+            return lm.currentMonitor ?? lm.primaryMonitor;
+        const win = global.display.focus_window;
+        if (win && win.get_monitor() >= 0)
+            return lm.monitors[win.get_monitor()] ?? lm.primaryMonitor;
+        return lm.currentMonitor ?? lm.primaryMonitor;
+    }
+
     _createIcon(result, size) {
         if (result.badge)
             return new St.Label({ text: result.badge, style: `font-size: ${Math.round(size * 0.7)}px;`, y_align: 2 /* CENTER */ });
@@ -313,8 +332,11 @@ export class Launcher {
             this._logError(`no provider ${result.providerId} for result ${result.id}`, null);
             return;
         }
+        const previous = this._previousWindow;
         try {
             provider.activate(result, { newWindow });
+            if (result.copies)
+                this.autoPaste.after(previous, { copied: true });
         } catch (e) {
             this._logError(`activating ${result.providerId}:${result.id} failed`, e);
             Main.notifyError('Conjure Launcher', `Could not open ${result.title}: ${e.message}`);

@@ -113,7 +113,9 @@ export async function run() {
     // --- Open windows ---
     await Scripting.createTestWindow({ width: 400, height: 300 });
     await Scripting.waitTestWindows();
-    await sleep(300);
+    // Under load (e.g. other headless shells on the machine) a new window can take seconds to be
+    // focused; measured 3.4 s at load average 10. Wait for it instead of a fixed sleep.
+    t.check('the test window gets focus', Boolean(await waitFor(() => global.display.focus_window, 10000)));
     const before = global.display.focus_window;
     await openWith('/win');
     const windowRows = launcher.panel.rows.filter(r => r.result?.window);
@@ -121,7 +123,7 @@ export async function run() {
     const target = windowRows.at(-1).result.window;
     launcher.panel.selectedIndex = windowRows.at(-1).index;
     await pressKeys(Clutter.KEY_Return);
-    t.check('Enter focuses that window', await waitFor(() => global.display.focus_window === target, 2000),
+    t.check('Enter focuses that window', await waitFor(() => global.display.focus_window === target, 5000),
         `focus ${global.display.focus_window?.get_title()} (before: ${before?.get_title()})`);
     await Scripting.destroyTestWindows();
 

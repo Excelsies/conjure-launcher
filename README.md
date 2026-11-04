@@ -80,8 +80,12 @@ With no match, Enter returns what you typed.
 Calculator: `+ - * / % ^ !`, parentheses, `sqrt cbrt abs round floor ceil sin cos tan asin acos
 atan ln log log2 exp pow min max`, `pi tau e`. Trigonometry is in radians.
 
-Settings: `gnome-extensions prefs conjure-launcher@excelsies` (placement, search field position,
-width, opening view, grid, shortcut, history, colours).
+Settings: `gnome-extensions prefs conjure-launcher@excelsies`. They cover placement, the monitor
+(focused window, pointer or primary), search field position, width, opening view, grid,
+auto-paste, the wallpaper folder, the shortcut, history and colours.
+
+Auto-paste (off by default) pastes copied calculator results and emoji into the window you were
+in, and never into any other window.
 
 ## Development
 
@@ -100,4 +104,5 @@ unit-tested under Node.
 
 Logs: `journalctl --user -f -o cat /usr/bin/gnome-shell | grep conjure-launcher`
 
-Theming for integrations: see `docs/theming.md`.
+Theming for integrations: see `docs/theming.md`. Publishing to extensions.gnome.org:
+`tools/ego-check.sh`, then `docs/publishing.md`.

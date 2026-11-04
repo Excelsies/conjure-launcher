@@ -375,3 +375,41 @@ Phase 4 record (2026-11-04):
   good entries kept) are all killed.
   - I15 first survived because its test was vacuous: a stale cache skipped the rerun, so there
     was nothing to kill. The test now asserts the command is running before Esc.
+
+## 19. Phase 5 spec (2026-11-04)
+
+- **Monitor:** a `monitor` setting chooses where the launcher opens: `focused` (default; the
+  monitor of the focused window, as before), `pointer` or `primary`. Placement (D7) applies
+  inside the chosen monitor's work area. A monitor change while open closes it (invariant 2).
+- **Auto-paste (D16, off by default):** with `auto-paste` on, a result that copies (calculator,
+  emoji, command entries without exec) is also pasted into the window that was focused before the
+  launcher opened. Terminals get Ctrl+Shift+V; everything else gets Ctrl+V.
+  - **Invariant 5: keystrokes only ever go to the window that was focused before opening.**
+    After closing, the launcher waits up to 300 ms for focus to return to that window. If focus
+    lands anywhere else, or there was no focused window, nothing is typed. This fails closed.
+- **Packaging:**
+  - `tools/pack.sh` builds the extensions.gnome.org zip with only runtime files.
+  - `tools/ego-check.sh` checks the zip's contents and the review rules that can be automated:
+    nothing created at import time, disable() undoes enable(), no compiled schemas, and licence
+    compatibility.
+  - Publishing (uploading to extensions.gnome.org with the owner's account) is the owner's step.
+    `docs/publishing.md` is the checklist.
+
+Phase 5 record (2026-11-04):
+- **Monitor setting:** focused (default), pointer or primary, tested on two virtual monitors.
+  Hot-plugging a monitor while open is not tested (virtual monitors cannot be added at run time
+  headless); the `monitors-changed` close path is the same one-line handler as in Phase 1.
+- **Auto-paste (invariant 5):** probes M33, M34 and I19-I21 are killed, including a bypass of the
+  focus check at the call site.
+  - Known limit: synthetic keys are delivered asynchronously. If another window takes focus in
+    the instant between the check and the delivery, it could receive the paste. That window is
+    microseconds and cannot be closed from an extension; auto-paste is off by default.
+- **GLib criticals fixed:** three timers were removed after they had already fired, logging
+  "Source ID … was not found" (search debounce, command timeout, auto-paste wait). Each now
+  clears its id when it fires. The full suite logs 0 criticals, down from several per run.
+- **Test timing under load:** with other headless shells on the machine (load average about
+  10), a new test window took 3.4 s to get focus. Window tests now wait for focus (up to 10 s)
+  instead of sleeping 300 ms.
+- **Packaging:** `tools/ego-check.sh` runs 24 checks. The module-level check was calibrated:
+  5/5 known positives caught, 0/3 negatives flagged. It also runs smoke tests (36 checks)
+  against the installed zip. Version 0.5.0.

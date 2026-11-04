@@ -60,7 +60,14 @@ real_ext_dir="${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions"
 export XDG_CONFIG_HOME="$sandbox/config" XDG_DATA_HOME="$sandbox/data"
 export XDG_STATE_HOME="$sandbox/state" XDG_CACHE_HOME="$sandbox/cache"
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME/gnome-shell/extensions"
-ln -s "$root" "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
+if [[ -n "${CONJURE_TEST_ZIP:-}" ]]; then
+    # Test the packaged extension instead of the checkout (tools/ego-check.sh).
+    mkdir -p "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
+    unzip -q "$CONJURE_TEST_ZIP" -d "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
+    glib-compile-schemas "$XDG_DATA_HOME/gnome-shell/extensions/$uuid/schemas"
+else
+    ln -s "$root" "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
+fi
 enabled="'$uuid'"
 for extra in ${CONJURE_EXTRA_EXTENSIONS:-}; do
     if [[ -d "$real_ext_dir/$extra" ]]; then
@@ -94,6 +101,12 @@ for script in "$@"; do
     log="$sandbox/$(basename "$script" .js).log"
     echo "== $(basename "$script")"
     set +e
+    # Optional <script>.monitors lists virtual monitor sizes (default: one 1600x1000).
+    monitors=(--virtual-monitor 1600x1000)
+    if [[ -f "${script%.js}.monitors" ]]; then
+        monitors=()
+        for m in $(cat "${script%.js}.monitors"); do monitors+=(--virtual-monitor "$m"); done
+    fi
     # Optional <script>.setup.sh seeds settings (inside the sandbox) before the shell starts.
     setup="${script%.js}.setup.sh"
     [[ -f "$setup" ]] || setup=""
@@ -108,9 +121,9 @@ for script in "$@"; do
         # Do not set enable-animations=false here: measured, it stops the headless shell from
         # ever reaching startup-complete (0/3 starts, against 3/3 without it).
         if [[ -n "$3" ]]; then bash "$3"; fi
-        exec gnome-shell --headless --wayland --no-x11 --virtual-monitor 1600x1000 \
-            --automation-script="$2"
-    ' _ "$enabled" "$script" "$setup" "$system_providers" >"$log" 2>&1
+        script="$2"; shift 4
+        exec gnome-shell --headless --wayland --no-x11 "$@" --automation-script="$script"
+    ' _ "$enabled" "$script" "$setup" "$system_providers" "${monitors[@]}" >"$log" 2>&1
     rc=$?
     set -e
     reap_sandbox

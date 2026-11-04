@@ -23,7 +23,7 @@ export class CalcProvider {
             return [];
         const value = formatNumber(r.value);
         return [{ id: 'calc-result', title: `= ${value}`, subtitle: `${text.trim()}  ·  Enter copies`,
-            iconName: this.icon, copyText: value, score: CALC_SCORE }];
+            iconName: this.icon, copyText: value, copies: true, score: CALC_SCORE }];
     }
 
     activate(result) {

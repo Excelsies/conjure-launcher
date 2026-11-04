@@ -38,7 +38,9 @@ function runCommand(command, { onCancel }) {
             if (finished)
                 return;
             finished = true;
-            GLib.source_remove(timer);
+            if (timer)
+                GLib.source_remove(timer);
+            timer = 0;
             resolve(result);
         };
         const kill = reason => {
@@ -49,7 +51,8 @@ function runCommand(command, { onCancel }) {
             proc.force_exit();
             finish({ ok: false, error: reason });
         };
-        const timer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, COMMAND_TIMEOUT_MS, () => {
+        let timer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, COMMAND_TIMEOUT_MS, () => {
+            timer = 0;  // this source is finished; finish() must not remove it again
             kill(`timed out after ${COMMAND_TIMEOUT_MS} ms`);
             return GLib.SOURCE_REMOVE;
         });
@@ -126,16 +129,17 @@ export class CommandProvider {
                 subtitle: this.entry.exec, iconName: this.icon, raw: q, typed: q, score: 0 }];
         }
         this._candidates ??= this._loadCandidates();
+        const copies = !this.entry.exec;
         return this._candidates.then(candidates => {
             const lower = q.toLowerCase();
             const out = [];
             candidates.forEach((c, i) => {
                 const s = lower ? fuzzy(lower, c.title.toLowerCase()) : -i;
                 if (!lower || isMatch(s))
-                    out.push({ id: c.raw, title: c.title, subtitle: c.subtitle || this.entry.label, raw: c.raw, typed: q, iconName: this.icon, score: s });
+                    out.push({ id: c.raw, title: c.title, subtitle: c.subtitle || this.entry.label, raw: c.raw, typed: q, iconName: this.icon, copies, score: s });
             });
             if (this.entry.freeform && q)
-                out.push({ id: `freeform:${q}`, title: q, subtitle: `Use typed text · ${this.entry.label}`, raw: q, typed: q, iconName: this.icon, score: FREEFORM_SCORE, freeform: true });
+                out.push({ id: `freeform:${q}`, title: q, subtitle: `Use typed text · ${this.entry.label}`, raw: q, typed: q, iconName: this.icon, copies, score: FREEFORM_SCORE, freeform: true });
             return out.sort((a, b) => b.score - a.score);
         });
     }

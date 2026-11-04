@@ -69,6 +69,20 @@
       <summary>Folder the /wall provider lists (searched 4 levels deep)</summary>
       <description>Empty means the Wallpapers folder inside your Pictures folder. A leading ~/ is your home folder.</description>
     </key>
+    <key name="monitor" type="s">
+      <choices>
+        <choice value="focused"/>
+        <choice value="pointer"/>
+        <choice value="primary"/>
+      </choices>
+      <default>'focused'</default>
+      <summary>Monitor to open on: the focused window's (default), the pointer's, or the primary</summary>
+    </key>
+    <key name="auto-paste" type="b">
+      <default>false</default>
+      <summary>Paste copied results (calculator, emoji) into the window you were in</summary>
+      <description>Only ever into the window that was focused before the launcher opened. Terminals get Ctrl+Shift+V.</description>
+    </key>
     <key name="provider-prefix" type="s">
       <default>'/'</default>
       <summary>Character that starts a provider trigger such as /calc</summary>
