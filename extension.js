@@ -42,7 +42,10 @@ export default class ConjureLauncherExtension extends Extension {
         // Built-in triggers, fixed before user command entries are added to the same list.
         const reserved = this._providers.map(p => p.trigger).filter(Boolean);
         this.commands = new CommandsRegistry({ providers: this._providers, reservedPrefixes: () => reserved, log, logError });
-        this.launcher = new Launcher({ settings: this._settings, providers: this._providers, log, logError });
+        this.launcher = new Launcher({
+            settings: this._settings, providers: this._providers, log, logError,
+            openSettings: () => this.openPreferences(),
+        });
         this.dbus = new ConjureDBusService({ dmenu: (prompt, lines) => this.launcher.dmenu(prompt, lines), logError });
         this.keybindings = new KeybindingManager({
             settings: this._settings, onToggle: () => this.launcher?.toggle(), log, logError,

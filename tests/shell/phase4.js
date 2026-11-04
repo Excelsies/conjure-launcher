@@ -163,6 +163,7 @@ export async function run() {
     let pending = runDmenu(colours, ['-p', 'Pick a colour']);
     t.check('conjure-dmenu opens the launcher', await waitFor(() => launcher.isOpen && launcher.panel?.rows.length === 3, 3000));
     t.equal('scoped to the candidates', titles(), ['red', 'Green', 'blue']);
+    t.equal('no settings gear in dmenu mode', launcher.panel.settingsIcon, null);
     t.check('with no tabs', !launcher.panel.panelActor.get_children().some(c => c.visible && c.get_children?.().some(b => b instanceof St.Button)));
     await type('gre');
     await pressKeys(Clutter.KEY_Return);

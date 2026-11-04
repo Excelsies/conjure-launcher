@@ -21,6 +21,7 @@ Status: design phase. See `docs/design-brief.md` (awaiting approval) and
 | Ctrl+Tab / Ctrl+Shift+Tab, Ctrl+1..4 | Switch view: Recent, Pinned, All, Categories |
 | Ctrl+Left / Ctrl+Right | Previous / next category (Categories view) |
 | Ctrl+G | Toggle list / grid |
+| Ctrl+, or the gear in the search field | Open Settings |
 | Esc | Leave the actions menu, or close |
 
 | Type | To get |

@@ -116,7 +116,7 @@ export class LauncherPanel {
      *          onToggleGrid: () => void,
      *          onCancel: (reason: string) => void,
      *          onGone?: (panel: LauncherPanel) => void,
-     *          scoped?: boolean, prompt?: string}} opts   scoped = dmenu mode
+     *          scoped?: boolean, prompt?: string, onOpenSettings?: () => void}} opts   scoped = dmenu mode
      */
     constructor(opts) {
         this._opts = opts;
@@ -173,6 +173,20 @@ export class LauncherPanel {
         });
         this._entry.clutter_text.connect('text-changed', () => this._onTextChanged());
         this._entry.clutter_text.connect('key-press-event', (_a, event) => this._onKey(event));
+        // A small gear at the end of the search field opens Settings (D12 amendment). Not in dmenu mode.
+        if (!this._opts.scoped && this._opts.onOpenSettings) {
+            this._gear = new St.Icon({ icon_name: 'emblem-system-symbolic', icon_size: 16, reactive: true, track_hover: true });
+            this._gear.connect('notify::hover', () => this._restyleChrome());
+            this._entry.set_secondary_icon(this._gear);
+            // Handled on the icon itself: under the modal grab a real click never produced St.Entry's
+            // secondary-icon-clicked (press and release both landed on the icon; measured headless).
+            this._gear.connect('button-release-event', (_a, event) => {
+                if (event.get_button() !== Clutter.BUTTON_PRIMARY)
+                    return Clutter.EVENT_PROPAGATE;
+                this._opts.onOpenSettings();
+                return Clutter.EVENT_STOP;
+            });
+        }
         this._toolbar.add_child(this._entry);
 
         // dmenu mode shows only the candidates: no tabs, no categories.
@@ -294,6 +308,7 @@ export class LauncherPanel {
             icon.set_style(on ? s.tabTextActive : s.tabText);
             label.set_style(`${on ? s.tabTextActive : s.tabText} padding-left: 6px;`);
         }
+        this._gear?.set_style(`${this._gear.hover ? s.title : s.subtitle} padding: 0 4px;`);
         for (const chip of this._chips?.get_children() ?? []) {
             const on = chip._categoryId === this._activeCategoryId;
             chip.set_style(on ? s.chipActive : s.chip);
@@ -616,6 +631,10 @@ export class LauncherPanel {
             this.setView(this.tabs[sym - Clutter.KEY_1]);
             return Clutter.EVENT_STOP;
         }
+        if (ctrl && sym === Clutter.KEY_comma && this._opts.onOpenSettings && !this._opts.scoped) {
+            this._opts.onOpenSettings();
+            return Clutter.EVENT_STOP;
+        }
         if (ctrl && (sym === Clutter.KEY_g || sym === Clutter.KEY_G)) {
             this._opts.onToggleGrid();
             return Clutter.EVENT_STOP;
@@ -660,6 +679,11 @@ export class LauncherPanel {
 
     get panelActor() {
         return this._panel;
+    }
+
+    /** Test hook: the settings gear (null in dmenu mode). */
+    get settingsIcon() {
+        return this._gear ?? null;
     }
 
     get toolbarActor() {

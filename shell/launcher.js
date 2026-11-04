@@ -25,7 +25,8 @@ export class Launcher {
      * @param {{settings: import('gi://Gio').Settings, providers: object[],
      *          log: (m: string) => void, logError: (m: string, e: unknown) => void}} opts
      */
-    constructor({ settings, providers, log, logError }) {
+    constructor({ settings, providers, log, logError, openSettings = null }) {
+        this._openSettings = openSettings;
         this._settings = settings;
         this._providers = providers;
         this._log = log;
@@ -187,6 +188,10 @@ export class Launcher {
             onToggleGrid: () => this._settings.set_boolean('app-grid', !this._settings.get_boolean('app-grid')),
             onCancel: reason => this._lifecycle.close(reason),
             onGone: p => this._fading.delete(p),
+            onOpenSettings: this._openSettings ? () => {
+                this._lifecycle.close('settings');
+                this._openSettings();
+            } : null,
         });
         panel.build(monitor, rect);
         this.lastRect = rect;

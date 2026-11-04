@@ -7,7 +7,7 @@ import Shell from 'gi://Shell';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { Suite, extension, pressKeys, waitFor, sleep } from './lib/harness.js';
+import { Suite, extension, pressKeys, clickAt, waitFor, sleep } from './lib/harness.js';
 
 const ALPHA = 'conjure-test-alpha.desktop';
 const BETA = 'conjure-test-beta.desktop';
@@ -39,7 +39,22 @@ export async function run() {
     t.equal('default layout is the list', own.get_boolean('app-grid'), false);
     t.equal('default search position is bottom', own.get_string('search-position'), 'bottom');
 
+    // --- The settings gear (D12 amendment): click and Ctrl+, close and open Settings ---
+    const settingsOpened = [];
+    launcher._openSettings = () => settingsOpened.push(Date.now());
     let panel = await open();
+    t.check('a settings gear sits in the search field', panel.settingsIcon?.visible === true);
+    await sleep(250);  // past the open slide, so the gear is where it is drawn
+    const gear = panel.settingsIcon;
+    const [gx, gy] = gear.get_transformed_position();
+    await clickAt(gx + gear.width / 2, gy + gear.height / 2);
+    t.check('clicking the gear closes the launcher', await waitFor(() => !launcher.isOpen, 1000));
+    t.equal('and opens Settings', settingsOpened.length, 1);
+    panel = await open();
+    await pressKeys(Clutter.KEY_Control_L, Clutter.KEY_comma);
+    t.check('Ctrl+, does the same', await waitFor(() => settingsOpened.length === 2 && !launcher.isOpen, 1000));
+
+    panel = await open();
     t.equal('the Recent tab comes first', panel.tabs, ['recent', 'pinned', 'all', 'categories']);
     t.equal('it opens on Recent', panel.view, 'recent');
     t.equal('Recent is empty before anything is launched', panel.rows.length, 0);

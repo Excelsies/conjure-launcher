@@ -225,6 +225,8 @@ Decisions (answered 2026-11-04; do not re-ask):
 - **[D11] Layout:** list by default; grid (5 columns) via the `app-grid` setting or Ctrl+G.
 - **[D12] Toolbar:** no avatar, no power button, no sort/grid/settings buttons. "We only want the
   launcher." Session actions stay a `/session` provider (Phase 3). Settings live in prefs.
+  **Amended 2026-11-04 by the owner:** a small gear at the end of the search field (and Ctrl+,)
+  closes the launcher and opens Settings. It is hidden in dmenu mode.
 
 Behaviour (from Noctalia `applyActiveCategory` and `onInputChanged` @ 60861c9):
 - Tabs: Recent / Pinned / All / Categories, with the default view first. Ctrl+Tab and
