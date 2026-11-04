@@ -37,8 +37,11 @@ Status: design phase. See `docs/design-brief.md` (awaiting approval) and
 
 ### Command entries
 
-Define your own providers in `~/.config/conjure-launcher/commands.json`. It is reloaded whenever
-you save it; invalid entries are skipped and named in the log.
+Define your own providers in **Settings → Commands** (add, edit, delete), or edit
+`~/.config/conjure-launcher/commands.json` directly; both use the same file. It is reloaded
+whenever it is saved; invalid entries are skipped and named in the log and in Settings. Settings
+never overwrites a file that does not parse or that changed on disk while it was open, and it
+keeps fields it does not know about.
 
 ```json
 {

@@ -39,7 +39,7 @@ else
     ok "no objects created at module level"
 fi
 # The preferences process has no shell: prefs.js and what it imports must not use shell libraries.
-prefs_graph="$work/prefs.js $work/lib/theme.js $work/lib/prefsHelpers.js"
+prefs_graph="$work/prefs.js $work/lib/theme.js $work/lib/prefsHelpers.js $work/lib/commandsDoc.js $work/lib/commands.js $work/lib/builtins.js $work/common/commandsStore.js"
 grep -nE "gi://(St|Clutter|Meta|Shell)|resource:///org/gnome/shell/ui" $prefs_graph && bad "prefs imports shell-only libraries" || ok "prefs uses no shell-only libraries"
 # enable() must not be done in the constructor.
 grep -nE "^\s+constructor\(" "$work/extension.js" && bad "extension.js defines a constructor" || ok "extension.js has no constructor"

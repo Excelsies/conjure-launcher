@@ -4,6 +4,7 @@
 
 import Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 
@@ -11,6 +12,8 @@ import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/
 
 import { COLOUR_TOKENS } from './lib/theme.js';
 import { rgbaToHex, hexToRgba } from './lib/prefsHelpers.js';
+import { upsertEntry, removeEntry, errorsFor, suggestId } from './lib/commandsDoc.js';
+import { CommandsStore } from './common/commandsStore.js';
 
 const TOKEN_LABELS = {
     'primary': ['Accent', 'Selected row and active tab'],
@@ -58,12 +61,17 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         window._settings = settings;  // keep alive with the window
         window.set_default_size(640, 720);
         window.add(this._generalPage(settings));
+        window.add(this._commandsPage(window));
         window.add(this._historyPage(settings));
         window.add(this._appearancePage(settings));
+        // Test hook (headless screenshots): open on a given page.
+        const page = GLib.getenv('CONJURE_PREFS_PAGE');
+        if (page)
+            window.set_visible_page_name(page);
     }
 
     _generalPage(settings) {
-        const page = new Adw.PreferencesPage({ title: 'General', icon_name: 'preferences-system-symbolic' });
+        const page = new Adw.PreferencesPage({ title: 'General', icon_name: 'preferences-system-symbolic', name: 'general' });
 
         const placement = new Adw.PreferencesGroup({ title: 'Placement' });
         placement.add(comboRow(settings, 'position', 'Position on screen', 'Where the launcher opens',
@@ -126,8 +134,188 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         return page;
     }
 
+    /**
+     * Commands editor (design brief section 20): edits ~/.config/conjure-launcher/commands.json,
+     * the file the extension watches. Validation is the extension's own; a file that does not
+     * parse, or that changed on disk since it was read, is never overwritten.
+     */
+    _commandsPage(window) {
+        const page = new Adw.PreferencesPage({ title: 'Commands', icon_name: 'utilities-terminal-symbolic', name: 'commands' });
+        const store = new CommandsStore();
+        let doc = null;
+
+        const head = new Adw.PreferencesGroup({
+            title: 'Command entries',
+            description: 'Your own providers: type /<prefix> in the launcher. Saved in ~/.config/conjure-launcher/commands.json; changes apply as soon as you save.',
+        });
+        const status = new Adw.ActionRow({ title: '', visible: false, css_classes: ['error'], use_markup: false });
+        head.add(status);
+        const fileRow = new Adw.ActionRow({ title: 'commands.json', subtitle: store.path });
+        const openFile = new Gtk.Button({ label: 'Open file', valign: Gtk.Align.CENTER });
+        openFile.connect('clicked', () => {
+            const file = Gio.File.new_for_path(store.path);
+            if (!file.query_exists(null))
+                store.save(doc ?? { version: 1, entries: [] });
+            new Gtk.FileLauncher({ file }).launch(window, null, null);
+        });
+        fileRow.add_suffix(openFile);
+        head.add(fileRow);
+        page.add(head);
+
+        const list = new Adw.PreferencesGroup({ title: 'Entries' });
+        const add = new Gtk.Button({ icon_name: 'list-add-symbolic', tooltip_text: 'Add a command', valign: Gtk.Align.CENTER, css_classes: ['flat'] });
+        add.connect('clicked', () => this._editCommand(window, store, doc, null, refresh));
+        list.set_header_suffix(add);
+        page.add(list);
+        let rows = [];
+
+        const refresh = () => {
+            for (const r of rows)
+                list.remove(r);
+            rows = [];
+            const loaded = store.load();
+            if (loaded.state === 'invalid' || loaded.state === 'unreadable') {
+                doc = null;
+                status.title = `The file cannot be read: ${loaded.error}. Fix it with Open file; it will not be overwritten.`;
+                status.visible = true;
+                add.sensitive = false;
+                return;
+            }
+            status.visible = false;
+            add.sensitive = true;
+            doc = loaded.doc;
+            if (!doc.entries.length) {
+                const empty = new Adw.ActionRow({ title: 'No command entries yet', subtitle: 'Add one with +, or see the README for examples' });
+                rows.push(empty);
+                list.add(empty);
+            }
+            doc.entries.forEach((entry, i) => {
+                const errs = errorsFor(doc, i);
+                const what = entry?.command ? 'lists candidates' : 'runs with the typed text';
+                const row = new Adw.ActionRow({
+                    title: GLib.markup_escape_text(String(entry?.label || entry?.id || `entry ${i + 1}`), -1),
+                    subtitle: GLib.markup_escape_text(errs.length ? errs.join('; ') : `/${entry.prefix} · ${what}`, -1),
+                });
+                if (errs.length)
+                    row.add_css_class('error');
+                const edit = new Gtk.Button({ icon_name: 'document-edit-symbolic', tooltip_text: 'Edit', valign: Gtk.Align.CENTER, css_classes: ['flat'] });
+                edit.connect('clicked', () => this._editCommand(window, store, doc, i, refresh));
+                const del = new Gtk.Button({ icon_name: 'user-trash-symbolic', tooltip_text: 'Delete', valign: Gtk.Align.CENTER, css_classes: ['flat'] });
+                del.connect('clicked', () => {
+                    const confirm = new Adw.AlertDialog({ heading: `Delete "${entry?.label || entry?.id}"?`, body: 'It is removed from commands.json.' });
+                    confirm.add_response('cancel', 'Cancel');
+                    confirm.add_response('delete', 'Delete');
+                    confirm.set_response_appearance('delete', Adw.ResponseAppearance.DESTRUCTIVE);
+                    confirm.connect('response', (_d, response) => {
+                        if (response === 'delete')
+                            this._saveCommands(window, store, removeEntry(doc, i), refresh);
+                    });
+                    confirm.present(window);
+                });
+                row.add_suffix(edit);
+                row.add_suffix(del);
+                rows.push(row);
+                list.add(row);
+            });
+        };
+
+        // Reload when the file is edited elsewhere (e.g. with Open file) while prefs are open.
+        const monitor = Gio.File.new_for_path(store.path).monitor_file(Gio.FileMonitorFlags.WATCH_MOVES, null);
+        let pending = 0;
+        monitor.connect('changed', () => {
+            if (pending)
+                GLib.source_remove(pending);
+            pending = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
+                pending = 0;
+                refresh();
+                return GLib.SOURCE_REMOVE;
+            });
+        });
+        page.connect('destroy', () => {
+            if (pending)
+                GLib.source_remove(pending);
+            monitor.cancel();
+        });
+        window._commandsMonitor = monitor;
+        refresh();
+        return page;
+    }
+
+    _saveCommands(window, store, next, refresh) {
+        const r = store.save(next);
+        if (!r.ok)
+            window.add_toast(new Adw.Toast({ title: r.conflict ? 'commands.json changed on disk; reloaded it. Please try again.' : `Not saved: ${r.error}`, timeout: 5 }));
+        refresh();
+        return r.ok;
+    }
+
+    _editCommand(window, store, doc, index, refresh) {
+        if (!doc)
+            return;
+        const entry = index === null ? {} : doc.entries[index] ?? {};
+        const dialog = new Adw.Dialog({ title: index === null ? 'Add command' : 'Edit command', content_width: 560 });
+        const view = new Adw.ToolbarView();
+        const header = new Adw.HeaderBar({ show_end_title_buttons: false, show_start_title_buttons: false });
+        const cancel = new Gtk.Button({ label: 'Cancel' });
+        const save = new Gtk.Button({ label: 'Save', css_classes: ['suggested-action'] });
+        header.pack_start(cancel);
+        header.pack_end(save);
+        view.add_top_bar(header);
+
+        const form = new Adw.PreferencesPage();
+        const group = new Adw.PreferencesGroup();
+        const text = (title, key, hint = '') => {
+            const row = new Adw.EntryRow({ title: hint ? `${title} — ${hint}` : title, text: typeof entry[key] === 'string' ? entry[key] : '' });
+            group.add(row);
+            return row;
+        };
+        const label = text('Label', 'label');
+        const prefix = text('Prefix', 'prefix', 'typed as /prefix');
+        const id = text('Id', 'id', 'a-z, 0-9, -');
+        const command = text('Command', 'command', 'prints one choice per line (optional)');
+        const exec = text('Run on Enter', 'exec', '{selection} and {query}, unquoted (optional)');
+        const icon = text('Icon name', 'icon', 'optional');
+        const freeform = new Adw.SwitchRow({ title: 'Also offer the typed text', active: entry.freeform === true });
+        const global = new Adw.SwitchRow({ title: 'Show in normal search too', active: entry.global === true });
+        group.add(freeform);
+        group.add(global);
+        if (index === null) {
+            label.connect('changed', () => {
+                if (!id._edited)
+                    id.text = suggestId(doc, label.text);
+            });
+            id.connect('changed', () => {
+                if (id.text !== suggestId(doc, label.text))
+                    id._edited = true;
+            });
+        }
+        const problems = new Gtk.Label({ wrap: true, xalign: 0, css_classes: ['error'], margin_top: 12, visible: false });
+        group.add(problems);
+        form.add(group);
+        view.set_content(form);
+        dialog.set_child(view);
+
+        cancel.connect('clicked', () => dialog.close());
+        save.connect('clicked', () => {
+            const fields = {
+                id: id.text, label: label.text, prefix: prefix.text, command: command.text,
+                exec: exec.text, icon: icon.text, freeform: freeform.active, global: global.active,
+            };
+            const next = upsertEntry(doc, index, fields);
+            const errs = errorsFor(next, index ?? next.entries.length - 1);
+            if (errs.length) {
+                problems.label = errs.map(e => e.replace(/^entry \d+( \([^)]*\))?: /, '')).join('\n');
+                problems.visible = true;
+                return;
+            }
+            if (this._saveCommands(window, store, next, refresh))
+                dialog.close();
+        });
+        dialog.present(window);
+    }
+
     _historyPage(settings) {
-        const page = new Adw.PreferencesPage({ title: 'History', icon_name: 'document-open-recent-symbolic' });
+        const page = new Adw.PreferencesPage({ title: 'History', icon_name: 'document-open-recent-symbolic', name: 'history' });
         const group = new Adw.PreferencesGroup({ title: 'Launch history', description: 'Kept on this computer only.' });
         group.add(switchRow(settings, 'track-usage', 'Remember launches', 'Needed for the Recent view'));
         group.add(switchRow(settings, 'sort-by-usage', 'Boost frequently used apps', 'Rank apps you open often higher'));
@@ -145,7 +333,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
     }
 
     _appearancePage(settings) {
-        const page = new Adw.PreferencesPage({ title: 'Appearance', icon_name: 'applications-graphics-symbolic' });
+        const page = new Adw.PreferencesPage({ title: 'Appearance', icon_name: 'applications-graphics-symbolic', name: 'appearance' });
 
         const colours = new Adw.PreferencesGroup({
             title: 'Colours',

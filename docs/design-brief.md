@@ -413,3 +413,33 @@ Phase 5 record (2026-11-04):
 - **Packaging:** `tools/ego-check.sh` runs 24 checks. The module-level check was calibrated:
   5/5 known positives caught, 0/3 negatives flagged. It also runs smoke tests (36 checks)
   against the installed zip. Version 0.5.0.
+
+## 20. Phase 6 spec (2026-11-04): commands editor in prefs (D13)
+
+- **One source of truth.** The editor reads and writes `~/.config/conjure-launcher/commands.json`,
+  the file the extension watches. It validates with the extension's own code (lib/commands.js)
+  against the same built-in prefixes (lib/builtins.js, which a test checks against the real
+  provider list), so the editor and the extension cannot disagree.
+- **Never destroys a hand-edited file:**
+  - A file that does not parse is shown with its error and an Open file button; editing is
+    disabled until it parses.
+  - Saving uses the etag from the read. If the file changed on disk since, the save is refused,
+    the editor reloads, and it says so.
+  - Unknown keys in an entry and at the top level are kept when an entry is edited.
+- Writes are atomic (g_file_replace writes a temporary file and renames it).
+
+Phase 6 record (2026-11-04):
+- **Commands page:** in Settings, with a list, add, edit, delete (with confirmation), Open file,
+  and a live reload when the file changes on disk. Validation is shared with the extension
+  (lib/commands.js plus lib/builtins.js; a shell test checks that builtins.js matches the
+  registered providers).
+- **Store (common/commandsStore.js):** atomic writes. A save is refused over an unparsed file,
+  over a file changed since it was read (etag), and over a file created after a "missing" read.
+  11 GJS checks run against the real filesystem; mutation probes M35-M38 are all killed.
+- **Headless check:** the Commands page renders a valid entry, an exec-only entry and an invalid
+  entry (shown in red with the extension's message). An unparseable file shows its error, Add
+  is disabled, and the file is left byte-for-byte unchanged.
+- **Known gap:** the edit dialog's widgets (typing into its fields, pressing Save) are not driven
+  by automation, because the preferences run in a separate GTK process. What Save does, the
+  document model and the store, is covered by the unit and GJS tests. "Open file" (Gtk.FileLauncher)
+  is not exercised. Version 0.6.0.

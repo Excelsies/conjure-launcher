@@ -25,6 +25,12 @@ export async function run() {
         JSON.stringify(ext.stateObj.keybindings.conflicts));
     t.check('and is not changed', wmKeys.get_strv('switch-input-source').some(a => /space/i.test(a)));
 
+    // The preferences window validates against lib/builtins.js; it must list exactly the
+    // triggers of the built-in providers the extension registers.
+    const { BUILTIN_TRIGGERS } = await import('../../lib/builtins.js');
+    const triggers = ext.stateObj._providers.filter(p => p.trigger && !String(p.id).startsWith('cmd:')).map(p => p.trigger);
+    t.equal('lib/builtins.js matches the registered built-in triggers', [...triggers].sort(), [...BUILTIN_TRIGGERS].sort());
+
     const launcher = ext.stateObj.launcher;
     t.check('the launcher still opens', launcher.open() && launcher.isOpen);
     launcher.close('test');
