@@ -43,6 +43,23 @@ export async function run() {
     const panel = launcher.panel;
     t.check('empty query lists installed apps', panel.rows.length > 0, `${panel.rows.length} rows`);
 
+    // --- Placement: bottom centre of the screen, inside the work area (decision D7) ---
+    const actor = panel.panelActor;
+    const [ax, ay] = actor.get_transformed_position();
+    const mon = Main.layoutManager.primaryMonitor;
+    const work = Main.layoutManager.getWorkAreaForMonitor(Main.layoutManager.primaryIndex);
+    t.equal('default position setting is bottom', own.get_string('position'), 'bottom');
+    t.check('the panel is horizontally centred on the screen',
+        Math.abs(ax + actor.width / 2 - (mon.x + mon.width / 2)) <= 1, `centre x ${ax + actor.width / 2}`);
+    t.check('the panel bottom sits just above the work area bottom',
+        Math.abs(ay + actor.height - (work.y + work.height - 24)) <= 1,
+        `bottom ${ay + actor.height}, work area bottom ${work.y + work.height}`);
+    t.equal('on-screen geometry matches the computed rectangle',
+        [Math.round(ax), Math.round(ay), actor.width, actor.height],
+        [launcher.lastRect.x, launcher.lastRect.y, launcher.lastRect.width, launcher.lastRect.height]);
+    t.check('opening the launcher creates no window', !global.get_window_actors().some(a =>
+        a.meta_window?.get_title()?.includes('conjure')));
+
     // --- Typing filters and ranks (fixture apps from tests/shell/fixtures/applications) ---
     const titles = () => launcher.panel.rows.map(r => r.result.title);
     t.check('a NoDisplay app is never listed', !titles().includes('Conjure Test Hidden Alpha'));

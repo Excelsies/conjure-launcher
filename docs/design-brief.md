@@ -138,6 +138,16 @@ Decisions ledger (answered 2026-11-04; do not re-ask):
 - **[D6] Theme.** DECIDED: the Noctalia palette by default, built so that another extension (for
   example a tiling extension) can override it smoothly. The design is in section 14.
 
+- **[D7] Placement.** DECIDED (2026-11-04): bottom centre of the screen by default; `position`
+  setting offers `center` and `top`. Centred horizontally on the monitor; anchored inside the
+  work area so a bottom dock never covers it (`lib/placement.js`).
+- **[D8] Tiling extensions.** DECIDED (2026-11-04): the launcher must stay floating under the
+  owner's tiling extension. It is shell chrome, not a window, so no tiling extension can tile,
+  move or resize it, and no float rule is needed (or possible: there is no window to match).
+  Verified headless with Plaid, Ubuntu Dock and DING enabled: geometry identical to the computed
+  rectangle, unchanged after 1.5 s and across queries, and no window is created. The launcher
+  contains no code that refers to any other extension.
+
 ## 14. Theming interface (D6)
 - Every colour, radius and spacing value in the UI comes from a token. No colour is hard-coded in
   `stylesheet.css` or in the code. Tokens use Noctalia's role names: `primary`, `on-primary`,
@@ -187,13 +197,17 @@ Deviations from Noctalia, chosen deliberately:
   top). The setting is Phase 2.
 - **Tab / Shift+Tab move the selection** (Noctalia cycles focus; Phase 1 has one focusable widget).
 
+Seen in screenshots, deferred to Phase 2: the text cursor overlaps the first letter of the
+placeholder text in the empty search field.
+
 Known gaps:
 - **CI does not run the shell integration tests.** GitHub's runner images ship GNOME 46, which
   cannot load a Shell 50 extension. A GNOME 50 container (`ci/shell-tests.Dockerfile`) runs them,
   but about half of the shell starts stall before `startup-complete` (measured 2 of 6 full runs
   passing). Already done: logind/UPower mocks, a system bus, removing the PipeWire-dependent
   screencast service, and reaping leftover helpers between scripts. The stall's root cause is not
-  found. Until it is, run `pnpm test:shell` locally before pushing.
+  found. Until it is, run `pnpm test:shell` locally before pushing. **Accepted by the owner
+  (2026-11-04): no CI job for the shell tests.**
 - **The dock's "Show Apps" button is not intercepted.** Only Super+Space is taken over (D2).
 - **Rebinding while crashed:** if the shell dies after `toggle-launcher` was rebound and before
   disable, the next restore compares against the new accelerators. The saved copy is still kept,

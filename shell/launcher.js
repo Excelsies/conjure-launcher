@@ -10,7 +10,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { PanelLifecycle } from '../lib/lifecycle.js';
 import { QueryController } from '../lib/queryController.js';
 import { resolveTheme, styles, COLOUR_TOKENS } from '../lib/theme.js';
-import { LauncherPanel } from '../ui/panel.js';
+import { panelRect } from '../lib/placement.js';
+import { LauncherPanel, PANEL_HEIGHT } from '../ui/panel.js';
 import { UsageFile } from './usageFile.js';
 
 const THEME_KEYS = [...Object.keys(COLOUR_TOKENS).map(k => `theme-${k}`), 'theme-radius-scale', 'theme-font-family'];
@@ -113,15 +114,22 @@ export class Launcher {
         const monitor = Main.layoutManager.focusMonitor ?? Main.layoutManager.primaryMonitor;
         if (!monitor)
             throw new Error('no monitor to open on');
+        const rect = panelRect({
+            monitor,
+            workArea: Main.layoutManager.getWorkAreaForMonitor(monitor.index),
+            width: this._settings.get_int('width'),
+            height: PANEL_HEIGHT,
+            position: this._settings.get_string('position'),
+        });
         const panel = new LauncherPanel({
             styles: this._styles,
-            width: this._settings.get_int('width'),
             createIcon: (result, size) => this._providerFor(result)?.createIcon?.(result, size) ?? null,
             onQuery: text => this._query.setQuery(text),
             onActivate: (result, opts) => this._activate(result, opts),
             onCancel: reason => this._lifecycle.close(reason),
         });
-        panel.build(monitor);
+        panel.build(monitor, rect);
+        this.lastRect = rect;
         try {
             const grab = Main.pushModal(panel.backdrop, { actionMode: Shell.ActionMode.POPUP });
             this._panel = panel;

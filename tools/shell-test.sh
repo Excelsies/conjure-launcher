@@ -5,6 +5,8 @@
 # touched. The extension is linked into the temporary data dir only.
 #
 # usage: tools/shell-test.sh tests/shell/<script>.js [more scripts...]
+#        CONJURE_EXTRA_EXTENSIONS="uuid ..." also enables those extensions (user-installed ones are
+#        linked into the sandbox read-only by path; they get sandboxed settings like everything else).
 #        CONJURE_TEST_VERBOSE=1 prints each script's full shell log.
 # exit:  0 when every script passed; non-zero otherwise.
 set -euo pipefail
@@ -54,10 +56,21 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
 
+real_ext_dir="${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions"
 export XDG_CONFIG_HOME="$sandbox/config" XDG_DATA_HOME="$sandbox/data"
 export XDG_STATE_HOME="$sandbox/state" XDG_CACHE_HOME="$sandbox/cache"
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME/gnome-shell/extensions"
 ln -s "$root" "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
+enabled="'$uuid'"
+for extra in ${CONJURE_EXTRA_EXTENSIONS:-}; do
+    if [[ -d "$real_ext_dir/$extra" ]]; then
+        ln -s "$real_ext_dir/$extra" "$XDG_DATA_HOME/gnome-shell/extensions/$extra"
+    elif [[ ! -d "/usr/share/gnome-shell/extensions/$extra" ]]; then
+        echo "error: extension $extra is not installed" >&2
+        exit 2
+    fi
+    enabled="$enabled, '$extra'"
+done
 # Fixture apps give the tests known names to rank, independent of what the machine has installed.
 mkdir -p "$XDG_DATA_HOME/applications"
 cp "$root"/tests/shell/fixtures/applications/*.desktop "$XDG_DATA_HOME/applications/"
@@ -76,7 +89,7 @@ for script in "$@"; do
     rm -rf "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" && mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME"
     timeout --kill-after=5 90 env CONJURE_SANDBOX="$sandbox" dbus-run-session -- bash -c '
         set -e
-        gsettings set org.gnome.shell enabled-extensions "[\"$1\"]"
+        gsettings set org.gnome.shell enabled-extensions "[$1]"
         gsettings set org.gnome.shell disable-user-extensions false
         gsettings set org.gnome.shell welcome-dialog-last-shown-version "999"
         # Do not set enable-animations=false here: measured, it stops the headless shell from
@@ -84,7 +97,7 @@ for script in "$@"; do
         if [[ -n "$3" ]]; then bash "$3"; fi
         exec gnome-shell --headless --wayland --no-x11 --virtual-monitor 1600x1000 \
             --automation-script="$2"
-    ' _ "$uuid" "$script" "$setup" >"$log" 2>&1
+    ' _ "$enabled" "$script" "$setup" >"$log" 2>&1
     rc=$?
     set -e
     reap_sandbox

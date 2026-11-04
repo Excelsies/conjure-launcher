@@ -9,7 +9,6 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { ensureActorVisibleInScrollView } from 'resource:///org/gnome/shell/misc/animationUtils.js';
 
 export const PANEL_HEIGHT = 620;
-const MONITOR_MARGIN = 48;
 const ICON_SIZE = 40;
 const OPEN_MS = 200;
 const PAGE_FALLBACK = 8;
@@ -60,7 +59,7 @@ export class LauncherPanel {
      * @param {{styles: object, createIcon: (result, size) => Clutter.Actor | null,
      *          onQuery: (text: string) => void,
      *          onActivate: (result, opts: {newWindow: boolean}) => void,
-     *          onCancel: (reason: string) => void, width: number}} opts
+     *          onCancel: (reason: string) => void}} opts
      */
     constructor(opts) {
         this._opts = opts;
@@ -78,8 +77,12 @@ export class LauncherPanel {
         }
     }
 
-    /** Build the actors on a monitor and add them above everything else. */
-    build(monitor) {
+    /**
+     * Build the actors and add them above everything else.
+     * @param monitor  the monitor the backdrop covers (stage coordinates)
+     * @param rect     the panel's rectangle in stage coordinates (lib/placement.js)
+     */
+    build(monitor, rect) {
         const backdrop = new St.Widget({
             reactive: true, x: monitor.x, y: monitor.y, width: monitor.width, height: monitor.height,
             name: 'conjure-launcher-backdrop',
@@ -92,11 +95,10 @@ export class LauncherPanel {
             return Clutter.EVENT_STOP;
         });
 
-        const width = Math.min(this._opts.width, monitor.width - 2 * MONITOR_MARGIN);
-        const height = Math.min(PANEL_HEIGHT, monitor.height - 2 * MONITOR_MARGIN);
+        // The panel is a child of the backdrop, so its position is relative to the monitor.
         this._panel = new St.BoxLayout({
-            orientation: Clutter.Orientation.VERTICAL, width, height, reactive: true,
-            x: Math.round((monitor.width - width) / 2), y: Math.round((monitor.height - height) / 2),
+            orientation: Clutter.Orientation.VERTICAL, width: rect.width, height: rect.height, reactive: true,
+            x: rect.x - monitor.x, y: rect.y - monitor.y,
             name: 'conjure-launcher-panel',
         });
 
@@ -245,6 +247,11 @@ export class LauncherPanel {
             get_key_symbol: () => sym,
             get_state: () => (ctrl ? Clutter.ModifierType.CONTROL_MASK : 0),
         });
+    }
+
+    /** Test hook: the panel actor (geometry checks). */
+    get panelActor() {
+        return this._panel;
     }
 
     get rows() {
