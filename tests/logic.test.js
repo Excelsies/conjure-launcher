@@ -51,7 +51,7 @@ test('rank: boosts only tracked providers, sorts high-first, stable on ties, no 
     const out = rank([
         { provider: { id: 'apps', trackUsage: true }, results: input },
         { provider: { id: 'calc' }, results: [{ id: 'c', title: 'C', score: 1 }] },
-    ], { usageCount: (p, id) => (id === 'y' || id === 'c' ? 3 : 0), typedQuery: true, sortByUsage: true });
+    ], { usageWeight: (p, id) => (id === 'y' || id === 'c' ? 3 : 0), typedQuery: true, sortByUsage: true });
     assert.deepEqual(out.map(r => r.id), ['y', 'x', 'c']);
     assert.equal(out[0].providerId, 'apps');
     assert.equal(input[1].score, 1, 'input was mutated');
@@ -60,7 +60,7 @@ test('rank: boosts only tracked providers, sorts high-first, stable on ties, no 
 test('rank: sort-by-usage off means no boost at all', () => {
     const out = rank([{ provider: { id: 'apps', trackUsage: true },
         results: [{ id: 'x', title: 'X', score: 1 }, { id: 'y', title: 'Y', score: 1 }] }],
-    { usageCount: () => 5, typedQuery: false, sortByUsage: false });
+    { usageWeight: () => 5, typedQuery: false, sortByUsage: false });
     assert.deepEqual(out.map(r => [r.id, r.score]), [['x', 1], ['y', 1]]);
 });
 

@@ -3,6 +3,7 @@
 // wallpapers. Everything writes only under the sandbox's XDG directories.
 
 import Clutter from 'gi://Clutter';
+import GdkPixbuf from 'gi://GdkPixbuf';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
@@ -199,9 +200,43 @@ export async function run() {
     const png = GLib.base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
     for (const name of ['sunset.png', 'nature/forest.png', 'notes.txt'])
         Gio.File.new_for_path(GLib.build_filenamev([wallDir, name])).replace_contents(png, null, false, Gio.FileCreateFlags.NONE, null);
+    // A fresh thumbnail for sunset.png only (standard path: md5 of the URI); forest.png has none.
+    const CACHE = GLib.getenv('XDG_CACHE_HOME');
+    const md5 = text => GLib.compute_checksum_for_string(GLib.ChecksumType.MD5, text, -1);
+    const thumbOf = (name, size) => GLib.build_filenamev([CACHE, 'thumbnails', size,
+        `${md5(Gio.File.new_for_path(GLib.build_filenamev([wallDir, name])).get_uri())}.png`]);
+    tryMkdir(GLib.build_filenamev([CACHE, 'thumbnails', 'normal']));
+    Gio.File.new_for_path(thumbOf('sunset.png', 'normal')).replace_contents(png, null, false, Gio.FileCreateFlags.NONE, null);
     own.set_string('wallpaper-dir', wallDir);
+    const walls = ext.stateObj._providers.find(p => p.id === 'wallpaper');
+    const iconFile = title => {
+        const row = launcher.panel?.rows.find(r => r.result?.title === title);
+        return row ? launcher.panel.iconOf(row)?.gicon?.get_file?.()?.get_path() ?? 'no file icon' : 'no row';
+    };
     await openWith('/wall', 400);
     t.equal('/wall lists images recursively and skips other files', titles().sort(), ['forest.png', 'sunset.png']);
+    t.equal('an image with a fresh thumbnail shows the thumbnail, not the image', iconFile('sunset.png'), thumbOf('sunset.png', 'normal'));
+    t.check('an image without one gets a thumbnail made in the background, and its icon updates',
+        await waitFor(() => iconFile('forest.png') === thumbOf('nature/forest.png', 'large'), 5000), iconFile('forest.png'));
+    const made = GdkPixbuf.Pixbuf.new_from_file(thumbOf('nature/forest.png', 'large'));
+    t.equal('the made thumbnail records the image URI, as the standard requires', made.get_option('tEXt::Thumb::URI'),
+        Gio.File.new_for_path(GLib.build_filenamev([wallDir, 'nature/forest.png'])).get_uri());
+    t.check('no row icon is the image itself', !['sunset.png', 'forest.png'].some(n => iconFile(n).startsWith(wallDir)));
+    launcher.close('test');
+    await sleep(100);
+    const listings = walls.listCount;
+    await openWith('/wall', 400);
+    t.equal('reopening with no folder change reuses the listing', walls.listCount, listings);
+    launcher.close('test');
+    await sleep(1100);  // a later modification time for the folder and the image
+    Gio.File.new_for_path(GLib.build_filenamev([wallDir, 'nature/river.png'])).replace_contents(png, null, false, Gio.FileCreateFlags.NONE, null);
+    Gio.File.new_for_path(GLib.build_filenamev([wallDir, 'sunset.png'])).replace_contents(png, null, false, Gio.FileCreateFlags.NONE, null);
+    await openWith('/wall', 400);
+    t.check('a new file in a listed folder is picked up on the next open', titles().includes('river.png') && walls.listCount === listings + 1, `${titles()} ${walls.listCount}`);
+    t.check('a thumbnail older than its image is not used', iconFile('sunset.png') !== thumbOf('sunset.png', 'normal'), iconFile('sunset.png'));
+    launcher.close('test');
+    await sleep(100);
+    await openWith('/wall', 400);
     await type('/wall sun', 200);
     await pressKeys(Clutter.KEY_Return);
     await waitFor(() => !launcher.isOpen, 1000);

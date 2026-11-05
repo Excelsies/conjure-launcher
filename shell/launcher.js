@@ -65,7 +65,7 @@ export class Launcher {
             providers,
             prefixChar: () => settings.get_string('provider-prefix'),
             sortByUsage: () => settings.get_boolean('sort-by-usage'),
-            usageCount: (pid, id) => this._usage.model.count(pid, id),
+            usageWeight: (pid, id) => this._usage.model.weight(pid, id),
             onResults: (results, info) => this._panel?.setResults(this._decorate(results), info),
             logError,
         });
