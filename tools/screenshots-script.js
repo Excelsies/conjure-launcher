@@ -5,6 +5,7 @@ import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Shell from 'gi://Shell';
+import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Scripting from 'resource:///org/gnome/shell/ui/scripting.js';
@@ -100,6 +101,23 @@ export async function run() {
     await shotPanel('08-providers');
     launcher.close('screenshots');
     await sleep(300);
+    // Clipboard history: a few harmless copies, as if made in other apps.
+    for (const text of ['Meeting notes for Thursday', 'https://github.com/Excelsies/conjure-launcher', 'sudo apt install gnome-shell-extension-manager']) {
+        St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, text);
+        await sleep(200);
+    }
+    launcher.open();
+    await sleep(100);
+    await type('/clip');
+    await shotPanel('09-clipboard');
+    await type('10 km to mi');
+    await shotPanel('10-conversion');
+    await type('/set');
+    await shotPanel('11-settings-pages');
+    await type('termnial');
+    await shotPanel('12-typo');
+    launcher.close('screenshots');
+    await sleep(300);
 
     const { paletteValues } = await import(`file://${ROOT}/lib/palettes.js`);
     // Theme gallery: the same search in several presets (written to the same keys the picker writes).
@@ -126,7 +144,7 @@ export async function run() {
     await waitFor(prefs, 20000);
     await sleep(4000);
     const r = prefs().meta_window.get_frame_rect();
-    await capture('09-settings', r, 0);
+    await capture('13-settings', r, 0);
     const pointer = Clutter.get_default_backend().get_default_seat().create_virtual_device(Clutter.InputDeviceType.POINTER_DEVICE);
     globalThis._shotPointer = pointer;
     const [px, py] = [r.x + r.width - 140, r.y + 136];
@@ -138,7 +156,7 @@ export async function run() {
     await sleep(120);
     pointer.notify_button(GLib.get_monotonic_time(), Clutter.BUTTON_PRIMARY, Clutter.ButtonState.RELEASED);
     await sleep(1500);
-    await capture('10-settings-themes', { x: r.x, y: r.y, width: r.width, height: global.screen_height - r.y }, 0);
+    await capture('14-settings-themes', { x: r.x, y: r.y, width: r.width, height: global.screen_height - r.y }, 0);
     // gnome-shell-perf-helper exits on its own idle timeout, which this script outlasts; the shell's
     // teardown would then fail calling Exit on it. Tell the teardown not to.
     (await Scripting._getPerfHelper())._autoExit = false;

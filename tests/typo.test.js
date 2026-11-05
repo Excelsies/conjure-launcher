@@ -32,6 +32,13 @@ test('fewer edits rank higher among typo matches', () => {
     assert.ok(typoScore('firfox', 'firefox') > typoScore('frfx', 'firefox'));
 });
 
+test('the documented example is a real typo case: fuzzy matching alone cannot find it', () => {
+    // "firfox" would be a poor example: its letters appear in order in "firefox", so fzy already matches it.
+    assert.equal(isMatch(scoreApp('termnial', entry('Terminal'))), false);
+    assert.ok(isMatch(typoScore('termnial', 'terminal')));
+    assert.ok(isMatch(scoreApp('firfox', entry('Firefox'))));
+});
+
 test('a typo match never outranks a real match, even the weakest one possible', () => {
     // The weakest real match: one letter of the query found at each end of a 1024-character exec name.
     const long = `f${'x'.repeat(1022)}o`;

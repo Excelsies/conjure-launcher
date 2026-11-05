@@ -17,13 +17,13 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 | Area | Files |
 |---|---|
 | Entry point | `extension.js` (enable / disable, provider list) |
-| Pure logic (no `gi://` imports; unit-tested under Node, enforced by ESLint) | `lib/`: `fzy`, `appScore`, `ranking`, `router`, `queryController`, `usage`, `views`, `navigation`, `lifecycle`, `takeover`, `placement`, `theme`, `palettes`, `calc`, `emoji`, `session`, `commands`, `commandsDoc`, `paste`, `overview`, `builtins`, `prefsHelpers` |
+| Pure logic (no `gi://` imports; unit-tested under Node, enforced by ESLint) | `lib/`: `fzy`, `appScore`, `ranking`, `router`, `queryController`, `usage`, `views`, `navigation`, `lifecycle`, `takeover`, `placement`, `theme`, `palettes`, `calc`, `emoji`, `session`, `commands`, `commandsDoc`, `paste`, `overview`, `builtins`, `prefsHelpers`, `typo`, `units`, `clipHistory`, `thumbnails` |
 | Shell integration | `shell/launcher.js` (panel lifecycle, query wiring, theming), `shell/keybinding.js`, `shell/systemStyle.js`, `shell/usageFile.js`, `shell/settingsAdapters.js`, `shell/clipboard.js`, `shell/autoPaste.js`, `shell/dbusService.js` |
 | UI | `ui/panel.js`, `stylesheet.css` (layout only; every color is a theme token) |
-| Providers | `providers/apps.js`, `calc.js`, `emoji.js`, `windows.js`, `session.js`, `searchProviders.js`, `commands.js`, `wallpaper.js`, `dmenu.js` |
+| Providers | `providers/apps.js`, `calc.js`, `emoji.js`, `windows.js`, `session.js`, `searchProviders.js`, `commands.js`, `wallpaper.js`, `clipboard.js`, `settingsPanels.js`, `recentFiles.js`, `dmenu.js` |
 | Settings | `schemas/*.gschema.xml`, `prefs.js`, `common/commandsStore.js` |
 | dmenu client | `bin/conjure-dmenu` (GJS) |
-| Data | `data/emoji.json` |
+| Data | `data/emoji.json`, `data/commands.example.json` |
 
 ## Opening and closing
 
@@ -62,8 +62,13 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
   query, plus 3000, so any name match outranks every other field. A localized or alternate name
   match adds 1500. Otherwise the best of generic name x 2, keywords x 0.8, categories x 0.3, app id
   x 1.5 and exec x 1. At most 50 app results.
-- Usage (`lib/ranking.js`): with an empty query, results sort by launch count x 0.1; with a query the
-  usage boost is capped at 0.5, so it only breaks near ties. The calculator always scores 10000.
+- Typos (`lib/typo.js`): an app that fzy cannot match is compared with the query by edit distance
+  over its name and each word of it (a swap of neighbors counts as one edit; one edit allowed for 4-5
+  characters, two from 6). Typo matches score near -1,000,000. The weakest real match scores above
+  -100, so typo matches are always listed after every real match.
+- Usage (`lib/usage.js`, `lib/ranking.js`): each launch adds 1 to a weight that halves every 14 days.
+  With an empty query, results sort by that weight x 0.1; with a query the usage boost is capped at
+  0.5, so it only breaks near ties. The calculator always scores 10000.
   GNOME search-provider results score 1000, minus 20 per provider position and 1 per result
   position.
 - Results merge with a stable sort, so ties keep each provider's own order.
@@ -87,12 +92,15 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 | Trigger | Provider | Behavior |
 |---|---|---|
 | (global) | Apps | `Shell.AppSystem`. Enter calls `app.activate()`: it focuses a running app or starts it. Ctrl+Enter or middle-click opens a new window |
-| `/calc` (also global) | Calculator | A recursive-descent parser over a fixed table of operators, functions and constants (`lib/calc.js`). No `eval`, no `Function`, no property lookups; input over 200 characters or nested deeper than 64 is refused. Enter copies the result |
+| `/calc` (also global) | Calculator | A recursive-descent parser over a fixed table of operators, functions and constants (`lib/calc.js`). No `eval`, no `Function`, no property lookups; input over 200 characters or nested deeper than 64 is refused. `<amount> <unit> to <unit>` converts units (`lib/units.js`: length, mass, volume, area, time, speed, data size, temperature; no currency). Enter copies the result |
 | `/emo` | Emoji | Substring scoring over names and keywords (`data/emoji.json`), at most 100 results. Enter copies |
-| `/win` | Windows | Open windows, most recently used first. Enter switches to the window |
+| `/win` | Windows | Open windows, most recently used first. Enter switches to the window; the actions menu adds minimize or restore, move to workspace N, and close (`Meta.Window.delete`, so the app's own "save changes?" prompt applies) |
 | `/session` | Session | Lock, log out, suspend, switch user, restart, power off, through GNOME's `SystemActions` (GNOME's own confirmation dialogs apply) |
 | (global) | GNOME search providers | Loaded through the shell's `remoteSearch.js`, so GNOME Settings → Search (enabled list and order) applies. `excluded-search-providers` removes more (default: GNOME Calculator). At most 5 results each, from 2 characters |
-| `/wall` | Wallpapers | Images (jpg, jpeg, png, webp, svg, avif, jxl) in `wallpaper-dir` (default `~/Pictures/Wallpapers`), up to 4 folders deep and 5000 files, listed once per open, at most 50 shown. Enter sets `picture-uri` and `picture-uri-dark` |
+| `/wall` | Wallpapers | Images (jpg, jpeg, png, webp, svg, avif, jxl) in `wallpaper-dir` (default `~/Pictures/Wallpapers`), up to 4 folders deep and 5000 files, at most 50 shown. Enter sets `picture-uri` and `picture-uri-dark`. See Wallpaper thumbnails |
+| `/clip` | Clipboard history | Text copies, newest first, kept in memory (Clipboard history, below). Enter copies one back |
+| `/set` | Settings pages | GNOME Settings panels from their desktop entries (category `X-GNOME-Settings-Panel`), matched by name or keywords. Enter opens the page |
+| `/rec` | Recent files | GTK's `recently-used.xbel`, newest first, read once per open off the main thread; deleted files and non-file URIs are skipped. Enter opens the file in its default app |
 | `/<prefix>` | Command entries | The user's own entries from `commands.json` (below) |
 
 ### Command entries
@@ -103,7 +111,9 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 - Each entry is validated on its own. An invalid one is skipped and named in the log and in
   Settings; a prefix that collides with a built-in or another entry is invalid.
 - `command` runs at most once per open, under `setsid`, with a 2 s limit, 1 MiB of output and 500
-  candidates. A timeout, or closing the launcher, kills its whole process group.
+  candidates. A timeout, or closing the launcher, kills its whole process group. With `cache` (seconds,
+  up to a day), a successful run's results are kept across opens until that time has passed; a file
+  reload starts fresh.
 - `exec` runs as `sh -c <exec> conjure-launcher <selection> <query>`. `{selection}` and `{query}`
   are rewritten to `"$1"` and `"$2"` before `sh` sees them, so candidate text is always an argument
   and never shell syntax. With no `exec`, Enter copies the selection.
@@ -125,6 +135,28 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
   pick, 1 on cancel and 2 when the extension is not running.
 - Any process of the same user on the session bus can open a menu and read the choice. That is the
   ordinary trust boundary between a user's own processes; it cannot run commands.
+
+### Clipboard history (`lib/clipHistory.js`, `providers/clipboard.js`)
+
+- On by default (`clipboard-history`), the last 50 copies (`clipboard-history-size`, 10-200). It is kept
+  in memory only: logout, disable and every screen lock clear it, because GNOME disables extensions while
+  locked. Turning it off or Settings → History → Clear also clears it.
+- Only the clipboard is watched (Mutter's selection `owner-changed`), not the primary selection.
+- A copy is stored only when it offers a text type, is not blank, is at most 64 KiB, and carries no
+  `x-kde-passwordManagerHint` (set by password managers on secrets, whatever its value; invariant 7).
+  The check runs on the offered types before the text is read, so a secret is never read at all.
+- A read that finishes after a newer copy is dropped. Copying an entry again moves it to the top.
+
+### Wallpaper thumbnails (`lib/thumbnails.js`, `providers/wallpaper.js`)
+
+- Icons come from freedesktop thumbnails (`~/.cache/thumbnails/<size>/<md5 of the URI>.png`), never
+  from the image itself. Decoding a 4K image to an icon costs about 145 ms (8K: about 600 ms); a
+  thumbnail costs about 2 ms.
+- A thumbnail older than its image is not used. A missing one shows a generic icon while a 256 px
+  thumbnail is made in the background (decoded off the main thread, one at a time, written with
+  `Thumb::URI` and `Thumb::MTime` as the standard requires), and the icon updates when it is ready.
+- The file list is kept across opens and re-read only when a listed folder's modification time
+  changes.
 
 ## Auto-paste
 
@@ -173,9 +205,11 @@ Schema `org.gnome.shell.extensions.conjure-launcher`. Theme keys are in `docs/th
 | `wallpaper-dir` | `''` | `/wall` folder; empty means `<Pictures>/Wallpapers` |
 | `auto-paste` | `false` | Paste copied results into the previous window |
 | `track-usage`, `sort-by-usage` | `true` | Record launches; boost frequent results |
+| `clipboard-history` | `true` | Keep text copies for `/clip` (memory only) |
+| `clipboard-history-size` | `50` | Copies kept, 10-200 |
 | `debug` | `false` | Log per-query provider timings |
 | `saved-toggle-application-view`, `has-saved-toggle-application-view` | | Internal: GNOME's app-grid binding while the launcher holds its shortcut |
-| `history-clear-request` | `0` | Internal: Settings writes a new value to ask the extension to clear the history |
+| `history-clear-request`, `clipboard-clear-request` | `0` | Internal: Settings writes a new value to ask the extension to clear the launch or clipboard history |
 
 The schema's ranges and choices refuse out-of-range values, and the panel is always clamped to fit
 inside the monitor's work area.
@@ -184,7 +218,8 @@ inside the monitor's work area.
 
 | File | Written by | Notes |
 |---|---|---|
-| `~/.local/state/conjure-launcher/usage.json` | the extension, on launch | Launch counts and the recent list. Written to a temporary file and renamed; saves are serialized |
+| `~/.local/state/conjure-launcher/usage.json` | the extension, on launch | Launch counts, the recent list and the decaying weights (`decay`). Written to a temporary file and renamed; saves are serialized. Versions that predate the weights read the same file and ignore them, so going back to one keeps the history (invariant 8) |
+| `~/.cache/thumbnails/large/*.png` | the extension, for `/wall` | Thumbnails of wallpapers that had none, as the freedesktop standard describes (shared with GNOME's file manager) |
 | `~/.config/conjure-launcher/commands.json` | the user, or Settings → Commands | Command entries. The folder is created at enable so the file watch works at once |
 
 ## Invariants
@@ -199,6 +234,8 @@ Code comments and tests refer to these by number.
 | 4 | A slow provider never blocks typing: queries carry a generation number and late results are dropped | `lib/queryController.js` |
 | 5 | Auto-paste keystrokes go only to the window that was focused before opening | `lib/paste.js`, `shell/autoPaste.js` |
 | 6 | Every dmenu call is answered exactly once | `shell/launcher.js`, `shell/dbusService.js` |
+| 7 | A clipboard copy marked secret by a password manager is never read or kept | `lib/clipHistory.js`, `providers/clipboard.js` |
+| 8 | Going back to an earlier version never loses launch history: counts and the recent list keep their format | `lib/usage.js` (tested against the 0.7.0 parser) |
 
 ## Failure handling
 
@@ -213,6 +250,10 @@ Code comments and tests refer to these by number.
 | An app fails to launch | A notification names the app |
 | A theme key is not a color | Logged with the key name; that token uses its default |
 | The system accent cannot be read | Logged once; Ubuntu orange is used |
+| A clipboard copy cannot be read | Not stored; logged once |
+| A wallpaper thumbnail is missing, stale or cannot be made | Generic image icon; the full image is never decoded for an icon |
+| `recently-used.xbel` missing or unreadable | No `/rec` results; logged once when unreadable |
+| A `usage.json` decay entry is invalid | That entry decays from the time the file was read, starting at its count |
 
 ## Time limits
 
@@ -223,6 +264,8 @@ Code comments and tests refer to these by number.
 | `commands.json` reload after a change | 200 ms |
 | Open and close animations | 200 ms |
 | Auto-paste wait for focus | 300 ms |
+| Launch weight half-life | 14 days |
+| Command entry `cache` | 0 (off) to 86400 s, per entry |
 
 ## Compared with Noctalia
 
@@ -277,5 +320,11 @@ of standard GNOME apps.
   Shell draws.
 - CI does not run the shell tests: hosted runners have GNOME 46, and the GNOME 50 container
   (`pnpm test:shell:container`, `ci/`) stalls on about half of its starts.
+- Clipboard history clears whenever the screen locks, since GNOME disables extensions while locked.
+- The stale-read guard of clipboard history is not covered by a test. Headless, every clipboard read
+  finishes in the same main-loop turn, so a test cannot produce a read that finishes after a newer copy.
 - Hot-plugging a monitor while the launcher is open is not tested headless; the close path is the
   same handler as the other monitor changes.
+- Once, early in a session of the nested preview (`tools/preview.sh`), Clutter logged "Can't update
+  stage views actor ... needs an allocation" five times. It is cosmetic and has not been reproduced
+  headless; it is worth reporting if it appears in an installed session.
