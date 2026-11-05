@@ -4,6 +4,9 @@
 //    machine's system bus, so a real one would act on the real computer;
 //  - app launches, window switching and command exec show a notice instead of running;
 //  - when the launcher closes (Esc, a pick), it opens again after a moment.
+// With CONJURE_PREVIEW_DRIVE=<path to a module exporting drive(ctx)>, that module runs instead of the
+// keep-open loop (scripted checks on the real GPU, inside this nested shell only), and the window closes
+// when it finishes.
 import GLib from 'gi://GLib';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -30,12 +33,23 @@ export async function run() {
             if (p._previewStubbed)
                 continue;
             p._previewStubbed = true;
-            if (['apps', 'windows', 'wallpaper'].includes(p.id) || String(p.id).startsWith('cmd:')) {
+            if (['apps', 'windows', 'wallpaper', 'settings-panels', 'recent-files'].includes(p.id) || String(p.id).startsWith('cmd:')) {
                 p.activate = result => Main.notify('Conjure Launcher preview', `Would open: ${result.title}`);
                 p.runAction = (result, id) => Main.notify('Conjure Launcher preview', `Would run "${id}" for ${result.title}`);
             }
         }
     };
+    const driver = GLib.getenv('CONJURE_PREVIEW_DRIVE');
+    if (driver) {
+        stubProviders();
+        try {
+            await (await import(`file://${driver}`)).drive({ ext, Main, sleep, stubProviders });
+        } catch (e) {
+            console.log(`# driver failed: ${e}\n${e.stack}`);
+        }
+        global.context.terminate();
+        return;
+    }
     // Runs until the window is closed (the shell then exits).
     for (;;) {
         const launcher = ext?.stateObj?.launcher;

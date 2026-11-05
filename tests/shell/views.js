@@ -50,6 +50,32 @@ export async function run() {
     await clickAt(gx + gear.width / 2, gy + gear.height / 2);
     t.check('clicking the gear closes the launcher', await waitFor(() => !launcher.isOpen, 1000));
     t.equal('and opens Settings', settingsOpened.length, 1);
+    // --- Clicking a tab switches the view (each tab, in an order that changes the view every time) ---
+    panel = await open();
+    await sleep(250);
+    for (const view of ['all', 'pinned', 'categories', 'recent', 'all']) {
+        const button = panel._tabButtons.get(view).button;
+        const [bx, by] = button.get_transformed_position();
+        await clickAt(bx + button.width / 2, by + button.height / 2);
+        t.check(`clicking the ${view} tab shows it`, await waitFor(() => panel.view === view, 1000), `view ${panel.view}`);
+    }
+    t.check('and the launcher stays open', launcher.isOpen);
+    // Category chips are clicked the same way.
+    {
+        const button = panel._tabButtons.get('categories').button;
+        const [bx, by] = button.get_transformed_position();
+        await clickAt(bx + button.width / 2, by + button.height / 2);
+        await waitFor(() => panel.view === 'categories', 1000);
+        await sleep(200);
+        const chips = panel._chips.get_children().filter(c => c.visible);
+        const last = chips.at(-1);
+        const [cx, cy] = last.get_transformed_position();
+        await clickAt(cx + last.width / 2, cy + last.height / 2);
+        t.check('clicking a category chip selects that category', chips.length > 1 && await waitFor(() => panel.activeCategory === last._categoryId, 1000),
+            `${chips.length} chips, active ${panel.activeCategory}, clicked ${last._categoryId}`);
+    }
+    launcher.close('test');
+    await sleep(300);
     panel = await open();
     await pressKeys(Clutter.KEY_Control_L, Clutter.KEY_comma);
     t.check('Ctrl+, does the same', await waitFor(() => settingsOpened.length === 2 && !launcher.isOpen, 1000));

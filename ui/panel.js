@@ -21,6 +21,21 @@ const OPEN_SLIDE = 16;
 const COMPACT_NAV_WIDTH = 680;
 const PAGE_FALLBACK = 8;
 const ELLIPSIZE_END = 3; // Pango.EllipsizeMode.END
+
+/**
+ * Run fn on a primary-button release on the actor itself. Under the launcher's modal grab St.Button's
+ * "clicked" (like St.Entry's secondary-icon-clicked) never fires for a real click: the backdrop takes every
+ * press. Rows, the gear, tabs and category chips all use this instead (measured headless with a virtual
+ * pointer).
+ */
+function onPrimaryClick(actor, fn) {
+    actor.connect('button-release-event', (_a, event) => {
+        if (event.get_button() !== Clutter.BUTTON_PRIMARY)
+            return Clutter.EVENT_PROPAGATE;
+        fn();
+        return Clutter.EVENT_STOP;
+    });
+}
 const WRAP_WORD_CHAR = 2; // Pango.WrapMode.WORD_CHAR
 
 const VIEW_ICONS = Object.freeze({
@@ -200,7 +215,7 @@ export class LauncherPanel {
             const label = new St.Label({ text: VIEW_LABELS[view], y_align: Clutter.ActorAlign.CENTER, visible: !this._compact });
             box.add_child(label);
             const button = new St.Button({ child: box, x_expand: true, can_focus: false, reactive: true });
-            button.connect('clicked', () => this.setView(view));
+            onPrimaryClick(button, () => this.setView(view));
             this._tabButtons.set(view, { button, icon, label });
             this._nav.add_child(button);
         }
@@ -353,7 +368,7 @@ export class LauncherPanel {
                 box.add_child(new St.Label({ text: cat.label, y_align: Clutter.ActorAlign.CENTER }));
             const chip = new St.Button({ child: box, can_focus: false, reactive: true });
             chip._categoryId = cat.id;
-            chip.connect('clicked', () => this.setCategory(cat.id));
+            onPrimaryClick(chip, () => this.setCategory(cat.id));
             this._chips.add_child(chip);
         }
     }

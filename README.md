@@ -82,7 +82,7 @@ gives it back when disabled.
 | Enter | Open (or switch to) the app; Ctrl+Enter or middle-click opens a new window |
 | Shift+Enter, right-click | Actions: for apps, open, new window, the app's own actions, pin / unpin; for `/win` windows, switch, minimize or restore, move to another workspace, close |
 | Ctrl+Up / Ctrl+Down | Reorder pinned apps (Pinned view, empty search) |
-| Ctrl+Tab / Ctrl+Shift+Tab, Ctrl+1..4 | Switch view: Recent, Pinned, All, Categories |
+| Ctrl+Tab / Ctrl+Shift+Tab, Ctrl+1..4, or click a tab | Switch view: Recent, Pinned, All, Categories |
 | Ctrl+Left / Ctrl+Right | Previous / next category (Categories view) |
 | Ctrl+G | Toggle list / grid |
 | Ctrl+, or the gear in the search field | Open Settings |
@@ -203,6 +203,7 @@ file manager does), so even folders of 4K or 8K images open quickly.
 | `pnpm test:shell` | Headless GNOME Shell integration tests (`tests/shell`): no window, its own D-Bus session and temporary XDG dirs, and session actions stubbed. Runs under your uid, so it shares your per-user kernel limits (inotify) while it runs. Not run by CI (`docs/architecture.md`, Known limitations) |
 | `pnpm test:shell:container` | The same tests in a GNOME Shell 50 container under a separate uid. **Experimental:** about half of container starts stall before `startup-complete` (see `docs/architecture.md`, Known limitations) |
 | `tools/preview.sh` | Opens the launcher in a nested GNOME Shell window to look at and try, without installing or logging out. It uses temporary settings, your apps read-only, and nothing launches (actions show a notice). Close the window to stop |
+| `CONJURE_PREVIEW_DRIVE=tools/preview-check.js tools/preview.sh` | The same preview, driven by a script instead of by hand: clicks, keys, providers, the shortcut and Settings, checked on your real GPU with your apps, shortcut and theme settings. Prints one line per check and closes when done |
 | `tools/install.sh` | Symlink this checkout into `~/.local/share/gnome-shell/extensions/` |
 | `tools/devkit.sh` | Run a nested GNOME Shell with only this extension enabled, using a temporary settings database. Needs `sudo apt install mutter-dev-bin` |
 | `tools/pack.sh` | Build the installable zip into `dist/` |

@@ -76,7 +76,9 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 ### Views (`lib/views.js`)
 
 - Tabs: Recent, Pinned, All and Categories, with `default-view` first. Ctrl+Tab and Ctrl+Shift+Tab
-  cycle them, Ctrl+1..4 select one.
+  cycle them, Ctrl+1..4 select one, and clicking selects one. Tabs, category chips, result rows and the gear
+  all act on the button release on themselves: under the modal grab, St.Button's `clicked` never fires for
+  a real click, because the backdrop takes every press.
 - Typing switches to All; the views shape only the empty-query screen.
 - All: pinned apps first in pinned order, then the rest by score. Pinned: only pinned apps. Recent:
   launched apps, newest first (the last 20). Categories: a chip row of the non-empty categories;
