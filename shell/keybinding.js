@@ -22,7 +22,7 @@ const CONFLICT_SCHEMAS = [
 
 /**
  * Find other bindings that hold one of our accelerators. Read-only: changing them is the
- * user's decision (docs/design-brief.md invariant 1). A schema that is not installed is skipped.
+ * user's decision (invariant 1, docs/architecture.md). A schema that is not installed is skipped.
  * @returns {string[]} "schema key" pairs
  */
 export function findConflicts(ours) {

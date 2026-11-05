@@ -1,4 +1,4 @@
-// Phase 1 integration test: runs inside a headless GNOME Shell (tools/shell-test.sh) against the
+// Core integration test: runs inside a headless GNOME Shell (tools/shell-test.sh) against the
 // real extension, real GSettings (sandboxed) and real input events from virtual devices.
 
 import Clutter from 'gi://Clutter';
@@ -43,7 +43,7 @@ export async function run() {
     const panel = launcher.panel;
     t.check('empty query lists installed apps', panel.rows.length > 0, `${panel.rows.length} rows`);
 
-    // --- Placement: bottom centre of the screen, inside the work area (decision D7) ---
+    // --- Placement: bottom centre of the screen, inside the work area ---
     // Measure after the 200 ms open slide, which moves the panel by translation_y.
     await waitFor(() => panel.panelActor.translation_y === 0 && panel.panelActor.opacity === 255, 1000);
     const actor = panel.panelActor;

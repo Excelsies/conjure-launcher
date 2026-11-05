@@ -1,4 +1,4 @@
-// Reading and writing commands.json for the preferences editor (design brief section 20).
+// Reading and writing commands.json for the preferences editor (docs/architecture.md, Command entries).
 // Gio only, so it runs in the preferences process. Writes are atomic and refuse to overwrite a
 // file that changed on disk since it was read (etag), or one that could not be parsed.
 

@@ -1,7 +1,7 @@
 // GNOME search providers (files, Settings, Characters, Software, ...) in global search, through
 // the shell's own remoteSearch.js, so the user's Search settings (enabled list and order) apply.
 //
-// Budget (docs/design-brief.md section 8): wait DEBOUNCE_MS after the last keystroke, then give
+// Budget (docs/architecture.md, Time limits): wait DEBOUNCE_MS after the last keystroke, then give
 // every provider TIMEOUT_MS to answer GetInitialResultSet + GetResultMetas. A provider that is
 // late or fails contributes nothing to this query; a newer query cancels the D-Bus calls.
 

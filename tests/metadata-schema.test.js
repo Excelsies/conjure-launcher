@@ -1,5 +1,5 @@
 // Consistency between metadata.json, the GSettings schema and the theming contract
-// (docs/design-brief.md section 14). These identifiers are permanent once published, so a
+// (docs/theming.md). These identifiers are permanent once published, so a
 // silent drift between them is a release blocker.
 
 import { test } from 'node:test';

@@ -1,4 +1,4 @@
-// The system's light/dark style and accent colour, as GNOME Shell itself uses them (decision D18).
+// The system's light/dark style and accent colour, as GNOME Shell itself uses them.
 // The empty theme keys resolve against this, so the default Ubuntu theme follows the system live.
 import St from 'gi://St';
 

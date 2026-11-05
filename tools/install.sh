@@ -24,7 +24,7 @@ else
     ln -s "$root" "$dest"
     echo "installed: $dest -> $root"
 fi
-# dmenu CLI on PATH (decision D14). Only ever replaces our own symlink.
+# dmenu CLI on PATH. Only ever replaces our own symlink.
 bindir="$HOME/.local/bin"
 mkdir -p "$bindir"
 if [[ -L "$bindir/conjure-dmenu" || ! -e "$bindir/conjure-dmenu" ]]; then

@@ -1,4 +1,5 @@
-// Custom command entries from ~/.config/conjure-launcher/commands.json (design brief section 18).
+// Custom command entries from ~/.config/conjure-launcher/commands.json (docs/architecture.md,
+// Command entries).
 // CommandsRegistry watches the file and keeps one CommandProvider per valid entry in the
 // launcher's provider list (edited in place, so the query controller sees changes at once).
 

@@ -237,7 +237,7 @@ export class Launcher {
         this._signals = [];
         this._query.cancel();
         this._query.setScope(null);
-        // A dmenu call still waiting gets its answer on every close path (design brief 18).
+        // A dmenu call still waiting gets its answer on every close path (invariant 6).
         if (reason === 'disable')
             this._finishDmenu(null, new Error('Conjure Launcher was disabled'));
         else

@@ -1,4 +1,4 @@
-// Phase 3 integration test (headless GNOME Shell, tools/shell-test.sh): calculator, emoji,
+// Integration test (headless GNOME Shell, tools/shell-test.sh): calculator, emoji,
 // session actions, open windows, the provider overview and GNOME search providers (through the
 // fixture provider in tests/shell/fixtures; the machine's own providers are disabled).
 

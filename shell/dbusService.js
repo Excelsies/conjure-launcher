@@ -1,4 +1,4 @@
-// org.excelsies.ConjureLauncher on the session bus (design brief section 18): Dmenu(prompt,
+// org.excelsies.ConjureLauncher on the session bus (docs/architecture.md, dmenu mode): Dmenu(prompt,
 // candidates) opens the launcher scoped to the candidates and answers with the pick. Every
 // pending call is answered exactly once: on a pick, on any close, on a newer call, or on disable.
 

@@ -1,4 +1,4 @@
-// Panel placement (decision D7: bottom centre by default).
+// Panel placement (bottom centre by default).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

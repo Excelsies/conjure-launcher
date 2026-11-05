@@ -1,4 +1,4 @@
-// Phase 2 integration test (headless GNOME Shell, tools/shell-test.sh): views, pins,
+// Integration test (headless GNOME Shell, tools/shell-test.sh): views, pins,
 // categories, grid, the actions menu, search-field placement and the close animation.
 // Runs on the shipped defaults (no setup file): Recent view, list, search at the bottom.
 
@@ -34,12 +34,12 @@ export async function run() {
         return launcher.panel;
     };
 
-    // --- Defaults (D9, D10, D11) ---
+    // --- Defaults ---
     t.equal('default view setting is recent', own.get_string('default-view'), 'recent');
     t.equal('default layout is the list', own.get_boolean('app-grid'), false);
     t.equal('default search position is bottom', own.get_string('search-position'), 'bottom');
 
-    // --- The settings gear (D12 amendment): click and Ctrl+, close and open Settings ---
+    // --- The settings gear: click and Ctrl+, close and open Settings ---
     const settingsOpened = [];
     launcher._openSettings = () => settingsOpened.push(Date.now());
     let panel = await open();

@@ -1,4 +1,4 @@
-// Colour themes (D17): every shipped palette is complete, valid and readable as the launcher draws it,
+// Colour themes: every shipped palette is complete, valid and readable as the launcher draws it,
 // and choosing / recognising a palette round-trips through the theme settings.
 
 import { test } from 'node:test';

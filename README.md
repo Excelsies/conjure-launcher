@@ -5,8 +5,8 @@ A keyboard-first application launcher for GNOME Shell 50+, modelled on the launc
 because Mutter does not implement `wlr-layer-shell`, so a standalone Wayland launcher cannot draw
 over the desktop. It opens on Super+Space, in place of GNOME's "Show Apps" grid.
 
-Version 0.7.0. The design and the record of each phase are in `docs/design-brief.md`; the
-behaviour taken from Noctalia is in `docs/noctalia-reference.md`.
+Version 0.7.0. How it works is described in `docs/architecture.md`; the theming interface for
+other programs is in `docs/theming.md`.
 
 ## Screenshots
 
@@ -170,8 +170,8 @@ in, and never into any other window.
 |---|---|
 | `pnpm install` | Install the lint and test tools (dev only; nothing ships to the shell). pnpm is pinned in `package.json`; `corepack enable` provides it |
 | `pnpm run check` | ESLint, unit tests (`tests/**/*.test.js`), GJS tests (`tests/gjs`) and schema validation; CI runs the same |
-| `pnpm test:shell` | Headless GNOME Shell integration tests (`tests/shell`): no window, its own D-Bus session and temporary XDG dirs, and session actions stubbed. Runs under your uid, so it shares your per-user kernel limits (inotify) while it runs. Not run by CI (`docs/design-brief.md`, known gaps) |
-| `pnpm test:shell:container` | The same tests in a GNOME Shell 50 container under a separate uid. **Experimental:** about half of container starts stall before `startup-complete` (see `docs/design-brief.md`, known gaps) |
+| `pnpm test:shell` | Headless GNOME Shell integration tests (`tests/shell`): no window, its own D-Bus session and temporary XDG dirs, and session actions stubbed. Runs under your uid, so it shares your per-user kernel limits (inotify) while it runs. Not run by CI (`docs/architecture.md`, Known limitations) |
+| `pnpm test:shell:container` | The same tests in a GNOME Shell 50 container under a separate uid. **Experimental:** about half of container starts stall before `startup-complete` (see `docs/architecture.md`, Known limitations) |
 | `tools/preview.sh` | Opens the launcher in a nested GNOME Shell window to look at and try, without installing or logging out. It uses temporary settings, your apps read-only, and nothing launches (actions show a notice). Close the window to stop |
 | `tools/install.sh` | Symlink this checkout into `~/.local/share/gnome-shell/extensions/` |
 | `tools/devkit.sh` | Run a nested GNOME Shell with only this extension enabled, using a temporary settings database. Needs `sudo apt install mutter-dev-bin` |

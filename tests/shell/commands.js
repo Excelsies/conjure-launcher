@@ -1,4 +1,4 @@
-// Phase 4 integration test (headless GNOME Shell, tools/shell-test.sh): command entries from
+// Integration test (headless GNOME Shell, tools/shell-test.sh): command entries from
 // commands.json, dmenu mode through the real bin/conjure-dmenu CLI on the sandbox bus, and
 // wallpapers. Everything writes only under the sandbox's XDG directories.
 

@@ -32,8 +32,6 @@ falls back to its default. The rest of the theme is unaffected.
 | `theme-hover` | Hovered row fill | `#e9e9e9` / `#4e4e52` |
 | `theme-on-hover` | Text on `hover` | `#222222` / `#ffffff` |
 
-The defaults were Noctalia's dark palette before version 0.7.0; Noctalia is now a preset.
-
 ## Other tokens
 
 | Key | Type | Meaning | Default |

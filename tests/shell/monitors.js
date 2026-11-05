@@ -1,4 +1,4 @@
-// Phase 5 integration test (headless GNOME Shell, two virtual monitors from phase5.monitors):
+// Integration test (headless GNOME Shell, two virtual monitors from monitors.monitors):
 // which monitor the launcher opens on, and auto-paste (invariant 5).
 
 import Clutter from 'gi://Clutter';

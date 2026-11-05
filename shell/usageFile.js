@@ -1,6 +1,6 @@
 // Launch-history persistence for lib/usage.js.
 //
-// Failure handling (docs/design-brief.md section 6):
+// Failure handling (docs/architecture.md, Failure handling):
 // - Missing file: start empty.
 // - Unparseable file: move it aside as usage.json.corrupt-<time>, so the history is kept for
 //   inspection instead of being silently overwritten, then start empty.

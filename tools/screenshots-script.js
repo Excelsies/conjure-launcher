@@ -54,7 +54,7 @@ export async function run() {
     const apps = ext.stateObj._providers.find(p => p.id === 'apps');
     apps.activate = () => {};
     await launcher.usageReady;
-    // The default theme follows the system (D18): show it as Ubuntu Dark with Ubuntu's orange accent.
+    // The default theme follows the system: show it as Ubuntu Dark with Ubuntu's orange accent.
     const iface = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
     iface.set_string('color-scheme', 'prefer-dark');
     iface.set_string('accent-color', 'orange');

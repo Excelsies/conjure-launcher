@@ -1,4 +1,4 @@
-// Pure logic of the Phase 3 providers: emoji, session actions, provider overview.
+// Pure logic of the providers: emoji, session actions, provider overview.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

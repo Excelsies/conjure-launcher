@@ -1,4 +1,4 @@
-// The default theme follows the system (D18): with every colour key empty the panel is Ubuntu Light or
+// The default theme follows the system: with every colour key empty the panel is Ubuntu Light or
 // Dark from the system's style, with the shell's accent colour, and restyles live when either changes.
 // Any chosen theme stops that. Disabling disconnects the system watchers.
 import Gio from 'gi://Gio';

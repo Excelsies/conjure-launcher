@@ -137,7 +137,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
     }
 
     /**
-     * Commands editor (design brief section 20): edits ~/.config/conjure-launcher/commands.json,
+     * Commands editor: edits ~/.config/conjure-launcher/commands.json,
      * the file the extension watches. Validation is the extension's own; a file that does not
      * parse, or that changed on disk since it was read, is never overwritten.
      */
@@ -338,7 +338,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
     _appearancePage(settings) {
         const page = new Adw.PreferencesPage({ title: 'Appearance', icon_name: 'applications-graphics-symbolic', name: 'appearance' });
 
-        // Colour themes (D17, D18): picking one writes all nine colour keys; editing any colour below
+        // Colour themes: picking one writes all nine colour keys; editing any colour below
         // shows "Custom". A menu button opens a tall list (taller than GTK's dropdown allows) where
         // every theme shows its swatches and the active one is ticked. The list follows the
         // settings, so changes made elsewhere show here too. "Ubuntu" is one entry: following the

@@ -1,6 +1,6 @@
 # Publishing to extensions.gnome.org
 
-Uploading uses the owner's extensions.gnome.org account, so it is a manual step. Everything
+Uploading needs the maintainer's extensions.gnome.org account, so it is a manual step. Everything
 before it is scripted.
 
 1. `pnpm run check && pnpm test:shell` passes on a clean tree.

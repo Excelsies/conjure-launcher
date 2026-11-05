@@ -173,7 +173,7 @@ export class LauncherPanel {
         });
         this._entry.clutter_text.connect('text-changed', () => this._onTextChanged());
         this._entry.clutter_text.connect('key-press-event', (_a, event) => this._onKey(event));
-        // A small gear at the end of the search field opens Settings (D12 amendment). Not in dmenu mode.
+        // A small gear at the end of the search field opens Settings. Not in dmenu mode.
         if (!this._opts.scoped && this._opts.onOpenSettings) {
             this._gear = new St.Icon({ icon_name: 'emblem-system-symbolic', icon_size: 16, reactive: true, track_hover: true });
             this._gear.connect('notify::hover', () => this._restyleChrome());
@@ -288,7 +288,7 @@ export class LauncherPanel {
         this._panel.set_style(`${styles.panel} spacing: 8px;`);
         this._toolbar.set_style(styles.toolbar);
         this._entry.set_style(styles.entry);
-        // Keep the hint clear of the text cursor (seen in Phase 1 screenshots).
+        // Keep the hint clear of the text cursor.
         this._entry.hint_actor?.set_style(`${styles.entryHint} padding-left: 3px;`);
         this._list.set_style(`spacing: 4px; padding-${bottom ? 'bottom' : 'top'}: 2px;`);
         this._empty.set_style(styles.empty);
