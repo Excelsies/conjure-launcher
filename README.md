@@ -5,7 +5,7 @@ A keyboard-first application launcher for GNOME Shell 50+, modelled on the launc
 because Mutter does not implement `wlr-layer-shell`, so a standalone Wayland launcher cannot draw
 over the desktop. It opens on Super+Space, in place of GNOME's "Show Apps" grid.
 
-Version 0.6.0. The design and the record of each phase are in `docs/design-brief.md`; the
+Version 0.7.0. The design and the record of each phase are in `docs/design-brief.md`; the
 behaviour taken from Noctalia is in `docs/noctalia-reference.md`.
 
 ## Screenshots
@@ -23,14 +23,18 @@ behaviour taken from Noctalia is in `docs/noctalia-reference.md`.
 
 ### Themes
 
+The shots above use the default, Ubuntu following the system (here dark, with Ubuntu's orange).
+
 | | | |
 |---|---|---|
-| ![Catppuccin](docs/screenshots/theme-catppuccin.png) | ![Dracula](docs/screenshots/theme-dracula.png) | ![Gruvbox](docs/screenshots/theme-gruvbox.png) |
-| Catppuccin | Dracula | Gruvbox |
-| ![Kanagawa](docs/screenshots/theme-kanagawa.png) | ![Nord](docs/screenshots/theme-nord.png) | ![Rosé Pine](docs/screenshots/theme-rose-pine.png) |
-| Kanagawa | Nord | Rosé Pine |
-| ![Tokyo Night](docs/screenshots/theme-tokyo-night.png) | ![Moonfly](docs/screenshots/theme-moonfly.png) | ![Oxocarbon](docs/screenshots/theme-oxocarbon-dark.png) |
-| Tokyo Night | Moonfly | Oxocarbon |
+| ![Ubuntu Light](docs/screenshots/theme-ubuntu-light.png) | ![Noctalia](docs/screenshots/theme-noctalia.png) | ![Catppuccin](docs/screenshots/theme-catppuccin.png) |
+| Ubuntu Light | Noctalia | Catppuccin |
+| ![Dracula](docs/screenshots/theme-dracula.png) | ![Gruvbox](docs/screenshots/theme-gruvbox.png) | ![Kanagawa](docs/screenshots/theme-kanagawa.png) |
+| Dracula | Gruvbox | Kanagawa |
+| ![Nord](docs/screenshots/theme-nord.png) | ![Rosé Pine](docs/screenshots/theme-rose-pine.png) | ![Tokyo Night](docs/screenshots/theme-tokyo-night.png) |
+| Nord | Rosé Pine | Tokyo Night |
+| ![Moonfly](docs/screenshots/theme-moonfly.png) | ![Oxocarbon](docs/screenshots/theme-oxocarbon-dark.png) | |
+| Moonfly | Oxocarbon | |
 
 ### Settings
 
@@ -143,12 +147,17 @@ Settings: `gnome-extensions prefs conjure-launcher@excelsies`. They cover placem
 auto-paste, the wallpaper folder, the shortcut, history and colours.
 
 Colour themes (Settings → Appearance), each shown with its swatches in the list:
-- Noctalia's palettes: Noctalia (the default), Ayu, Catppuccin, Dracula, Eldritch, Gruvbox, Kanagawa,
+- **Ubuntu** (the default), from Ubuntu's Yaru theme. With "Use Ubuntu's style and accent colour" on,
+  it follows GNOME Settings → Appearance live: Light or Dark, and the accent colour you picked there.
+  Turn it off to choose Ubuntu Light or Ubuntu Dark yourself, with Ubuntu orange. Choosing any other
+  theme also stops following.
+- Noctalia's palettes: Noctalia, Ayu, Catppuccin, Dracula, Eldritch, Gruvbox, Kanagawa,
   Nord, Rosé Pine and Tokyo Night.
 - Ten darker ones from the Gogh collection: One Half Black, Moonfly, Gotham, Jellybeans, Night Owl,
   Aura, Oxocarbon, Oceanic Next, Molokai and Tomorrow Night.
 
-Each theme is checked for readable contrast as the launcher draws it. Adjusting any single colour
+Each theme is checked for readable contrast as the launcher draws it, Ubuntu with each of Ubuntu's ten
+accent colours in both styles. Adjusting any single colour
 after picking a theme shows "Custom". A theme writes the same `theme-*` keys that other programs
 can set (`docs/theming.md`).
 

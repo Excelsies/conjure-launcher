@@ -3,8 +3,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PALETTES, DEFAULT_PALETTE_ID, matchPalette, paletteValues } from '../lib/palettes.js';
-import { COLOUR_TOKENS, parseColour, resolveTheme } from '../lib/theme.js';
+import { PALETTES, DEFAULT_PALETTE_ID, FOLLOW_SYSTEM_ID, matchPalette, paletteValues } from '../lib/palettes.js';
+import { COLOUR_TOKENS, UBUNTU, UBUNTU_ORANGE, parseColour, resolveTheme, systemDefaults } from '../lib/theme.js';
 
 // WCAG 2.x relative luminance and contrast ratio, written here independently of the generator.
 function luminance(hex) {
@@ -24,15 +24,43 @@ function contrast(a, b) {
 const FLOOR = [['on-primary', 'primary', 4.5], ['on-surface', 'surface', 4.5], ['on-hover', 'hover', 4.5],
     ['on-surface', 'surface-container', 4.5], ['on-surface-variant', 'surface', 3.0]];
 
-test('twenty palettes (Noctalia set plus ten darker ones), the current one first, ids unique', () => {
-    assert.equal(PALETTES.length, 20);
+test('22 palettes: Ubuntu Light and Dark first, then the Noctalia set and ten darker ones; ids unique', () => {
+    assert.equal(PALETTES.length, 22);
+    assert.deepEqual(PALETTES.slice(0, 2).map(p => p.id), ['ubuntu-light', 'ubuntu-dark']);
+    assert.equal(PALETTES.filter(p => p.family === 'ubuntu').length, 2);
+    assert.equal(PALETTES[2].id, 'noctalia');
     assert.equal(PALETTES.filter(p => p.source === 'gogh').length, 10);
-    assert.equal(PALETTES[0].id, DEFAULT_PALETTE_ID);
-    assert.equal(new Set(PALETTES.map(p => p.id)).size, PALETTES.length);
+    assert.equal(new Set([...PALETTES.map(p => p.id), FOLLOW_SYSTEM_ID]).size, PALETTES.length + 1);
 });
 
-test('the Noctalia palette is exactly the built-in default', () => {
-    assert.deepEqual({ ...PALETTES[0].colours }, { ...COLOUR_TOKENS });
+test('the default is Ubuntu following the system; with no system information that is Ubuntu Light, orange', () => {
+    assert.equal(DEFAULT_PALETTE_ID, FOLLOW_SYSTEM_ID);
+    assert.deepEqual({ ...COLOUR_TOKENS }, { ...UBUNTU.light });
+    assert.equal(UBUNTU.light['primary'], UBUNTU_ORANGE);
+    assert.equal(UBUNTU.dark['primary'], UBUNTU_ORANGE);
+});
+
+// Ubuntu's accent colours as its GNOME Shell draws them: libst's table in gnome-shell 50.1-0ubuntu1.4, one pair
+// per accent, [dark style, light style] (measured in a headless shell: purple is #7764d8 dark and #7360d7 light;
+// blue and orange matched the dark column). Ubuntu draws white text on all of them.
+const UBUNTU_ACCENTS = { blue: ['#0073e5', '#0070de'], teal: ['#308280', '#2e7e7c'], green: ['#4b8501', '#488001'],
+    yellow: ['#9f6c00', '#9a6800'], orange: ['#d34615', '#cb4314'], red: ['#da3450', '#d82b48'],
+    pink: ['#b34cb3', '#ae4aae'], purple: ['#7764d8', '#7360d7'], slate: ['#657b69', '#627766'],
+    brown: ['#92714a', '#8c6c47'] };
+
+test('Ubuntu Light and Dark meet the contrast floor with every Ubuntu accent', () => {
+    for (const dark of [false, true]) {
+        for (const [name, [darkAccent, lightAccent]] of Object.entries(UBUNTU_ACCENTS)) {
+            const accent = dark ? darkAccent : lightAccent;
+            const c = systemDefaults({ dark, accent, accentFg: '#ffffff' });
+            // White everywhere except dark-style brown, 4.49:1 with white, which the floor gives black.
+            assert.equal(c['on-primary'], dark && name === 'brown' ? '#000000' : '#ffffff', `${name}: text on the accent`);
+            for (const [fg, bg, min] of FLOOR) {
+                const ratio = contrast(c[fg], c[bg]);
+                assert.ok(ratio >= min, `Ubuntu ${dark ? 'Dark' : 'Light'} + ${name}: ${fg} on ${bg} is ${ratio.toFixed(2)}:1, under ${min}:1`);
+            }
+        }
+    }
 });
 
 test('every palette has all nine roles as valid colours', () => {
@@ -56,9 +84,20 @@ test('choosing a palette, then reading it back, recognises it', () => {
         assert.equal(matchPalette(paletteValues(p.id)), p.id, p.name);
 });
 
-test('Noctalia is stored as empty values (the default), so empty settings match it', () => {
-    assert.ok(Object.values(paletteValues(DEFAULT_PALETTE_ID)).every(v => v === ''));
-    assert.equal(matchPalette({}), DEFAULT_PALETTE_ID);
+test('following the system is stored as empty values, and only all-empty values match it', () => {
+    assert.ok(Object.values(paletteValues(FOLLOW_SYSTEM_ID)).every(v => v === ''));
+    assert.deepEqual(Object.keys(paletteValues(FOLLOW_SYSTEM_ID)).sort(), Object.keys(COLOUR_TOKENS).sort());
+    assert.equal(matchPalette({}), FOLLOW_SYSTEM_ID);
+    assert.equal(matchPalette(paletteValues(FOLLOW_SYSTEM_ID), systemDefaults({ dark: true })), FOLLOW_SYSTEM_ID);
+    // One key set: not following; the empty rest read as the current defaults.
+    const dark = systemDefaults({ dark: true });
+    assert.equal(matchPalette({ ...paletteValues(FOLLOW_SYSTEM_ID), surface: UBUNTU.dark['surface'] }, dark), 'ubuntu-dark');
+    assert.equal(matchPalette({ surface: '#123456' }, dark), null);
+});
+
+test('every palette, Noctalia included, is stored as its hex values', () => {
+    for (const p of PALETTES)
+        assert.deepEqual(paletteValues(p.id), { ...p.colours }, p.name);
 });
 
 test('a hand-picked colour makes it Custom (no match); matching ignores case and spaces', () => {
@@ -70,7 +109,8 @@ test('a hand-picked colour makes it Custom (no match); matching ignores case and
 
 test('the added themes are darker than the median of the original set', () => {
     const lum = p => luminance(p.colours['surface']);
-    const original = PALETTES.filter(p => p.source !== 'gogh').map(lum).sort((a, b) => a - b);
+    const original = PALETTES.filter(p => !p.source && !p.family).map(lum).sort((a, b) => a - b);
+    assert.equal(original.length, 10);
     const median = original[Math.floor(original.length / 2)];
     for (const p of PALETTES.filter(x => x.source === 'gogh'))
         assert.ok(lum(p) < median, `${p.name} background is not darker than the original median`);

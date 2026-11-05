@@ -54,6 +54,11 @@ export async function run() {
     const apps = ext.stateObj._providers.find(p => p.id === 'apps');
     apps.activate = () => {};
     await launcher.usageReady;
+    // The default theme follows the system (D18): show it as Ubuntu Dark with Ubuntu's orange accent.
+    const iface = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
+    iface.set_string('color-scheme', 'prefer-dark');
+    iface.set_string('accent-color', 'orange');
+    await sleep(300);
     const panel = () => launcher.panel;
     const type = async (text, ms = 250) => {
         panel().setText(text);
@@ -98,7 +103,8 @@ export async function run() {
 
     const { paletteValues } = await import(`file://${ROOT}/lib/palettes.js`);
     // Theme gallery: the same search in several presets (written to the same keys the picker writes).
-    for (const id of ['catppuccin', 'dracula', 'gruvbox', 'kanagawa', 'nord', 'rose-pine', 'tokyo-night', 'moonfly', 'oxocarbon-dark']) {
+    // Ubuntu Dark is the default, shown in every other shot.
+    for (const id of ['ubuntu-light', 'noctalia', 'catppuccin', 'dracula', 'gruvbox', 'kanagawa', 'nord', 'rose-pine', 'tokyo-night', 'moonfly', 'oxocarbon-dark']) {
         for (const [k, v] of Object.entries(paletteValues(id)))
             own.set_string(`theme-${k}`, v);
         launcher.open();
@@ -108,7 +114,7 @@ export async function run() {
         launcher.close('screenshots');
         await sleep(300);
     }
-    for (const k of Object.keys(paletteValues('noctalia')))
+    for (const k of Object.keys(paletteValues('ubuntu')))
         own.reset(`theme-${k}`);
     await sleep(300);
 

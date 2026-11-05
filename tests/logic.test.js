@@ -6,7 +6,7 @@ import { route } from '../lib/router.js';
 import { rank, usageBoost, TYPED_USAGE_SCORE_CAP } from '../lib/ranking.js';
 import { scoreApp, NAME_MATCH_PRIORITY, LOCALIZED_NAME_MATCH_PRIORITY } from '../lib/appScore.js';
 import { UsageModel, RECENT_LIMIT } from '../lib/usage.js';
-import { resolveTheme, parseColour, styles, COLOUR_TOKENS } from '../lib/theme.js';
+import { resolveTheme, parseColour, styles, systemDefaults, textOn, contrastRatio, UBUNTU, UBUNTU_ORANGE, COLOUR_TOKENS } from '../lib/theme.js';
 
 const apps = { id: 'apps' };
 const calc = { id: 'calc', trigger: 'calc', global: true, acceptsGlobal: t => /\d/.test(t) };
@@ -163,7 +163,7 @@ test('theme: colour parsing', () => {
         assert.equal(parseColour(bad), null, String(bad));
 });
 
-test('theme: empty values use Noctalia defaults; invalid ones fall back and are reported', () => {
+test('theme: empty values use the defaults (Ubuntu Light with no system information); invalid ones fall back and are reported', () => {
     const t = resolveTheme({ 'primary': '#89b4fa', 'hover': 'nope', 'radius-scale': 9, 'font-family': 'x; color: red' });
     assert.deepEqual(t.colours['primary'], parseColour('#89b4fa'));
     assert.deepEqual(t.colours['hover'], parseColour(COLOUR_TOKENS['hover']));
@@ -172,6 +172,39 @@ test('theme: empty values use Noctalia defaults; invalid ones fall back and are 
     assert.equal(t.fontFamily, '');
     assert.deepEqual(t.invalid.sort(), ['font-family', 'hover', 'radius-scale']);
     assert.deepEqual(resolveTheme({}).invalid, []);
+});
+
+test('theme: empty values resolve against the system defaults passed in; set ones are kept', () => {
+    const dark = systemDefaults({ dark: true, accent: '#7764d8', accentFg: '#ffffff' });
+    const t = resolveTheme({ 'surface': '#123456' }, dark);
+    assert.deepEqual(t.colours['surface'], parseColour('#123456'));
+    assert.deepEqual(t.colours['primary'], parseColour('#7764d8'));
+    assert.deepEqual(t.colours['surface-container'], parseColour(UBUNTU.dark['surface-container']));
+});
+
+test('systemDefaults: dark picks Ubuntu Dark, otherwise Ubuntu Light; the accent replaces orange', () => {
+    assert.deepEqual(systemDefaults({ dark: true }), UBUNTU.dark);
+    assert.deepEqual(systemDefaults({ dark: false }), UBUNTU.light);
+    assert.deepEqual(systemDefaults(), UBUNTU.light);
+    const purple = systemDefaults({ dark: false, accent: '#7764D8', accentFg: '#ffffff' });
+    assert.equal(purple['primary'], '#7764d8');
+    assert.equal(purple['on-primary'], '#ffffff');
+    assert.equal(purple['surface'], UBUNTU.light['surface']);
+    // An accent that cannot be read is Ubuntu orange.
+    for (const bad of [null, '', 'nope'])
+        assert.equal(systemDefaults({ dark: true, accent: bad })['primary'], UBUNTU_ORANGE, String(bad));
+});
+
+test('textOn: the preferred colour when it reaches 4.5:1, then white, then black', () => {
+    assert.equal(textOn('#7764d8', '#ffffff'), '#ffffff');          // 4.56:1
+    assert.equal(textOn('#3584e4', '#ffffff'), '#000000');          // white is under 4.5:1 on GNOME blue
+    assert.equal(textOn('#ffff00', '#ffffff'), '#000000');
+    assert.equal(textOn('#000080', '#ffff00'), '#ffff00');          // preferred, though white also passes
+    assert.equal(textOn('#000080', 'nope'), '#ffffff');
+    for (const fill of ['#777777', '#808080', '#e95420', '#3584e4', '#ed5b00', '#c88800']) {
+        const fg = textOn(fill, null);
+        assert.ok(contrastRatio(parseColour(fg), parseColour(fill)) >= 4.5, `${fg} on ${fill}`);
+    }
 });
 
 test('theme: font family rejects every CSS breakout character', () => {

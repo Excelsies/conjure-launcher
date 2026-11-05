@@ -474,3 +474,106 @@ Post-phase record (2026-11-04):
   hypotheses did not reproduce it (interaction paths, fast typing). An unverified candidate: a close
   for monitors-changed still fades out on a reconfigured stage. Revisit only if it shows up in the
   installed extension.
+
+## 21. [D18] Ubuntu themes and following the system (owner request, 2026-11-04) — APPROVED 2026-11-04
+
+Owner's words: "a light and a dark Ubuntu theme ... default the theme to light or dark depending on
+the system's settings", then "make these Ubuntu ones special, and add a toggle when one is selected to
+utilize Ubuntu's colors, and default to the Ubuntu theme with this on ... whatever Ubuntu has for dark vs
+light AND utilize the color the user selected in Ubuntu's setting".
+Then: "I'd want this to retroactively change when the user changes the Ubuntu themes UNLESS the user
+unchecks the toggle OR utilizes a different theme" (live following; stops on toggle off or another theme).
+
+- **Goal:** two presets, Ubuntu Light and Ubuntu Dark, taken from the installed Yaru shell theme. The
+  default (all colour keys empty) is Ubuntu, following the system's light/dark style and accent colour,
+  live. **Non-goals:** following the system for the other twenty themes; a light variant of them; reading
+  GTK theme names.
+- **Model: "follow the system" is the empty keys.** No new key. The empty value of each colour token
+  already means "the built-in default"; that default becomes *Ubuntu, resolved from the system*. So:
+  - toggle on = every colour key empty (the default, and what `gsettings reset` gives);
+  - toggle off = the chosen Ubuntu variant written as fixed values, with Ubuntu orange as the accent;
+  - an integration that sets some keys still gets the system-resolved value for the ones it leaves empty
+    (the per-token fallback rule in `docs/theming.md` is unchanged).
+  - The `docs/theming.md` contract changes only in its "built-in default" column: the defaults were
+    Noctalia's, and are now Ubuntu's, resolved from the system. No key is renamed. The Noctalia preset now
+    writes its hex values instead of empty strings.
+- **Palettes** (from `/usr/share/gnome-shell/theme/Yaru{,-dark}/gnome-shell.css`, popup menu and entry):
+
+  | Role | Ubuntu Light | Ubuntu Dark |
+  |---|---|---|
+  | surface / field / border | `#ffffff` / `#ededed` / `#ededed` | `#36363a` / `#414144` / `#424247` |
+  | text / secondary | `#222222` / `#7b7b7b` | `#ffffff` / `#9b9b9d` |
+  | hover / text on hover | `#e9e9e9` / `#222222` | `#4e4e52` / `#ffffff` |
+  | accent / text on accent | system accent, or `#d34615` | the same |
+
+  Hover is Yaru's 10% overlay flattened to an opaque colour, so the contrast test measures what is drawn.
+  `#d34615` is Ubuntu's own contrast-tuned orange, as St draws it (not the brand `#E95420`).
+- **Reads (shell):** `St.Settings.get().color_scheme` (PREFER_DARK → Dark, otherwise Light: Ubuntu's
+  "Default" style is light) and `St.ThemeContext.get_for_stage(global.stage).get_accent_color()`, the
+  accent the shell itself draws (Ubuntu's St maps the accent setting to the Yaru hues). Restyle on
+  `notify::color-scheme` and `notify::accent-color`; both handlers are disconnected in `disable()`.
+  Measured in a headless shell: inside `notify::accent-color` the theme context already returns the new
+  accent, so the theme context's `changed` signal (in the first draft) is not needed.
+- **Failure table:** an accent read that throws or returns nothing → `#d34615`, logged once; an
+  unknown scheme value → Light. Neither stops the panel opening. Text on the accent: St's accent
+  foreground if it reaches 4.5:1, otherwise white if that reaches 4.5:1, otherwise black (always ≥ 4.58:1).
+- **Prefs (owner answer: "set the list to just Ubuntu, and have a separate selection for Light/Dark that
+  shows up if you toggle off"):** one "Ubuntu" entry heads the list; picking it means following (keys
+  empty). While Ubuntu is the theme, a switch "Use Ubuntu's style and accent colour" is shown (on when
+  the keys are empty). Turning it off writes the variant currently shown, fixed, with Ubuntu orange
+  (owner answer), and shows a Light / Dark choice; turning it on resets the colour keys and hides that
+  choice. Another theme from the list stops following.
+  Swatches and colour-row fallbacks use libadwaita's style manager (`dark`, `get_accent_color_rgba()`).
+  **Accepted limit:** Ubuntu's libadwaita draws orange as `#e95420` and St as `#d34615`, so with the
+  orange accent the swatch in Settings is a shade off from the panel.
+- **Existing installs:** a user who never chose a theme (keys empty, which was Noctalia) gets Ubuntu
+  on the next shell start. A user who chose a theme keeps it. A user who chose Noctalia explicitly had
+  empty keys, so also gets Ubuntu.
+- **Tests:** both Ubuntu palettes against the contrast floor with each of the ten Ubuntu accents
+  (copied from libst 50.1-0ubuntu1.4) and with `#d34615`; the text-on-accent rule; `matchPalette` of
+  empty keys → following; a resolver unit test (scheme × accent); a shell test that flips
+  `color-scheme` and `accent-color` in the sandbox and checks the panel restyles; mutation probes on the
+  scheme mapping and on the reconnect in `disable()`.
+- **Screenshots:** the main and Settings shots in Ubuntu Dark, following the system (sandbox set to
+  prefer-dark and the orange accent, owner answer). The theme gallery keeps the nine presets and adds Ubuntu Light and
+  Noctalia.
+
+Record (2026-11-04, version 0.7.0):
+- **Files:** `lib/theme.js` (`UBUNTU`, `UBUNTU_ORANGE`, `systemDefaults`, `textOn`, `contrastRatio`;
+  `resolveTheme` takes the defaults), `lib/palettes.js` (Ubuntu Light / Dark first, `FOLLOW_SYSTEM_ID`,
+  `matchPalette` with the current defaults), `shell/systemStyle.js` (new), `shell/launcher.js`, `prefs.js`
+  (one "Ubuntu" entry, the follow switch, the Light / Dark row).
+- **Measured:** Ubuntu's St keeps one accent pair per colour, [dark style, light style]; purple is `#7764d8`
+  under the dark style and `#7360d7` under the light one. The shell test compares against the shell's own
+  value. With white text every Ubuntu accent reaches 4.5:1 except dark-style brown (`#92714a`, 4.49:1),
+  which the rule draws with black text; pinned by a test.
+- **Prefs preview:** libadwaita's accent is a shade lighter than St's (orange `#e95420` against
+  `#d34615`), so the preview's text on the accent is fixed to white, as Ubuntu draws it, rather than run
+  through the contrast rule. Accepted limit: the swatches are a preview, and on non-Ubuntu GNOME the panel
+  may draw black text where the preview shows white.
+- **Tests:** unit tests for `systemDefaults`, `textOn`, resolving against the defaults, following ==
+  all keys empty, and the contrast floor for both styles with all twenty Ubuntu accent values.
+  `tests/shell/theme.js` (14 checks): dark and orange, a live accent change, a live switch to light, a
+  chosen theme and a fixed Ubuntu Light ignoring the system, a reset following again, and the handlers
+  disconnected on disable (checked with `GObject.signal_handler_is_connected`).
+- **Mutation probes:**
+  - inverting the scheme mapping fails three checks;
+  - dropping the disconnect fails "disable disconnects".
+  - The first probe exposed a weak assertion: Ubuntu Dark's panel style contains `#ffffff` as its text
+    colour, so "is Ubuntu Light" passed under the mutation. Checks are now anchored on `background-color`.
+- **Prefs logic:** what the switch writes and which rows show are pure helpers (`ubuntuControls`,
+  `themeForFollow` in `lib/prefsHelpers.js`), unit-tested with round-trips through `matchPalette`.
+  **Known gap, as in Phase 6:** the widgets themselves are not driven by automation (a separate GTK
+  process). They are checked by Settings screenshots (switch on, and off with the Light / Dark row) and
+  the runtime-criticals gate.
+
+- **Known gap, found 2026-11-04 (open for the owner):** `tests/shell/providers.js` intermittently fails the
+  runtime-criticals gate after its last check has passed. GNOME Shell's own Background Apps quick-settings
+  toggle (`status/backgroundApps.js`) is updated after it has been disposed while the shell shuts down.
+  Measured: 1 of 4 runs on this change, and 1 of 5 on the commit before it, so it predates the change. The
+  launcher is not involved.
+- **Known gap, found 2026-11-04 (open for the owner):** while other agents' headless shells were running
+  (load average about 5), `tests/shell/phase5.js` failed "opens on the monitor of the focused window" 3 times
+  in a row. The commit before this change fails in the same way. The test does not check that its focus
+  wait succeeded; its own comment already says focus is "slow under load". It passed earlier the same day
+  on a quieter machine.

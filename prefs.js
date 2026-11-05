@@ -10,11 +10,11 @@ import Gtk from 'gi://Gtk';
 
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import { COLOUR_TOKENS } from './lib/theme.js';
-import { rgbaToHex, hexToRgba, swatchMarkup } from './lib/prefsHelpers.js';
+import { COLOUR_TOKENS, systemDefaults } from './lib/theme.js';
+import { rgbaToHex, hexToRgba, swatchMarkup, ubuntuControls, themeForFollow } from './lib/prefsHelpers.js';
 import { upsertEntry, removeEntry, errorsFor, suggestId } from './lib/commandsDoc.js';
 import { CommandsStore } from './common/commandsStore.js';
-import { PALETTES, matchPalette, paletteValues } from './lib/palettes.js';
+import { PALETTES, FOLLOW_SYSTEM_ID, matchPalette, paletteValues } from './lib/palettes.js';
 
 const TOKEN_LABELS = {
     'primary': ['Accent', 'Selected row and active tab'],
@@ -338,14 +338,37 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
     _appearancePage(settings) {
         const page = new Adw.PreferencesPage({ title: 'Appearance', icon_name: 'applications-graphics-symbolic', name: 'appearance' });
 
-        // Colour themes (D17): picking one writes all nine colour keys; editing any colour below
+        // Colour themes (D17, D18): picking one writes all nine colour keys; editing any colour below
         // shows "Custom". A menu button opens a tall list (taller than GTK's dropdown allows) where
         // every theme shows its swatches and the active one is ticked. The list follows the
-        // settings, so changes made elsewhere show here too.
+        // settings, so changes made elsewhere show here too. "Ubuntu" is one entry: following the
+        // system (every colour key empty, the default), or, with following off, a fixed Light or Dark.
         const themes = new Adw.PreferencesGroup({ title: 'Colour theme' });
-        const themeRow = new Adw.ActionRow({ title: 'Theme', subtitle: 'Noctalia and Gogh palettes' });
+        const themeRow = new Adw.ActionRow({ title: 'Theme', subtitle: 'Ubuntu, Noctalia and Gogh palettes' });
+        // What the empty keys resolve to, read the way the shell reads it: prefer-dark is dark, and
+        // the accent as libadwaita draws it (on Ubuntu, the Yaru hue; St's orange is a shade darker).
+        const iface = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
+        const styleManager = Adw.StyleManager.get_default();
+        const sysDefaults = () => {
+            const c = styleManager.get_accent_color_rgba();
+            const d = systemDefaults({
+                dark: iface.get_string('color-scheme') === 'prefer-dark',
+                accent: rgbaToHex({ red: c.red, green: c.green, blue: c.blue }),
+            });
+            // libadwaita's accent is a shade lighter than the one the shell draws, so the contrast
+            // rule could pick black here where the shell draws white. Ubuntu's shell draws white on
+            // its accents (only dark-style brown falls under 4.5:1), so the preview shows white.
+            return { ...d, 'on-primary': '#ffffff' };
+        };
         const currentValues = () => Object.fromEntries(Object.keys(COLOUR_TOKENS).map(t => [t, settings.get_string(`theme-${t}`)]));
-        const currentColours = () => Object.fromEntries(Object.keys(COLOUR_TOKENS).map(t => [t, settings.get_string(`theme-${t}`) || COLOUR_TOKENS[t]]));
+        const currentColours = () => {
+            const d = sysDefaults();
+            return Object.fromEntries(Object.keys(COLOUR_TOKENS).map(t => [t, settings.get_string(`theme-${t}`) || d[t]]));
+        };
+        const writeTheme = id => {
+            for (const [token, value] of Object.entries(paletteValues(id)))
+                settings.set_string(`theme-${token}`, value);
+        };
 
         const buttonName = new Gtk.Label();
         const buttonSwatches = new Gtk.Label({ use_markup: true });
@@ -356,7 +379,11 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         const menu = new Gtk.MenuButton({ child: buttonBox, valign: Gtk.Align.CENTER, css_classes: ['flat'] });
 
         const list = new Gtk.ListBox({ selection_mode: Gtk.SelectionMode.NONE, css_classes: ['navigation-sidebar'] });
-        const entries = [...PALETTES.map(p => ({ id: p.id, name: p.name, colours: p.colours })), { id: null, name: 'Custom' }];
+        const entries = [
+            { id: FOLLOW_SYSTEM_ID, name: 'Ubuntu', colours: null },  // swatches: what it currently resolves to
+            ...PALETTES.filter(p => p.family !== 'ubuntu').map(p => ({ id: p.id, name: p.name, colours: p.colours })),
+            { id: null, name: 'Custom' },
+        ];
         const rows = entries.map(entry => {
             const check = new Gtk.Image({ icon_name: 'object-select-symbolic', opacity: 0 });
             const name = new Gtk.Label({ label: entry.name, xalign: 0, hexpand: true });
@@ -376,8 +403,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
             const id = row._entry.id;
             if (!id)
                 return;  // "Custom" is shown, not chosen
-            for (const [token, value] of Object.entries(paletteValues(id)))
-                settings.set_string(`theme-${token}`, value);
+            writeTheme(id);  // "Ubuntu" from the list means following the system
             menu.popdown();
         });
         // Tall enough for every theme on a typical screen; scrolls only when the screen is shorter.
@@ -389,44 +415,86 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         themeRow.add_suffix(menu);
         themeRow.activatable_widget = menu;
         themes.add(themeRow);
+
+        // Shown while Ubuntu is the theme. On = follow the system (keys empty); off = the variant now
+        // shown, fixed, with Ubuntu orange, and the Light / Dark choice appears.
+        const followRow = new Adw.SwitchRow({
+            title: 'Use Ubuntu\'s style and accent colour',
+            subtitle: 'Follows Light or Dark and the accent colour in GNOME Settings → Appearance',
+        });
+        const styleRow = new Adw.ComboRow({ title: 'Style', model: Gtk.StringList.new(['Light', 'Dark']) });
+        themes.add(followRow);
+        themes.add(styleRow);
         page.add(themes);
 
+        let syncingTheme = false;
+        followRow.connect('notify::active', () => {
+            if (!syncingTheme)
+                writeTheme(themeForFollow(followRow.active, iface.get_string('color-scheme') === 'prefer-dark'));
+        });
+        styleRow.connect('notify::selected', () => {
+            if (!syncingTheme)
+                writeTheme(styleRow.selected === 1 ? 'ubuntu-dark' : 'ubuntu-light');
+        });
+
         const syncTheme = () => {
-            const id = matchPalette(currentValues());
-            const active = entries.find(e => e.id === id) ?? entries[entries.length - 1];
+            const id = matchPalette(currentValues(), sysDefaults());
+            const ui = ubuntuControls(id);
+            const active = ui.ubuntu ? entries[0] : entries.find(e => e.id === id) ?? entries[entries.length - 1];
             buttonName.label = active.name;
-            buttonSwatches.set_markup(swatchMarkup(active.colours ?? currentColours()));
+            buttonSwatches.set_markup(swatchMarkup(currentColours()));
             for (const row of rows) {
                 row._check.opacity = row._entry === active ? 1 : 0;
-                row._sw.set_markup(swatchMarkup(row._entry.colours ?? currentColours()));
+                row._sw.set_markup(swatchMarkup(row._entry.colours ?? (row._entry.id ? sysDefaults() : currentColours())));
             }
+            syncingTheme = true;
+            followRow.visible = ui.ubuntu;
+            followRow.active = ui.follow;
+            styleRow.visible = ui.styleVisible;
+            styleRow.selected = ui.styleDark ? 1 : 0;
+            syncingTheme = false;
         };
         for (const token of Object.keys(COLOUR_TOKENS))
             watch(settings, `theme-${token}`, themeRow, syncTheme);
+        // The system side of "Ubuntu": restyle the swatches when the style or accent changes.
+        const colourSyncs = [];  // the colour rows below show the default for an empty key
+        const onSystem = () => {
+            syncTheme();
+            colourSyncs.forEach(f => f());
+        };
+        const ifaceIds = ['changed::color-scheme', 'changed::accent-color'].map(sig => iface.connect(sig, onSystem));
+        const accentId = styleManager.connect('notify::accent-color-rgba', onSystem);
+        themeRow.connect('destroy', () => {
+            ifaceIds.forEach(id => iface.disconnect(id));
+            styleManager.disconnect(accentId);
+        });
 
         const colours = new Adw.PreferencesGroup({
             title: 'Colours',
-            description: 'Defaults are Noctalia\'s dark palette. Other extensions may change these unless locked below.',
+            description: 'Defaults are Ubuntu\'s, following your system\'s style and accent colour. Other extensions may change these unless locked below.',
         });
-        for (const [token, fallback] of Object.entries(COLOUR_TOKENS)) {
+        for (const token of Object.keys(COLOUR_TOKENS)) {
             const key = `theme-${token}`;
+            const fallback = () => sysDefaults()[token];
             const [title, subtitle] = TOKEN_LABELS[token] ?? [token, ''];
             const row = new Adw.ActionRow({ title, subtitle });
             const picker = new Gtk.ColorDialogButton({ dialog: new Gtk.ColorDialog({ with_alpha: true }), valign: Gtk.Align.CENTER });
             const reset = new Gtk.Button({ icon_name: 'edit-undo-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Use the default', css_classes: ['flat'] });
             let syncing = false;
-            watch(settings, key, row, () => {
+            const sync = () => {
                 syncing = true;
-                picker.rgba = new Gdk.RGBA(hexToRgba(settings.get_string(key), fallback));
+                picker.rgba = new Gdk.RGBA(hexToRgba(settings.get_string(key), fallback()));
                 reset.sensitive = settings.get_string(key) !== '';
                 syncing = false;
-            });
+            };
+            watch(settings, key, row, sync);
+            colourSyncs.push(sync);
             picker.connect('notify::rgba', () => {
                 if (syncing)
                     return;
                 const hex = rgbaToHex(picker.rgba);
                 // Picking the default colour stores "use the default", so later default changes apply.
-                settings.set_string(key, hex === fallback ? '' : hex);
+                settings.set_string(key, hex === fallback() ? '' : hex);
             });
             reset.connect('clicked', () => settings.reset(key));
             row.add_suffix(picker);

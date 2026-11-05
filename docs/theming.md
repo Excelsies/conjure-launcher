@@ -1,7 +1,8 @@
 # Theming contract
 
 Conjure Launcher draws every colour, corner radius and font from a set of **theme tokens**. The
-default palette is Noctalia's dark palette. Any program can override tokens by writing the
+default is Ubuntu's look, following the system: Ubuntu Light or Ubuntu Dark from the system's style,
+with the shell's accent colour. Any program can override tokens by writing the
 launcher's GSettings keys; the panel restyles live, with no reload.
 
 This file is the public interface. Key names, types and meanings below are stable: renaming or
@@ -12,21 +13,26 @@ Schema: `org.gnome.shell.extensions.conjure-launcher`
 
 ## Colour tokens
 
-Type `s`. The empty string (the default) means "use the built-in value". Accepted formats:
+Type `s`. The empty string (the default) means "use the built-in value", which follows the system:
+it is the Ubuntu Light value, or the Ubuntu Dark value when `org.gnome.desktop.interface color-scheme`
+is `prefer-dark`, and `primary` is the accent colour GNOME Shell draws (Settings → Appearance), live.
+An empty key keeps following the system while others are set. Accepted formats:
 `#rgb`, `#rrggbb`, `#rrggbbaa`. An unparseable value is logged with its key name and that one token
 falls back to its default. The rest of the theme is unaffected.
 
-| Key | Used for | Built-in default |
+| Key | Used for | Built-in default: Light / Dark |
 |---|---|---|
-| `theme-primary` | Selected row fill, focus accents | `#fff59b` |
-| `theme-on-primary` | Text and glyphs on `primary` | `#0e0e43` |
-| `theme-surface` | Panel background | `#070722` |
-| `theme-surface-container` | Search toolbar and card backgrounds | `#11112d` |
-| `theme-on-surface` | Primary text | `#f3edf7` |
-| `theme-on-surface-variant` | Subtitles, hints, inactive glyphs | `#7c80b4` |
-| `theme-outline-variant` | 1px card and panel borders | `#21215f` |
-| `theme-hover` | Hovered row fill | `#9bfece` |
-| `theme-on-hover` | Text on `hover` | `#0e0e43` |
+| `theme-primary` | Selected row fill, focus accents | the system accent (Ubuntu orange `#d34615` if unreadable) |
+| `theme-on-primary` | Text and glyphs on `primary` | the shell's accent text colour if it reaches 4.5:1, else white, else black |
+| `theme-surface` | Panel background | `#ffffff` / `#36363a` |
+| `theme-surface-container` | Search toolbar and card backgrounds | `#ededed` / `#414144` |
+| `theme-on-surface` | Primary text | `#222222` / `#ffffff` |
+| `theme-on-surface-variant` | Subtitles, hints, inactive glyphs | `#7b7b7b` / `#9b9b9d` |
+| `theme-outline-variant` | 1px card and panel borders | `#ededed` / `#424247` |
+| `theme-hover` | Hovered row fill | `#e9e9e9` / `#4e4e52` |
+| `theme-on-hover` | Text on `hover` | `#222222` / `#ffffff` |
+
+The defaults were Noctalia's dark palette before version 0.7.0; Noctalia is now a preset.
 
 ## Other tokens
 
@@ -38,9 +44,11 @@ falls back to its default. The rest of the theme is unaffected.
 
 ## Presets
 
-Settings → Appearance offers 20 built-in themes (`lib/palettes.js`). Picking one writes the nine
-colour keys above, exactly as an integration would. The default theme, Noctalia, writes empty
-strings. The picker shows "Custom" when the keys match no preset. A preset is not a separate
+Settings → Appearance offers Ubuntu plus 20 built-in themes (`lib/palettes.js`). Picking one writes
+the nine colour keys above, exactly as an integration would. "Ubuntu" with "Use Ubuntu's style and
+accent colour" on (the default) writes empty strings, so it follows the system; with it off, Ubuntu
+Light or Ubuntu Dark is written as fixed values with Ubuntu orange. The picker shows "Custom" when the
+keys match no preset. A preset is not a separate
 setting, so an integration that writes the keys simply replaces it. The picker does not check
 `theme-overrides-locked`: the lock is there to protect what the user chose, and the picker is the
 user choosing.

@@ -10,13 +10,14 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { PanelLifecycle } from '../lib/lifecycle.js';
 import { QueryController } from '../lib/queryController.js';
-import { resolveTheme, styles, COLOUR_TOKENS } from '../lib/theme.js';
+import { resolveTheme, styles, systemDefaults, COLOUR_TOKENS } from '../lib/theme.js';
 import { panelRect } from '../lib/placement.js';
 import { togglePin } from '../lib/views.js';
 import { LauncherPanel, PANEL_HEIGHT } from '../ui/panel.js';
 import { UsageFile } from './usageFile.js';
 import { DmenuProvider } from '../providers/dmenu.js';
 import { AutoPaste } from './autoPaste.js';
+import { SystemStyle } from './systemStyle.js';
 
 const THEME_KEYS = [...Object.keys(COLOUR_TOKENS).map(k => `theme-${k}`), 'theme-radius-scale', 'theme-font-family'];
 
@@ -42,11 +43,11 @@ export class Launcher {
             { log, logError });
         this._usageLoaded = this._usage.load();
 
+        this.systemStyle = new SystemStyle({ logError, onChange: () => this._restyle() });
         this._styles = this._computeStyles();
         this._settingsIds = [settings.connect('changed', (_s, key) => {
             if (THEME_KEYS.includes(key)) {
-                this._styles = this._computeStyles();
-                this._panel?.applyStyles(this._styles);
+                this._restyle();
             } else if (key === 'app-grid') {
                 this._panel?.setGrid(settings.get_boolean('app-grid'));
             } else if (key === 'pinned') {
@@ -143,6 +144,12 @@ export class Launcher {
         for (const id of this._settingsIds)
             this._settings.disconnect(id);
         this._settingsIds = [];
+        this.systemStyle.destroy();
+    }
+
+    _restyle() {
+        this._styles = this._computeStyles();
+        this._panel?.applyStyles(this._styles);
     }
 
     _computeStyles() {
@@ -151,7 +158,7 @@ export class Launcher {
             values[name] = this._settings.get_string(`theme-${name}`);
         values['radius-scale'] = this._settings.get_double('theme-radius-scale');
         values['font-family'] = this._settings.get_string('theme-font-family');
-        const theme = resolveTheme(values);
+        const theme = resolveTheme(values, systemDefaults(this.systemStyle.get()));
         for (const key of theme.invalid)
             this._log(`theme-${key} has an invalid value; using the default`);
         return styles(theme);

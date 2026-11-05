@@ -70,3 +70,10 @@ Ten of the colour themes in `lib/palettes.js` (One Half Black, Moonfly, Gotham, 
 Owl, Aura, Oxocarbon, Oceanic Next, Molokai, Tomorrow Night) are mapped from terminal palettes in the
 Gogh collection (https://github.com/Gogh-Co/Gogh), as bundled with Ptyxis 50.1. Gogh is dual-licensed
 under the MIT License and the Apache License 2.0; these are used under the MIT License.
+
+## Yaru (Ubuntu)
+
+The Ubuntu Light and Ubuntu Dark colour values in `lib/theme.js` were read from the Yaru GNOME Shell
+theme (`yaru-theme-gnome-shell` 26.04.5.1ubuntu, https://github.com/ubuntu/yaru, GPL-3.0+). Only
+individual colour values are used; no Yaru source, stylesheet or asset is included. The accent
+colours are not bundled: they are read at runtime from the running GNOME Shell.
