@@ -8,6 +8,7 @@ import Shell from 'gi://Shell';
 import * as ParentalControlsManager from 'resource:///org/gnome/shell/misc/parentalControlsManager.js';
 
 import { scoreApp, MAX_APP_RESULTS } from '../lib/appScore.js';
+import { typoScore } from '../lib/typo.js';
 import { categoryFor } from '../lib/views.js';
 import { isMatch } from '../lib/fzy.js';
 
@@ -79,7 +80,9 @@ export class AppsProvider {
 
         const out = [];
         for (const e of this._entries) {
-            const s = scoreApp(pattern, e.score);
+            let s = scoreApp(pattern, e.score);
+            if (!isMatch(s))
+                s = typoScore(pattern, e.score.nameLower);  // listed, but below every real match
             if (isMatch(s))
                 out.push(toResult(e, s));
         }

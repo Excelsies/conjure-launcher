@@ -82,6 +82,9 @@ export async function run() {
     panel.setText('zzzzqqqxx');
     await sleep(50);
     t.equal('a query that matches nothing shows no rows', launcher.panel.rows.length, 0);
+    panel.setText('alpah');
+    await sleep(50);
+    t.check('a typo still finds the app ("alpah" -> Conjure Test Alpha)', titles().includes('Conjure Test Alpha'), JSON.stringify(titles()));
     panel.setText('/');
     await sleep(50);
     t.equal('a bare "/" is the provider overview (providers, not apps)',

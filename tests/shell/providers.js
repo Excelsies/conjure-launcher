@@ -72,6 +72,13 @@ export async function run() {
     await pressKeys(Clutter.KEY_Return);
     t.check('Enter on the result closes the launcher', await waitFor(() => !launcher.isOpen, 1000));
     t.equal('and copies the value', await clipboardText(), '36');
+    await openWith('10 km to mi');
+    t.equal('a unit conversion in global search shows the result first', titles()[0], '= 6.21371 mi');
+    await pressKeys(Clutter.KEY_Return);
+    await waitFor(() => !launcher.isOpen, 1000);
+    t.equal('and Enter copies the number', await clipboardText(), '6.21371');
+    await openWith('10 kg to km');
+    t.check('units that measure different things give no result', !titles().some(x => x?.startsWith('=')), JSON.stringify(titles()));
     await openWith('/calc 2^10 + 0.1 + 0.2');
     t.equal('/calc evaluates with float noise hidden', titles(), ['= 1024.3']);
     await type('/calc constructor');
