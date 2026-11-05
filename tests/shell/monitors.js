@@ -27,14 +27,21 @@ export async function run() {
     const wins = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, null);
     t.check('two test windows', wins.length >= 2, `${wins.length}`);
     const [a, b] = wins;
-    a.move_to_monitor(1);
-    b.move_to_monitor(0);
-    await sleep(200);
+    // Under load the windows' own initial placement can land after a move and undo it, so keep
+    // moving until both are where the checks below need them.
+    const placed = await waitFor(() => {
+        if (a.get_monitor() !== 1)
+            a.move_to_monitor(1);
+        if (b.get_monitor() !== 0)
+            b.move_to_monitor(0);
+        return a.get_monitor() === 1 && b.get_monitor() === 0;
+    }, 10000);
+    t.check('the test windows are on monitors 1 and 0', placed, `a on ${a.get_monitor()}, b on ${b.get_monitor()}`);
 
     // --- Which monitor ---
     t.equal('default monitor setting is focused', own.get_string('monitor'), 'focused');
     Main.activateWindow(a);
-    await waitFor(() => global.display.focus_window === a, 5000);
+    t.check('the window on monitor 1 has focus', await waitFor(() => global.display.focus_window === a, 10000));
     launcher.open();
     await sleep(50);
     t.check('opens on the monitor of the focused window', inside(launcher.lastRect, m1), JSON.stringify(launcher.lastRect));

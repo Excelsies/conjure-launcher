@@ -251,7 +251,9 @@ default Noctalia palette), with these differences:
 The shell runner (`tools/shell-test.sh`) gives each script its own D-Bus session, temporary XDG
 directories, fixture apps and a fixture search provider. It disables the machine's own search
 providers and stubs session actions, because the sandbox shares the real system bus. It fails a
-script that logs GLib or GJS criticals, even when every check passed. Optional `<script>.setup.sh`
+script that logs GLib or GJS criticals, even when every check passed (`tools/lib/criticals.js`). The one
+exemption is GNOME Shell's own UI touched after disposal while the shell shuts down: an "already
+disposed" critical after the script's last check whose whole stack is in the shell's own code. Optional `<script>.setup.sh`
 and `<script>.monitors` files seed settings and set the virtual monitors.
 
 `tools/screenshots.sh` regenerates `docs/screenshots/` with the same runner, showing only a fixed set

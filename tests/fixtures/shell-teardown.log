@@ -1,0 +1,19 @@
+GNOME Shell-Message: 17:26:59.213: # 30/30 passed
+(gnome-shell:2548923): Gjs-CRITICAL **: 17:26:59.254: Object St.BoxLayout (0x58416b5db5b0), has been already disposed — impossible to access it. This might be caused by the object having been destroyed from C code using something such as destroy(), dispose(), or remove() vfuncs.
+== Stack trace for context 0x58416823ccf0 ==
+#0   7fff226f67a0 b   resource:///org/gnome/shell/ui/popupMenu.js:915 (19b011557470 @ 22)
+#1   7fff226f6860 b   resource:///org/gnome/shell/ui/popupMenu.js:933 (19b011557600 @ 23)
+#2   58416830d3d8 i   resource:///org/gnome/shell/ui/status/backgroundApps.js:207 (1cce521bba60 @ 107)
+#3   58416830d358 i   resource:///org/gnome/shell/ui/status/backgroundApps.js:163 (1cce521bb8d0 @ 12)
+#4   58416830d2b8 i   resource:///org/gnome/shell/ui/main.js:292 (23b4aeefb7e0 @ 119)
+
+(gnome-shell:2548923): Gjs-CRITICAL **: 17:26:59.255: Object Gjs_ui_popupMenu_PopupMenuItem (0x58416b5d2ad0), has been already disposed — impossible to set any property on it. This might be caused by the object having been destroyed from C code using something such as destroy(), dispose(), or remove() vfuncs.
+== Stack trace for context 0x58416823ccf0 ==
+#0   58416830d3d8 i   resource:///org/gnome/shell/ui/status/backgroundApps.js:243 (1cce521bba60 @ 341)
+#1   58416830d358 i   resource:///org/gnome/shell/ui/status/backgroundApps.js:163 (1cce521bb8d0 @ 12)
+#2   58416830d2b8 i   resource:///org/gnome/shell/ui/main.js:292 (23b4aeefb7e0 @ 119)
+Gdk-Message: 17:26:59.322: Lost connection to Wayland compositor.
+Gdk-Message: 17:26:59.323: Error reading events from display: Broken pipe
+Gdk-Message: 17:26:59.323: Lost connection to Wayland compositor.
+libmutter-Message: 17:26:59.344: Removed virtual monitor Meta-0
+

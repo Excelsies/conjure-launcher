@@ -145,12 +145,12 @@ for script in "$@"; do
     reap_sandbox
     if [[ -n "${CONJURE_TEST_VERBOSE:-}" ]]; then cat "$log"; fi
     grep -E '(: |^)(ok|not ok|#) |\[conjure-launcher\]|JS ERROR|JS WARNING|Extension .*(error|Error)' "$log" || true
-    # Runtime criticals (test-harness pattern 8): a green script must not hide errors the platform
-    # only logs. Allowed, with reasons: our own "[conjure-launcher]" lines (tests inject failures on
-    # purpose and the extension logs them) and the harness's own "Script failed" line.
-    crit="$(grep -E 'CRITICAL \*\*|JS ERROR|JS WARNING|Failed to set text .* from markup' "$log" \
-        | grep -v -E '\[conjure-launcher\]|Script failed' \
-        | { if [[ -n "${CONJURE_TEST_EXTRA_ALLOWED:-}" ]]; then grep -v -E "$CONJURE_TEST_EXTRA_ALLOWED"; else cat; fi; } || true)"
+    # Runtime criticals: a green script must not hide errors the platform only logs. The rules and
+    # the one exemption (GNOME Shell's own UI touched after disposal at shutdown) are in
+    # tools/lib/criticals.js. If the classifier itself fails, the script fails.
+    if ! crit="$(gjs -m "$root/tools/criticals-cli.js" "$log" "${CONJURE_TEST_EXTRA_ALLOWED:-}")"; then
+        crit="criticals classifier failed on $log"
+    fi
     if [[ -n "$crit" ]]; then
         echo "FAILED ($(basename "$script")): runtime criticals in the shell log:"
         sed 's/^/    /' <<<"$crit" | head -n 20
