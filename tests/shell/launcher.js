@@ -162,9 +162,32 @@ export async function run() {
     t.check('usage.json is written under the sandboxed XDG_STATE_HOME',
         file.query_exists(null) && launcher.usage.path.startsWith(GLib.getenv('XDG_STATE_HOME')), launcher.usage.path);
 
+    t.equal('by default, Return on an app asks for a new window', launched[0][1], true);
+    const enter = async (...mods) => {
+        const before = launched.length;
+        launcher.open();
+        await pressKeys(...mods, Clutter.KEY_Return);
+        await waitFor(() => launched.length > before, 1000);
+        return launched.at(-1)?.[1];
+    };
+    t.equal('Ctrl+Return does the other action: switch to it', await enter(Clutter.KEY_Control_L), false);
+    // A real middle-click through a virtual pointer.
     launcher.open();
-    await pressKeys(Clutter.KEY_Control_L, Clutter.KEY_Return);
-    t.check('Ctrl+Return asks for a new window', await waitFor(() => launched.at(-1)?.[1] === true, 1000), JSON.stringify(launched.at(-1)));
+    await sleep(300);
+    const row = launcher.panel.rows[0].actor;
+    const [rx, ry] = row.get_transformed_position();
+    const mouse = Clutter.get_default_backend().get_default_seat().create_virtual_device(Clutter.InputDeviceType.POINTER_DEVICE);
+    const before = launched.length;
+    mouse.notify_absolute_motion(GLib.get_monotonic_time(), rx + 40, ry + row.height / 2);
+    await sleep(80);
+    mouse.notify_button(GLib.get_monotonic_time(), Clutter.BUTTON_MIDDLE, Clutter.ButtonState.PRESSED);
+    mouse.notify_button(GLib.get_monotonic_time(), Clutter.BUTTON_MIDDLE, Clutter.ButtonState.RELEASED);
+    await waitFor(() => launched.length > before, 1000);
+    t.equal('a middle-click also does the other action', launched.at(-1)?.[1], false);
+    own.set_string('running-app-action', 'switch');
+    t.equal('with "Switch to it", Return switches', await enter(), false);
+    t.equal('and Ctrl+Return opens a new window', await enter(Clutter.KEY_Control_L), true);
+    own.reset('running-app-action');
 
     apps.activate = () => {
         throw new Error('gone');

@@ -91,6 +91,8 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         const content = new Adw.PreferencesGroup({ title: 'Content' });
         content.add(comboRow(settings, 'default-view', 'Opening view', 'Shown before you type; its tab comes first',
             [['recent', 'Recent'], ['pinned', 'Pinned'], ['all', 'All'], ['categories', 'Categories']]));
+        content.add(comboRow(settings, 'running-app-action', 'When the app is already open', 'What Enter or a click does; Ctrl+Enter or middle-click does the other',
+            [['new-window', 'Open a new window'], ['switch', 'Switch to it']]));
         content.add(switchRow(settings, 'app-grid', 'Grid layout', 'Large icons in rows of five (Ctrl+G in the launcher)'));
         const prefix = new Adw.EntryRow({ title: 'Provider prefix (e.g. / for /calc)', show_apply_button: true });
         watch(settings, 'provider-prefix', prefix, () => {

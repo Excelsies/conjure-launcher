@@ -17,7 +17,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 | Area | Files |
 |---|---|
 | Entry point | `extension.js` (enable / disable, provider list) |
-| Pure logic (no `gi://` imports; unit-tested under Node, enforced by ESLint) | `lib/`: `fzy`, `appScore`, `ranking`, `router`, `queryController`, `usage`, `views`, `navigation`, `lifecycle`, `takeover`, `placement`, `theme`, `palettes`, `calc`, `emoji`, `session`, `commands`, `commandsDoc`, `paste`, `overview`, `builtins`, `prefsHelpers`, `typo`, `units`, `clipHistory`, `thumbnails` |
+| Pure logic (no `gi://` imports; unit-tested under Node, enforced by ESLint) | `lib/`: `fzy`, `appScore`, `ranking`, `router`, `queryController`, `usage`, `views`, `navigation`, `lifecycle`, `takeover`, `placement`, `theme`, `palettes`, `calc`, `emoji`, `session`, `commands`, `commandsDoc`, `paste`, `overview`, `builtins`, `prefsHelpers`, `appActivation`, `typo`, `units`, `clipHistory`, `thumbnails` |
 | Shell integration | `shell/launcher.js` (panel lifecycle, query wiring, theming), `shell/keybinding.js`, `shell/systemStyle.js`, `shell/usageFile.js`, `shell/settingsAdapters.js`, `shell/clipboard.js`, `shell/autoPaste.js`, `shell/dbusService.js` |
 | UI | `ui/panel.js`, `stylesheet.css` (layout only; every color is a theme token) |
 | Providers | `providers/apps.js`, `calc.js`, `emoji.js`, `windows.js`, `session.js`, `searchProviders.js`, `commands.js`, `wallpaper.js`, `clipboard.js`, `settingsPanels.js`, `recentFiles.js`, `dmenu.js` |
@@ -93,7 +93,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 
 | Trigger | Provider | Behavior |
 |---|---|---|
-| (global) | Apps | `Shell.AppSystem`. Enter calls `app.activate()`: it focuses a running app or starts it. Ctrl+Enter or middle-click opens a new window |
+| (global) | Apps | `Shell.AppSystem`. An app that is not running starts. For one that is, Enter or a click opens a new window (`running-app-action`, default) or switches to it; Ctrl+Enter or middle-click does the other (`lib/appActivation.js`). An app that cannot open a second window switches |
 | `/calc` (also global) | Calculator | A recursive-descent parser over a fixed table of operators, functions and constants (`lib/calc.js`). No `eval`, no `Function`, no property lookups; input over 200 characters or nested deeper than 64 is refused. `<amount> <unit> to <unit>` converts units (`lib/units.js`: length, mass, volume, area, time, speed, data size, temperature; no currency). Enter copies the result |
 | `/emo` | Emoji | Substring scoring over names and keywords (`data/emoji.json`), at most 100 results. Enter copies |
 | `/win` | Windows | Open windows, most recently used first. Enter switches to the window; the actions menu adds minimize or restore, move to workspace N, and close (`Meta.Window.delete`, so the app's own "save changes?" prompt applies) |
@@ -200,6 +200,7 @@ Schema `org.gnome.shell.extensions.conjure-launcher`. Theme keys are in `docs/th
 | `width` | `760` | Panel width, 560-1100 logical pixels (the height is 620) |
 | `search-position` | `bottom` | Search field at the `bottom` or `top` of the panel |
 | `default-view` | `recent` | `recent`, `pinned`, `all` or `categories` |
+| `running-app-action` | `new-window` | For an app that is already open, Enter or a click opens a `new-window` or does `switch`; Ctrl+Enter and middle-click do the other |
 | `app-grid` | `false` | Grid instead of list |
 | `pinned` | `[]` | Pinned app ids, in order |
 | `provider-prefix` | `/` | Character that starts a trigger |

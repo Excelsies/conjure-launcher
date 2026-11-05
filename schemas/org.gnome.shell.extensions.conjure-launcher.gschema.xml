@@ -50,6 +50,14 @@
       <default>'recent'</default>
       <summary>View shown when the launcher opens; its tab comes first</summary>
     </key>
+    <key name="running-app-action" type="s">
+      <choices>
+        <choice value="new-window"/>
+        <choice value="switch"/>
+      </choices>
+      <default>'new-window'</default>
+      <summary>What Enter or a click does with an app that is already open: open a new window (default) or switch to it. Ctrl+Enter and middle-click do the other</summary>
+    </key>
     <key name="app-grid" type="b">
       <default>false</default>
       <summary>Show results as a grid of icons instead of a list (Ctrl+G toggles)</summary>

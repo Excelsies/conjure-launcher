@@ -137,7 +137,7 @@ export class LauncherPanel {
      *          searchPosition: 'bottom'|'top', defaultView: string, grid: boolean,
      *          pinned: () => string[],
      *          onQuery: (text: string) => void,
-     *          onActivate: (result, opts: {newWindow: boolean}) => void,
+     *          onActivate: (result, opts: {alternate: boolean}) => void,   alternate = Ctrl or middle-click held
      *          onActions: (result) => {id: string, label: string, icon?: string}[],
      *          onRunAction: (result, actionId: string) => void,
      *          onTogglePin: (result) => void, onMovePin?: (result, delta: number) => void,
@@ -583,7 +583,7 @@ export class LauncherPanel {
             this._runMenuItem(item);
             return;
         }
-        this._opts.onActivate(item.result, { newWindow: Boolean(opts.newWindow) });
+        this._opts.onActivate(item.result, { alternate: Boolean(opts.alternate) });
     }
 
     _runMenuItem(item) {
@@ -609,7 +609,7 @@ export class LauncherPanel {
             return Clutter.EVENT_PROPAGATE;
         const ctrl = (event.get_state() & Clutter.ModifierType.CONTROL_MASK) !== 0;
         this.selectedIndex = item.index;
-        this.activateIndex(item.index, { newWindow: ctrl || button === Clutter.BUTTON_MIDDLE });
+        this.activateIndex(item.index, { alternate: ctrl || button === Clutter.BUTTON_MIDDLE });
         return Clutter.EVENT_STOP;
     }
 
@@ -663,7 +663,7 @@ export class LauncherPanel {
             if (shift && !this.menu && !this._opts.scoped)
                 this.openMenu(this._items[this.selectedIndex]?.result);
             else
-                this.activateIndex(this.selectedIndex, { newWindow: ctrl });
+                this.activateIndex(this.selectedIndex, { alternate: ctrl });
             return Clutter.EVENT_STOP;
         }
         if (ctrl && (sym === Clutter.KEY_Tab || sym === Clutter.KEY_ISO_Left_Tab)) {

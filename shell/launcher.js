@@ -13,6 +13,7 @@ import { QueryController } from '../lib/queryController.js';
 import { resolveTheme, styles, systemDefaults, COLOR_TOKENS } from '../lib/theme.js';
 import { panelRect } from '../lib/placement.js';
 import { togglePin, movePin } from '../lib/views.js';
+import { wantsNewWindow } from '../lib/appActivation.js';
 import { LauncherPanel, PANEL_HEIGHT } from '../ui/panel.js';
 import { UsageFile } from './usageFile.js';
 import { DmenuProvider } from '../providers/dmenu.js';
@@ -332,7 +333,7 @@ export class Launcher {
         return this._providers.find(p => p.id === result.providerId);
     }
 
-    _activate(result, { newWindow }) {
+    _activate(result, { alternate }) {
         if (this._dmenu) {
             const pending = this._dmenu;
             this._dmenu = null;
@@ -354,7 +355,7 @@ export class Launcher {
         }
         const previous = this._previousWindow;
         try {
-            provider.activate(result, { newWindow });
+            provider.activate(result, { newWindow: wantsNewWindow(this._settings.get_string('running-app-action'), alternate) });
             if (result.copies)
                 this.autoPaste.after(previous, { copied: true });
         } catch (e) {

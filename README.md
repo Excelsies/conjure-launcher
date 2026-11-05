@@ -5,7 +5,7 @@ A keyboard-first application launcher for GNOME Shell 50+, modeled on the launch
 because Mutter does not implement `wlr-layer-shell`, so a standalone Wayland launcher cannot draw
 over the desktop. It opens on Super+Space, in place of GNOME's "Show Apps" grid.
 
-Version 0.8.1. How it works is described in `docs/architecture.md`; the theming interface for
+Version 0.8.2. How it works is described in `docs/architecture.md`; the theming interface for
 other programs is in `docs/theming.md`.
 
 ## Screenshots
@@ -79,7 +79,7 @@ gives it back when disabled.
 | Type | Search all apps (fuzzy; typos such as "termnial" for Terminal are listed after real matches) |
 | Up / Down, Tab / Shift+Tab, Ctrl+N / Ctrl+P | Move the selection (Left / Right too in the grid) |
 | Page Up / Page Down | Move by a page |
-| Enter | Open (or switch to) the app; Ctrl+Enter or middle-click opens a new window |
+| Enter, click | Start the app, or when it is already open, open a new window (Settings → General can make this switch to the open app instead); Ctrl+Enter or middle-click does the other |
 | Shift+Enter, right-click | Actions: for apps, open, new window, the app's own actions, pin / unpin; for `/win` windows, switch, minimize or restore, move to another workspace, close |
 | Ctrl+Up / Ctrl+Down | Reorder pinned apps (Pinned view, empty search) |
 | Ctrl+Tab / Ctrl+Shift+Tab, Ctrl+1..4, or click a tab | Switch view: Recent, Pinned, All, Categories |
