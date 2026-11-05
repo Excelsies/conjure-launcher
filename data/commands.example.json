@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "ssh", "prefix": "ssh", "label": "SSH hosts", "icon": "network-server-symbolic",
+      "command": "grep -ihoP '^Host \\K[^*?\\s]+' ~/.ssh/config",
+      "exec": "ptyxis -- ssh {selection}",
+      "freeform": true
+    },
+    {
+      "id": "files", "prefix": "f", "label": "Files in home", "icon": "folder-symbolic",
+      "command": "fdfind --type f --max-depth 4 . ~ 2>/dev/null || find ~ -maxdepth 4 -type f -not -path '*/.*'",
+      "exec": "xdg-open {selection}",
+      "cache": 120
+    },
+    {
+      "id": "kube", "prefix": "kube", "label": "Kubernetes contexts", "icon": "network-workgroup-symbolic",
+      "command": "kubectl config get-contexts -o name",
+      "exec": "kubectl config use-context {selection}",
+      "cache": 60
+    },
+    {
+      "id": "web", "prefix": "g", "label": "Web search", "icon": "web-browser-symbolic",
+      "exec": "xdg-open https://duckduckgo.com/?q={query}"
+    }
+  ]
+}

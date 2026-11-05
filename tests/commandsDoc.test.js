@@ -56,3 +56,9 @@ test('suggestId makes a valid, unique id from a label', () => {
     assert.equal(suggestId(doc, 'SSH hosts'), 'ssh-hosts-2');
     assert.equal(suggestId(doc, '***'), 'command');
 });
+
+test('the editor keeps a positive cache and drops 0', () => {
+    const doc = { version: 1, entries: [{ id: 'k', prefix: 'k', command: 'true', cache: 60 }] };
+    assert.equal(upsertEntry(doc, 0, { id: 'k', prefix: 'k', command: 'true', cache: 120 }).entries[0].cache, 120);
+    assert.equal('cache' in upsertEntry(doc, 0, { id: 'k', prefix: 'k', command: 'true', cache: 0 }).entries[0], false);
+});

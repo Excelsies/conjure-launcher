@@ -67,6 +67,8 @@ const COMMANDS = {
         { id: 'slow', prefix: 'slow', label: 'Slow',
             command: "echo $$ > \"$XDG_STATE_HOME/slow.pid\"; sleep 30 & echo $! > \"$XDG_STATE_HOME/slowchild.pid\"; wait" },
         { id: 'clash', prefix: 'calc', label: 'Clash', exec: 'true' },
+        { id: 'stamp', prefix: 'stamp', label: 'Stamp', command: 'date +%s%N', cache: 2 },
+        { id: 'fresh', prefix: 'fresh', label: 'Fresh', command: 'date +%s%N' },
     ],
 };
 
@@ -91,7 +93,7 @@ export async function run() {
     // --- Command entries load from the file and reload when it changes ---
     t.equal('no commands.json means no entries', registry.entries.length, 0);
     writeText(registry.path, JSON.stringify(COMMANDS));
-    t.check('the file is picked up after it changes', await waitFor(() => registry.entries.length === 4, 3000),
+    t.check('the file is picked up after it changes', await waitFor(() => registry.entries.length === 6, 3000),
         JSON.stringify(registry.entries.map(e => e.id)));
     t.check('a prefix clashing with a built-in is dropped and reported',
         registry.errors.some(e => /clash.*prefix "calc" is already used/.test(e)), JSON.stringify(registry.errors));
@@ -125,6 +127,21 @@ export async function run() {
     await waitFor(() => !launcher.isOpen, 1000);
     t.equal('an entry without exec copies the selection', await clipboardText(), 'two');
 
+    // "cache": results kept across opens for that many seconds; without it, every open runs the command again.
+    const stampOf = async prefix => {
+        await openWith(`/${prefix}`, 400);
+        const v = titles()[0];
+        launcher.close('test');
+        await sleep(100);
+        return v;
+    };
+    const s1 = await stampOf('stamp');
+    t.equal('a cached entry shows the same results on the next open', await stampOf('stamp'), s1);
+    await sleep(2200);
+    t.check('and runs again once the cache time has passed', (await stampOf('stamp')) !== s1);
+    const f1 = await stampOf('fresh');
+    t.check('an entry without cache runs on every open', (await stampOf('fresh')) !== f1);
+
     await openWith('/web hello world', 100);
     t.equal('an exec-only entry offers one result with the typed text', titles(), ['Web: hello world']);
     await pressKeys(Clutter.KEY_Return);
@@ -155,10 +172,10 @@ export async function run() {
     // --- Reload: removed entries go; a broken file keeps the last good entries ---
     writeText(registry.path, JSON.stringify({ version: 1, entries: COMMANDS.entries.filter(e => e.id !== 'copy') }));
     t.check('removing an entry from the file removes it', await waitFor(() =>
-        !registry.entries.some(e => e.id === 'copy') && registry.entries.length === 3, 3000));
+        !registry.entries.some(e => e.id === 'copy') && registry.entries.length === 5, 3000));
     writeText(registry.path, '{ not json');
     await sleep(600);
-    t.equal('a broken file keeps the previous entries', registry.entries.map(e => e.id), ['hosts', 'web', 'slow']);
+    t.equal('a broken file keeps the previous entries', registry.entries.map(e => e.id), ['hosts', 'web', 'slow', 'stamp', 'fresh']);
 
     // --- dmenu mode through the real CLI ---
     const colors = 'red\nGreen\tcolor\nblue\n';

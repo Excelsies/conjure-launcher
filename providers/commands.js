@@ -96,18 +96,31 @@ export class CommandProvider {
         this.global = entry.global;
         this.trackUsage = true;
         this._logError = logError;
-        this._candidates = null;    // per open: Promise<{raw,title,subtitle}[]>
+        this._candidates = null;    // Promise<{raw,title,subtitle}[]>: per open, or kept for entry.cache seconds
+        this._cachedAt = 0;         // when the last successful run finished (0 = none)
         this._cancelRun = null;
     }
 
-    /** Called when the launcher closes: drop the cache and kill a command still running. */
+    /**
+     * Called when the launcher closes: kill a command still running, and drop its results unless the entry
+     * keeps them ("cache" seconds) and the run finished successfully.
+     */
     onClose() {
         this._cancelRun?.();
         this._cancelRun = null;
-        this._candidates = null;
+        if (!(this.entry.cache > 0) || !this._cachedAt)
+            this._candidates = null;
+    }
+
+    _expireCache(now = Date.now()) {
+        if (this._candidates && this.entry.cache > 0 && this._cachedAt && now - this._cachedAt > this.entry.cache * 1000) {
+            this._candidates = null;
+            this._cachedAt = 0;
+        }
     }
 
     _loadCandidates() {
+        this._cachedAt = 0;
         if (!this.entry.command)
             return Promise.resolve([]);
         const callbacks = [];
@@ -118,6 +131,7 @@ export class CommandProvider {
                     this._logError(`command for "${this.entry.id}" failed: ${r.error}`, null);
                 return [];
             }
+            this._cachedAt = Date.now();
             return parseCandidates(r.text);
         });
     }
@@ -129,6 +143,7 @@ export class CommandProvider {
             return [{ id: 'run', title: q ? `${this.entry.label}: ${q}` : this.entry.label,
                 subtitle: this.entry.exec, iconName: this.icon, raw: q, typed: q, score: 0 }];
         }
+        this._expireCache();
         this._candidates ??= this._loadCandidates();
         const copies = !this.entry.exec;
         return this._candidates.then(candidates => {

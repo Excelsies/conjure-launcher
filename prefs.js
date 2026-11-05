@@ -282,6 +282,11 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         const global = new Adw.SwitchRow({ title: 'Show in normal search too', active: entry.global === true });
         group.add(freeform);
         group.add(global);
+        const cache = Adw.SpinRow.new_with_range(0, 86400, 30);
+        cache.title = 'Keep results for (seconds)';
+        cache.subtitle = '0 runs the command on every open';
+        cache.value = Number.isInteger(entry.cache) ? entry.cache : 0;
+        group.add(cache);
         if (index === null) {
             label.connect('changed', () => {
                 if (!id._edited)
@@ -303,6 +308,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
             const fields = {
                 id: id.text, label: label.text, prefix: prefix.text, command: command.text,
                 exec: exec.text, icon: icon.text, freeform: freeform.active, global: global.active,
+                cache: Math.round(cache.value),
             };
             const next = upsertEntry(doc, index, fields);
             const errs = errorsFor(next, index ?? next.entries.length - 1);

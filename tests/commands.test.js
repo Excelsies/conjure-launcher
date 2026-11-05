@@ -3,10 +3,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, existsSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { validateCommands, parseCandidates, execArgv, MAX_CANDIDATES } from '../lib/commands.js';
+import { BUILTIN_TRIGGERS } from '../lib/builtins.js';
 
 const good = { id: 'ssh', prefix: 'ssh', label: 'SSH', command: 'echo a', exec: 'echo {selection}' };
 
@@ -91,4 +92,20 @@ test('a command runs in its own process group, so killing the group stops its ch
         }
     };
     assert.ok(!alive(grandchild), 'the background child survived the group kill');
+});
+
+test('cache: whole seconds from 0 to a day, kept on the entry (0 when absent)', () => {
+    const base = { id: 'k', prefix: 'k', command: 'true' };
+    const one = cache => validateCommands({ version: 1, entries: [{ ...base, cache }] }, []);
+    assert.equal(one(60).entries[0].cache, 60);
+    assert.equal(validateCommands({ version: 1, entries: [base] }, []).entries[0].cache, 0);
+    for (const bad of [-1, 1.5, '60', 86401])
+        assert.equal(one(bad).entries.length, 0, String(bad));
+});
+
+test('the shipped example commands file is valid', () => {
+    const data = JSON.parse(readFileSync(new URL('../data/commands.example.json', import.meta.url), 'utf8'));
+    const r = validateCommands(data, BUILTIN_TRIGGERS);
+    assert.deepEqual(r.errors, []);
+    assert.equal(r.entries.length, 4);
 });
