@@ -59,6 +59,19 @@
       <summary>Internal: written by the preferences window to ask the extension to clear launch history</summary>
       <description>Unix time of the latest request. The extension clears its history whenever the value changes.</description>
     </key>
+    <key name="clipboard-history" type="b">
+      <default>true</default>
+      <summary>Keep a history of text copies for /clip (in memory only; secrets are never stored)</summary>
+    </key>
+    <key name="clipboard-history-size" type="i">
+      <range min="10" max="200"/>
+      <default>50</default>
+      <summary>How many text copies /clip keeps</summary>
+    </key>
+    <key name="clipboard-clear-request" type="x">
+      <default>0</default>
+      <summary>Internal: written by the preferences window to ask the extension to clear the clipboard history</summary>
+    </key>
     <key name="excluded-search-providers" type="as">
       <default><![CDATA[['org.gnome.Calculator.desktop']]]></default>
       <summary>GNOME search providers left out of the launcher</summary>

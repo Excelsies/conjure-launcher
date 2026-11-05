@@ -17,6 +17,9 @@ import { WindowsProvider } from './providers/windows.js';
 import { SessionProvider } from './providers/session.js';
 import { SearchProvidersBridge } from './providers/searchProviders.js';
 import { WallpaperProvider } from './providers/wallpaper.js';
+import { ClipboardProvider } from './providers/clipboard.js';
+import { SettingsPanelsProvider } from './providers/settingsPanels.js';
+import { RecentFilesProvider } from './providers/recentFiles.js';
 import { CommandsRegistry } from './providers/commands.js';
 import { ConjureDBusService } from './shell/dbusService.js';
 
@@ -37,6 +40,9 @@ export default class ConjureLauncherExtension extends Extension {
             new WindowsProvider(),
             new SessionProvider(),
             new WallpaperProvider(this._settings),
+            new ClipboardProvider(this._settings, logError),
+            new SettingsPanelsProvider(),
+            new RecentFilesProvider(logError),
             new SearchProvidersBridge({ settings: this._settings, log, logError }),
         ];
         // Built-in triggers, fixed before user command entries are added to the same list.

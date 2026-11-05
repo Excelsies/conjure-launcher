@@ -332,6 +332,25 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         clear.add_suffix(button);
         group.add(clear);
         page.add(group);
+
+        const clip = new Adw.PreferencesGroup({
+            title: 'Clipboard history',
+            description: 'Text you copy, for /clip. Kept in memory only, cleared at logout and when the screen locks. Copies a password manager marks as secret are never kept.',
+        });
+        clip.add(switchRow(settings, 'clipboard-history', 'Keep clipboard history', 'Turning this off also clears it'));
+        const size = Adw.SpinRow.new_with_range(10, 200, 10);
+        size.title = 'Copies to keep';
+        settings.bind('clipboard-history-size', size, 'value', 0);
+        clip.add(size);
+        const clipClear = new Adw.ActionRow({ title: 'Clear clipboard history', subtitle: 'Forget every kept copy now' });
+        const clipButton = new Gtk.Button({ label: 'Clear', valign: Gtk.Align.CENTER, css_classes: ['destructive-action'] });
+        clipButton.connect('clicked', () => {
+            settings.set_int64('clipboard-clear-request', GLib.get_real_time());
+            clipClear.subtitle = 'Cleared';
+        });
+        clipClear.add_suffix(clipButton);
+        clip.add(clipClear);
+        page.add(clip);
         return page;
     }
 

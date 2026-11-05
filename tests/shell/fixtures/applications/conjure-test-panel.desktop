@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Conjure Test Panel
+Comment=A fixture Settings page for /set
+Exec=true
+Icon=preferences-system-symbolic
+NoDisplay=true
+Categories=GNOME;GTK;Settings;X-GNOME-Settings-Panel;
+Keywords=Zebrafish;Fixture;
