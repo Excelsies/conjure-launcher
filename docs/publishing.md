@@ -10,6 +10,10 @@ before it is scripted.
    - checks the automatable review rules: no legacy `imports.*`, no `eval`, no GNOME objects
      created at import time, no shell libraries in the preferences process, no extension
      constructor, required metadata, and an MIT license;
+   - runs **shexli**, the static analyzer extensions.gnome.org runs on every upload, on the zip. It fails on
+     any shexli error and on any finding not accepted in `tools/shexli-baseline.json`, where each accepted
+     finding carries its reason. Install shexli once with `tools/shexli-setup.sh` (a per-user virtual
+     environment, no admin rights);
    - installs the **zip** into a headless sandbox and runs smoke tests against it.
 3. Bump `version-name` in `metadata.json`. The site assigns the integer `version`.
 4. Upload the zip at https://extensions.gnome.org/upload/.
@@ -38,3 +42,7 @@ before it is scripted.
      wallpapers under `~/.cache/thumbnails/large/`, as the freedesktop thumbnail standard describes.
      It reads GTK's `~/.local/share/recently-used.xbel` for `/rec`.
    - `bin/conjure-dmenu` is a GJS client script. Nothing in the zip is compiled.
+   - **Shexli:** the findings it still reports are listed with their reasons in `tools/shexli-baseline.json`.
+     The clipboard use is declared in the description. The cleanup warnings in `ui/panel.js` are per-row
+     actors in the panel's actor tree, destroyed with it on every re-render and in `disable()`; their signal
+     handlers go with them.

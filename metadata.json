@@ -1,9 +1,11 @@
 {
     "uuid": "conjure-launcher@excelsies",
     "name": "Conjure Launcher",
-    "description": "A keyboard-first launcher for GNOME Shell: fuzzy search across apps, windows, session actions, a calculator, emoji and GNOME search providers. Opens on Super+Space in place of the Show Apps grid.",
-    "shell-version": ["50", "51"],
+    "description": "A keyboard-first launcher for GNOME Shell: fuzzy search across apps, windows, session actions, a calculator with unit conversion, emoji, recent files, GNOME Settings pages and GNOME search providers. Opens on Super+Space in place of the Show Apps grid.\n\nClipboard: the launcher copies results you pick to the clipboard, and keeps a history of the text you copy for /clip, in memory only (cleared at logout and screen lock, and never for copies a password manager marks as secret). The history can be turned off in Settings.",
+    "shell-version": [
+        "50"
+    ],
     "url": "https://github.com/Excelsies/conjure-launcher",
     "settings-schema": "org.gnome.shell.extensions.conjure-launcher",
-    "version-name": "0.8.0"
+    "version-name": "0.8.1"
 }

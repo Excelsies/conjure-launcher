@@ -1,10 +1,9 @@
 // Wallpapers: "/wall <name>" lists images under the wallpaper folder (setting wallpaper-dir;
 // empty means <XDG Pictures>/Wallpapers) and Enter sets the GNOME background, light and dark.
 //
-// Icons come from freedesktop thumbnails, never from the image itself: decoding a 4K image to a 40 px icon
-// costs about 145 ms (8K: about 600 ms), a thumbnail about 2 ms. A missing or stale thumbnail shows a generic
-// icon and is created in the background, one at a time, and the icon updates when it is ready.
-// The file list is kept across opens and re-read only when a listed folder's modification time changes.
+// Icons come from freedesktop thumbnails, not from decoding the images (slow for large wallpapers). A missing
+// or stale thumbnail shows a generic icon while one is made in the background, then the icon updates.
+// The file list is kept across opens and re-read only when a listed folder changes.
 
 import GdkPixbuf from 'gi://GdkPixbuf';
 import Gio from 'gi://Gio';

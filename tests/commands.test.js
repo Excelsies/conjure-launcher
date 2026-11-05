@@ -104,7 +104,7 @@ test('cache: whole seconds from 0 to a day, kept on the entry (0 when absent)', 
 });
 
 test('the shipped example commands file is valid', () => {
-    const data = JSON.parse(readFileSync(new URL('../data/commands.example.json', import.meta.url), 'utf8'));
+    const data = JSON.parse(readFileSync(new URL('../examples/commands.json', import.meta.url), 'utf8'));
     const r = validateCommands(data, BUILTIN_TRIGGERS);
     assert.deepEqual(r.errors, []);
     assert.equal(r.entries.length, 4);

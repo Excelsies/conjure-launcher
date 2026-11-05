@@ -4,6 +4,7 @@
 // The panel owns only what is on screen (view, category, selection, actions menu); the
 // controller (shell/launcher.js) owns queries, providers, pins and history.
 
+import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 
@@ -23,10 +24,8 @@ const PAGE_FALLBACK = 8;
 const ELLIPSIZE_END = 3; // Pango.EllipsizeMode.END
 
 /**
- * Run fn on a primary-button release on the actor itself. Under the launcher's modal grab St.Button's
- * "clicked" (like St.Entry's secondary-icon-clicked) never fires for a real click: the backdrop takes every
- * press. Rows, the gear, tabs and category chips all use this instead (measured headless with a virtual
- * pointer).
+ * Run fn on a primary-button release on the actor itself. Under the launcher's modal grab, St.Button's
+ * "clicked" does not fire (the backdrop takes the press), so every clickable part uses this.
  */
 function onPrimaryClick(actor, fn) {
     actor.connect('button-release-event', (_a, event) => {
@@ -35,6 +34,14 @@ function onPrimaryClick(actor, fn) {
         fn();
         return Clutter.EVENT_STOP;
     });
+}
+
+/** Add or remove an accessible state (SELECTED, CHECKED) to match what is drawn. */
+function setAccessibleState(widget, state, on) {
+    if (on)
+        widget.add_accessible_state(state);
+    else
+        widget.remove_accessible_state(state);
 }
 const WRAP_WORD_CHAR = 2; // Pango.WrapMode.WORD_CHAR
 
@@ -59,6 +66,7 @@ class Item {
         this.actor = new St.BoxLayout({
             reactive: true, track_hover: true, x_expand: !grid,
             orientation: grid ? Clutter.Orientation.VERTICAL : Clutter.Orientation.HORIZONTAL,
+            accessible_role: action ? Atk.Role.MENU_ITEM : Atk.Role.LIST_ITEM,
         });
 
         let icon = null;
@@ -91,6 +99,9 @@ class Item {
             this._title.clip_to_allocation = true;
         }
         labels.add_child(this._title);
+        // What a screen reader announces for the row: its title (as a label relation and as the name).
+        this.actor.label_actor = this._title;
+        this.actor.accessible_name = this._title.text;
         const subtitle = !grid && result?.subtitle;
         this._subtitle = new St.Label({ text: subtitle || '', visible: Boolean(subtitle) });
         this._subtitle.clutter_text.ellipsize = ELLIPSIZE_END;
@@ -108,7 +119,9 @@ class Item {
 
     restyle() {
         const s = this.panel.styles;
-        const state = this.panel.selectedIndex === this.index ? 'Selected' : this.actor.hover ? 'Hover' : '';
+        const selected = this.panel.selectedIndex === this.index;
+        const state = selected ? 'Selected' : this.actor.hover ? 'Hover' : '';
+        setAccessibleState(this.actor, Atk.StateType.SELECTED, selected);
         const grid = this.layout === 'grid';
         this.actor.set_style(`${s[`row${state}`]} spacing: ${grid ? 6 : 12}px;${grid ? ' padding: 10px 4px;' : ''}`);
         this._title.set_style(`${s[`title${state}`]}${grid ? ' font-size: 13px; text-align: center;' : ''}`);
@@ -178,23 +191,26 @@ export class LauncherPanel {
         this._panel = new St.BoxLayout({
             orientation: Clutter.Orientation.VERTICAL, width: rect.width, height: rect.height, reactive: true,
             x: rect.x - monitor.x, y: rect.y - monitor.y, name: 'conjure-launcher-panel',
+            accessible_role: Atk.Role.DIALOG, accessible_name: this._opts.scoped ? (this._opts.prompt || 'Choose') : 'Launcher',
         });
         this._compact = rect.width < COMPACT_NAV_WIDTH;
 
         this._toolbar = new St.BoxLayout({ x_expand: true });
         this._entry = new St.Entry({
             hint_text: this._opts.scoped ? (this._opts.prompt || 'Choose') : 'Search apps, or type / for providers',
-            can_focus: true, x_expand: true,
+            can_focus: true, x_expand: true, accessible_name: 'Search',
         });
         this._entry.clutter_text.connect('text-changed', () => this._onTextChanged());
         this._entry.clutter_text.connect('key-press-event', (_a, event) => this._onKey(event));
         // A small gear at the end of the search field opens Settings. Not in dmenu mode.
         if (!this._opts.scoped && this._opts.onOpenSettings) {
-            this._gear = new St.Icon({ icon_name: 'emblem-system-symbolic', icon_size: 16, reactive: true, track_hover: true });
+            this._gear = new St.Icon({
+                icon_name: 'emblem-system-symbolic', icon_size: 16, reactive: true, track_hover: true,
+                accessible_role: Atk.Role.PUSH_BUTTON, accessible_name: 'Settings',
+            });
             this._gear.connect('notify::hover', () => this._restyleChrome());
             this._entry.set_secondary_icon(this._gear);
-            // Handled on the icon itself: under the modal grab a real click never produced St.Entry's
-            // secondary-icon-clicked (press and release both landed on the icon; measured headless).
+            // Handled on the icon itself: St.Entry's secondary-icon-clicked does not fire under the modal grab.
             this._gear.connect('button-release-event', (_a, event) => {
                 if (event.get_button() !== Clutter.BUTTON_PRIMARY)
                     return Clutter.EVENT_PROPAGATE;
@@ -214,7 +230,10 @@ export class LauncherPanel {
             box.add_child(icon);
             const label = new St.Label({ text: VIEW_LABELS[view], y_align: Clutter.ActorAlign.CENTER, visible: !this._compact });
             box.add_child(label);
-            const button = new St.Button({ child: box, x_expand: true, can_focus: false, reactive: true });
+            const button = new St.Button({
+                child: box, x_expand: true, can_focus: false, reactive: true,
+                accessible_role: Atk.Role.PAGE_TAB, accessible_name: VIEW_LABELS[view],  // the label hides when narrow
+            });
             onPrimaryClick(button, () => this.setView(view));
             this._tabButtons.set(view, { button, icon, label });
             this._nav.add_child(button);
@@ -226,7 +245,7 @@ export class LauncherPanel {
             hscrollbar_policy: St.PolicyType.NEVER, vscrollbar_policy: St.PolicyType.AUTOMATIC,
             x_expand: true, y_expand: true, overlay_scrollbars: true,
         });
-        this._list = new St.BoxLayout({ orientation: Clutter.Orientation.VERTICAL, x_expand: true });
+        this._list = new St.BoxLayout({ orientation: Clutter.Orientation.VERTICAL, x_expand: true, accessible_role: Atk.Role.LIST });
         this._scroll.set_child(this._list);
 
         this._empty = new St.Label({ text: '', visible: false, x_align: Clutter.ActorAlign.CENTER, y_align: Clutter.ActorAlign.CENTER, y_expand: true });
@@ -320,6 +339,7 @@ export class LauncherPanel {
         for (const [view, { button, icon, label }] of this._tabButtons ?? []) {
             const on = view === active;
             button.set_style(`${on ? s.tabActive : s.tab} spacing: 6px;`);
+            setAccessibleState(button, Atk.StateType.SELECTED, on);
             icon.set_style(on ? s.tabTextActive : s.tabText);
             label.set_style(`${on ? s.tabTextActive : s.tabText} padding-left: 6px;`);
         }
@@ -327,6 +347,7 @@ export class LauncherPanel {
         for (const chip of this._chips?.get_children() ?? []) {
             const on = chip._categoryId === this._activeCategoryId;
             chip.set_style(on ? s.chipActive : s.chip);
+            setAccessibleState(chip, Atk.StateType.CHECKED, on);
         }
     }
 
@@ -366,7 +387,7 @@ export class LauncherPanel {
             box.add_child(new St.Icon({ icon_name: cat.icon, icon_size: 14 }));
             if (!this._compact)
                 box.add_child(new St.Label({ text: cat.label, y_align: Clutter.ActorAlign.CENTER }));
-            const chip = new St.Button({ child: box, can_focus: false, reactive: true });
+            const chip = new St.Button({ child: box, can_focus: false, reactive: true, accessible_name: cat.label });
             chip._categoryId = cat.id;
             onPrimaryClick(chip, () => this.setCategory(cat.id));
             this._chips.add_child(chip);

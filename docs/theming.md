@@ -1,7 +1,7 @@
 # Theming contract
 
 Conjure Launcher draws every color, corner radius and font from a set of **theme tokens**. The
-default is Ubuntu's look, following the system: Ubuntu Light or Ubuntu Dark from the system's style,
+default is the System theme (colors from Ubuntu's Yaru theme), following the system: System Light or System Dark from the system's style,
 with the shell's accent color. Any program can override tokens by writing the
 launcher's GSettings keys; the panel restyles live, with no reload.
 
@@ -14,7 +14,7 @@ Schema: `org.gnome.shell.extensions.conjure-launcher`
 ## Color tokens
 
 Type `s`. The empty string (the default) means "use the built-in value", which follows the system:
-it is the Ubuntu Light value, or the Ubuntu Dark value when `org.gnome.desktop.interface color-scheme`
+it is the System Light value, or the System Dark value when `org.gnome.desktop.interface color-scheme`
 is `prefer-dark`, and `primary` is the accent color GNOME Shell draws (Settings → Appearance), live.
 An empty key keeps following the system while others are set. Accepted formats:
 `#rgb`, `#rrggbb`, `#rrggbbaa`. An unparseable value is logged with its key name and that one token
@@ -42,10 +42,10 @@ falls back to its default. The rest of the theme is unaffected.
 
 ## Presets
 
-Settings → Appearance offers Ubuntu plus 20 built-in themes (`lib/palettes.js`). Picking one writes
-the nine color keys above, exactly as an integration would. "Ubuntu" with "Use Ubuntu's style and
-accent color" on (the default) writes empty strings, so it follows the system; with it off, Ubuntu
-Light or Ubuntu Dark is written as fixed values with Ubuntu orange. The picker shows "Custom" when the
+Settings → Appearance offers System plus 20 built-in themes (`lib/palettes.js`). Picking one writes
+the nine color keys above, exactly as an integration would. "System" with "Use the system style and
+accent color" on (the default) writes empty strings, so it follows the system; with it off, System
+Light or System Dark is written as fixed values with an orange accent (`#d34615`). The picker shows "Custom" when the
 keys match no preset. A preset is not a separate
 setting, so an integration that writes the keys simply replaces it. The picker does not check
 `theme-overrides-locked`: the lock is there to protect what the user chose, and the picker is the

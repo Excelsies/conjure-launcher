@@ -20,7 +20,7 @@ for f in metadata.json extension.js prefs.js stylesheet.css LICENSE THIRD_PARTY_
          schemas/org.gnome.shell.extensions.conjure-launcher.gschema.xml data/emoji.json bin/conjure-dmenu; do
     grep -qx "$f" <<<"$listing" && ok "zip contains $f" || bad "zip is missing $f"
 done
-for pat in '^tests/' '^tools/' '^ci/' '^docs/' '^node_modules/' '\.compiled$' '^\.git' '^package' '^eslint'; do
+for pat in '^tests/' '^tools/' '^ci/' '^docs/' '^examples/' 'example' '^node_modules/' '\.compiled$' '^\.git' '^package' '^eslint'; do
     grep -qE "$pat" <<<"$listing" && bad "zip contains files matching $pat" || ok "no files matching $pat"
 done
 
@@ -52,6 +52,15 @@ print('FAIL: metadata missing ' + ', '.join(missing) if missing else 'ok - metad
 sys.exit(1 if missing else 0)
 PY
 head -1 "$work/LICENSE" | grep -q 'MIT License' && ok "license is MIT (GPL-compatible)" || bad "license not found"
+
+echo "== shexli (the analyzer extensions.gnome.org runs on uploads)"
+shexli="${SHEXLI:-${XDG_CACHE_HOME:-$HOME/.cache}/conjure-launcher/shexli-venv/bin/shexli}"
+if [[ ! -x "$shexli" ]]; then
+    bad "shexli is not installed: run tools/shexli-setup.sh (a per-user virtual environment, no admin rights)"
+else
+    "$shexli" --format json "$zip" > "$work/shexli.json" 2> "$work/shexli.err" || true
+    python3 -I "$root/tools/shexli-compare.py" "$work/shexli.json" "$root/tools/shexli-baseline.json" || fail=1
+fi
 
 echo "== smoke tests against the installed zip"
 CONJURE_TEST_ZIP="$zip" "$root/tools/shell-test.sh" "$root/tests/shell/defaults.js" "$root/tests/shell/providers.js" || fail=1

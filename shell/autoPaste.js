@@ -19,8 +19,7 @@ export class AutoPaste {
     destroy() {
         for (const cancel of this._pending.splice(0))
             cancel();
-        this._keyboard?.run_dispose?.();
-        this._keyboard = null;
+        this._keyboard = null;  // the virtual device is released with its last reference
     }
 
     /** Send a key chord through a virtual keyboard (replaceable in tests). */

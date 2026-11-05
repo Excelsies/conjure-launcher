@@ -1,0 +1,25 @@
+{
+  "comment": "Shexli findings accepted for extensions.gnome.org review, each with the reason. tools/ego-check.sh fails on any error, and on any finding not listed here (same rule, files a subset of the listed ones).",
+  "accepted": [
+    {
+      "rule_id": "EGO-A-005",
+      "files": ["providers/clipboard.js", "shell/clipboard.js"],
+      "reason": "Clipboard access is declared in the metadata description, as the review guidelines require: results are copied when picked, and /clip keeps an in-memory history of text copies (off in Settings; never for copies carrying x-kde-passwordManagerHint)."
+    },
+    {
+      "rule_id": "EGO-L-002",
+      "files": ["ui/panel.js"],
+      "reason": "Per-row actors (icon bin, labels, pin) are children of the panel's actor tree. They are destroyed with it on every re-render (destroy_all_children) and in disable() (launcher.destroy -> panel.destroy -> backdrop.destroy)."
+    },
+    {
+      "rule_id": "EGO-L-005",
+      "files": ["ui/panel.js"],
+      "reason": "Same per-row objects as EGO-L-002: the Item that holds the references is dropped with the panel, which disable() destroys."
+    },
+    {
+      "rule_id": "EGO-L-003",
+      "files": ["ui/panel.js"],
+      "reason": "The per-row hover and button-release handlers are connected on the row's own actor and go away when that actor is destroyed with the panel (re-render and disable())."
+    }
+  ]
+}

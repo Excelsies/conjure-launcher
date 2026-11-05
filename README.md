@@ -5,7 +5,7 @@ A keyboard-first application launcher for GNOME Shell 50+, modeled on the launch
 because Mutter does not implement `wlr-layer-shell`, so a standalone Wayland launcher cannot draw
 over the desktop. It opens on Super+Space, in place of GNOME's "Show Apps" grid.
 
-Version 0.8.0. How it works is described in `docs/architecture.md`; the theming interface for
+Version 0.8.1. How it works is described in `docs/architecture.md`; the theming interface for
 other programs is in `docs/theming.md`.
 
 ## Screenshots
@@ -27,12 +27,12 @@ other programs is in `docs/theming.md`.
 
 ### Themes
 
-The shots above use the default, Ubuntu following the system (here dark, with Ubuntu's orange).
+The shots above use the default, System, following the system's style (here dark, with the orange accent).
 
 | | | |
 |---|---|---|
-| ![Ubuntu Light](docs/screenshots/theme-ubuntu-light.png) | ![Noctalia](docs/screenshots/theme-noctalia.png) | ![Catppuccin](docs/screenshots/theme-catppuccin.png) |
-| Ubuntu Light | Noctalia | Catppuccin |
+| ![System Light](docs/screenshots/theme-ubuntu-light.png) | ![Noctalia](docs/screenshots/theme-noctalia.png) | ![Catppuccin](docs/screenshots/theme-catppuccin.png) |
+| System Light | Noctalia | Catppuccin |
 | ![Dracula](docs/screenshots/theme-dracula.png) | ![Gruvbox](docs/screenshots/theme-gruvbox.png) | ![Kanagawa](docs/screenshots/theme-kanagawa.png) |
 | Dracula | Gruvbox | Kanagawa |
 | ![Nord](docs/screenshots/theme-nord.png) | ![Rosé Pine](docs/screenshots/theme-rose-pine.png) | ![Tokyo Night](docs/screenshots/theme-tokyo-night.png) |
@@ -126,7 +126,7 @@ keeps fields it does not know about.
 }
 ```
 
-`data/commands.example.json` has four ready entries (SSH hosts, files in your home folder,
+`examples/commands.json` has four ready entries (SSH hosts, files in your home folder,
 Kubernetes contexts, web search) to copy from.
 
 | Field | Meaning |
@@ -174,16 +174,16 @@ Settings: `gnome-extensions prefs conjure-launcher@excelsies`. They cover placem
 auto-paste, the wallpaper folder, the shortcut, launch and clipboard history, and colors.
 
 Color themes (Settings → Appearance), each shown with its swatches in the list:
-- **Ubuntu** (the default), from Ubuntu's Yaru theme. With "Use Ubuntu's style and accent color" on,
+- **System** (the default), with colors from Ubuntu's Yaru theme. With "Use the system style and accent color" on,
   it follows GNOME Settings → Appearance live: Light or Dark, and the accent color you picked there.
-  Turn it off to choose Ubuntu Light or Ubuntu Dark yourself, with Ubuntu orange. Choosing any other
+  Turn it off to choose System Light or System Dark yourself, with an orange accent. Choosing any other
   theme also stops following.
 - Noctalia's palettes: Noctalia, Ayu, Catppuccin, Dracula, Eldritch, Gruvbox, Kanagawa,
   Nord, Rosé Pine and Tokyo Night.
 - Ten darker ones from the Gogh collection: One Half Black, Moonfly, Gotham, Jellybeans, Night Owl,
   Aura, Oxocarbon, Oceanic Next, Molokai and Tomorrow Night.
 
-Each theme is checked for readable contrast as the launcher draws it, Ubuntu with each of Ubuntu's ten
+Each theme is checked for readable contrast as the launcher draws it, System with each of Ubuntu's ten
 accent colors in both styles. Adjusting any single color
 after picking a theme shows "Custom". A theme writes the same `theme-*` keys that other programs
 can set (`docs/theming.md`).
@@ -207,7 +207,8 @@ file manager does), so even folders of 4K or 8K images open quickly.
 | `tools/install.sh` | Symlink this checkout into `~/.local/share/gnome-shell/extensions/` |
 | `tools/devkit.sh` | Run a nested GNOME Shell with only this extension enabled, using a temporary settings database. Needs `sudo apt install mutter-dev-bin` |
 | `tools/pack.sh` | Build the installable zip into `dist/` |
-| `tools/ego-check.sh` | Build the zip, check it against the extensions.gnome.org review rules, and smoke-test the zip headless |
+| `tools/ego-check.sh` | Build the zip, check it against the extensions.gnome.org review rules and with shexli (the analyzer the site runs), and smoke-test the zip headless |
+| `tools/shexli-setup.sh` | Install shexli for `ego-check` into a per-user virtual environment (no admin rights) |
 | `tools/screenshots.sh` | Regenerate `docs/screenshots/` headless, with a fixed set of standard GNOME apps and nothing launched |
 
 Code under `lib/` must not import `gi://` or Shell modules (ESLint enforces this), so it can be

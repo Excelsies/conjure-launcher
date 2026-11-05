@@ -23,7 +23,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 | Providers | `providers/apps.js`, `calc.js`, `emoji.js`, `windows.js`, `session.js`, `searchProviders.js`, `commands.js`, `wallpaper.js`, `clipboard.js`, `settingsPanels.js`, `recentFiles.js`, `dmenu.js` |
 | Settings | `schemas/*.gschema.xml`, `prefs.js`, `common/commandsStore.js` |
 | dmenu client | `bin/conjure-dmenu` (GJS) |
-| Data | `data/emoji.json`, `data/commands.example.json` |
+| Data | `data/emoji.json` (runtime); `examples/commands.json` (example command entries, not packed) |
 
 ## Opening and closing
 
@@ -173,18 +173,18 @@ that window. If focus lands anywhere else, or nothing was focused, nothing is ty
 Every color, corner radius and the font come from theme tokens, which are GSettings keys
 (`theme-*`). The public contract is in `docs/theming.md`.
 
-- **Following the system.** With every color key empty (the default), the tokens resolve to Ubuntu
-  Light or Ubuntu Dark from the system's style (`color-scheme`), with the accent color GNOME Shell
+- **Following the system.** With every color key empty (the default), the tokens resolve to System
+  Light or System Dark from the system's style (`color-scheme`), with the accent color GNOME Shell
   draws. `shell/systemStyle.js` reads `St.Settings` and the stage's theme context, and the panel
   restyles live on `notify::color-scheme` and `notify::accent-color`. Text on the accent is the
   shell's accent text color when it reaches 4.5:1, otherwise white, otherwise black.
-- **Presets** (`lib/palettes.js`): Ubuntu Light and Dark (from the Yaru shell theme), ten palettes from
+- **Presets** (`lib/palettes.js`): System Light and Dark (from the Yaru shell theme), ten palettes from
   Noctalia and ten darker ones from the Gogh collection. Each is checked against a contrast floor as
   the launcher draws it: 4.5:1 for text on the accent, the background, the field and the hover fill,
   and 3:1 for secondary text.
-- **Settings → Appearance** lists one "Ubuntu" entry. "Use Ubuntu's style and accent color" (on by
-  default) keeps the keys empty; turning it off writes Light or Dark as fixed values with Ubuntu
-  orange (`#d34615`). Any other theme writes its values. Any key edited by hand shows "Custom".
+- **Settings → Appearance** lists one "System" entry (colors from Ubuntu's Yaru theme). "Use the
+  system style and accent color" (on by default) keeps the keys empty; turning it off writes Light or
+  Dark as fixed values with an orange accent (`#d34615`). Any other theme writes its values. Any key edited by hand shows "Custom".
 - Tokens are applied as inline styles (`lib/theme.js` `styles()`), so a change never reloads the
   stylesheet.
 

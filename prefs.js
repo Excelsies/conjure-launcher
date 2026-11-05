@@ -65,7 +65,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         window.add(this._commandsPage(window));
         window.add(this._historyPage(settings));
         window.add(this._appearancePage(settings));
-        // Test hook (headless screenshots): open on a given page.
+        // CONJURE_PREFS_PAGE=<page name> opens on that page (used for screenshots).
         const page = GLib.getenv('CONJURE_PREFS_PAGE');
         if (page)
             window.set_visible_page_name(page);
@@ -366,10 +366,10 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         // Color themes: picking one writes all nine color keys; editing any color below
         // shows "Custom". A menu button opens a tall list (taller than GTK's dropdown allows) where
         // every theme shows its swatches and the active one is ticked. The list follows the
-        // settings, so changes made elsewhere show here too. "Ubuntu" is one entry: following the
+        // settings, so changes made elsewhere show here too. "System" is one entry: following the
         // system (every color key empty, the default), or, with following off, a fixed Light or Dark.
         const themes = new Adw.PreferencesGroup({ title: 'Color theme' });
-        const themeRow = new Adw.ActionRow({ title: 'Theme', subtitle: 'Ubuntu, Noctalia and Gogh palettes' });
+        const themeRow = new Adw.ActionRow({ title: 'Theme', subtitle: 'System, Noctalia and Gogh palettes' });
         // What the empty keys resolve to, read the way the shell reads it: prefer-dark is dark, and
         // the accent as libadwaita draws it (on Ubuntu, the Yaru hue; St's orange is a shade darker).
         const iface = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
@@ -405,7 +405,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
 
         const list = new Gtk.ListBox({ selection_mode: Gtk.SelectionMode.NONE, css_classes: ['navigation-sidebar'] });
         const entries = [
-            { id: FOLLOW_SYSTEM_ID, name: 'Ubuntu', colors: null },  // swatches: what it currently resolves to
+            { id: FOLLOW_SYSTEM_ID, name: 'System', colors: null },  // swatches: what it currently resolves to
             ...PALETTES.filter(p => p.family !== 'ubuntu').map(p => ({ id: p.id, name: p.name, colors: p.colors })),
             { id: null, name: 'Custom' },
         ];
@@ -428,7 +428,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
             const id = row._entry.id;
             if (!id)
                 return;  // "Custom" is shown, not chosen
-            writeTheme(id);  // "Ubuntu" from the list means following the system
+            writeTheme(id);  // "System" from the list means following the system
             menu.popdown();
         });
         // Tall enough for every theme on a typical screen; scrolls only when the screen is shorter.
@@ -441,10 +441,10 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         themeRow.activatable_widget = menu;
         themes.add(themeRow);
 
-        // Shown while Ubuntu is the theme. On = follow the system (keys empty); off = the variant now
+        // Shown while System is the theme. On = follow the system (keys empty); off = the variant now
         // shown, fixed, with Ubuntu orange, and the Light / Dark choice appears.
         const followRow = new Adw.SwitchRow({
-            title: 'Use Ubuntu\'s style and accent color',
+            title: 'Use the system style and accent color',
             subtitle: 'Follows Light or Dark and the accent color in GNOME Settings → Appearance',
         });
         const styleRow = new Adw.ComboRow({ title: 'Style', model: Gtk.StringList.new(['Light', 'Dark']) });
@@ -481,7 +481,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         };
         for (const token of Object.keys(COLOR_TOKENS))
             watch(settings, `theme-${token}`, themeRow, syncTheme);
-        // The system side of "Ubuntu": restyle the swatches when the style or accent changes.
+        // The system side of "System": restyle the swatches when the style or accent changes.
         const colorSyncs = [];  // the color rows below show the default for an empty key
         const onSystem = () => {
             syncTheme();
@@ -496,7 +496,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
 
         const colors = new Adw.PreferencesGroup({
             title: 'Colors',
-            description: 'Defaults are Ubuntu\'s, following your system\'s style and accent color. Other extensions may change these unless locked below.',
+            description: 'Defaults follow your system\'s style and accent color. Other extensions may change these unless locked below.',
         });
         for (const token of Object.keys(COLOR_TOKENS)) {
             const key = `theme-${token}`;

@@ -12,8 +12,7 @@ export class SystemStyle {
         this._logError = logError;
         this._loggedAccentFailure = false;
         this._settings = St.Settings.get();
-        // Measured on GNOME Shell 50: inside notify::accent-color the theme context already holds
-        // the new accent, so no later signal is needed.
+        // The theme context already holds the new accent when notify::accent-color fires.
         this._ids = ['notify::color-scheme', 'notify::accent-color']
             .map(signal => this._settings.connect(signal, () => onChange()));
     }

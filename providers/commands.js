@@ -20,6 +20,7 @@ const RELOAD_DELAY_MS = 200;
 const FREEFORM_SCORE = -1e9;
 
 Gio._promisify(Gio.InputStream.prototype, 'read_bytes_async');
+Gio._promisify(Gio.File.prototype, 'load_contents_async');
 
 /** Run a candidate command: 2 s timeout, 1 MiB output cap, killable via cancel(). */
 function runCommand(command, { onCancel }) {
@@ -193,10 +194,12 @@ export class CommandsRegistry {
         }
         this._monitor = this._file.monitor_file(Gio.FileMonitorFlags.WATCH_MOVES, null);
         this._monitorId = this._monitor.connect('changed', () => this._scheduleReload());
+        this._reloadGeneration = 0;
         this.reload();
     }
 
     destroy() {
+        this._reloadGeneration++;  // a read still in flight is dropped
         if (this._reloadId)
             GLib.source_remove(this._reloadId);
         this._reloadId = 0;
@@ -219,11 +222,18 @@ export class CommandsRegistry {
         });
     }
 
-    reload() {
+    /** Read the file off the main thread; only the newest read is applied (an older one may finish later). */
+    async reload() {
+        const generation = ++this._reloadGeneration;
         let text;
         try {
-            text = new TextDecoder().decode(this._file.load_contents(null)[1]);
+            const [bytes] = await this._file.load_contents_async(null);
+            if (generation !== this._reloadGeneration)
+                return;
+            text = new TextDecoder().decode(bytes);
         } catch (e) {
+            if (generation !== this._reloadGeneration)
+                return;
             if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
                 this.errors = [];
                 this._apply([]);

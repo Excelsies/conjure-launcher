@@ -6,6 +6,8 @@ import Gio from 'gi://Gio';
 import { indexEmoji, searchEmoji } from '../lib/emoji.js';
 import { copyToClipboard } from '../shell/clipboard.js';
 
+Gio._promisify(Gio.File.prototype, 'load_contents_async');
+
 export class EmojiProvider {
     /** @param {string} dataPath  absolute path of data/emoji.json */
     constructor(dataPath, logError) {
@@ -19,9 +21,10 @@ export class EmojiProvider {
         this._entries = null;
     }
 
-    _load() {
+    /** Read and index the data once, off the main thread, on the first /emo query. */
+    async _load() {
         try {
-            const [, bytes] = Gio.File.new_for_path(this._path).load_contents(null);
+            const [bytes] = await Gio.File.new_for_path(this._path).load_contents_async(null);
             return indexEmoji(JSON.parse(new TextDecoder().decode(bytes)));
         } catch (e) {
             this._logError(`cannot read emoji data ${this._path}; the emoji provider is empty`, e);
@@ -31,7 +34,7 @@ export class EmojiProvider {
 
     query(text) {
         this._entries ??= this._load();
-        return searchEmoji(this._entries, text);
+        return this._entries.then(entries => searchEmoji(entries, text));
     }
 
     activate(result) {

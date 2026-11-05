@@ -2,6 +2,7 @@
 // categories, grid, the actions menu, search-field placement and the close animation.
 // Runs on the shipped defaults (no setup file): Recent view, list, search at the bottom.
 
+import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
 import Shell from 'gi://Shell';
 
@@ -60,6 +61,25 @@ export async function run() {
         t.check(`clicking the ${view} tab shows it`, await waitFor(() => panel.view === view, 1000), `view ${panel.view}`);
     }
     t.check('and the launcher stays open', launcher.isOpen);
+
+    // --- Accessibility: roles, names and states a screen reader reads (Atk, through St) ---
+    {
+        const acc = actor => actor?.get_accessible();
+        const has = (actor, state) => Boolean(acc(actor)?.ref_state_set().contains_state(state));
+        t.equal('the panel is a dialog named Launcher', [acc(panel._panel)?.get_role(), acc(panel._panel)?.get_name()], [Atk.Role.DIALOG, 'Launcher']);
+        t.equal('the gear is a button named Settings', [acc(panel.settingsIcon)?.get_role(), acc(panel.settingsIcon)?.get_name()], [Atk.Role.PUSH_BUTTON, 'Settings']);
+        const tabs = [...panel._tabButtons.entries()];
+        t.check('every tab is a named page tab, and only the active one is SELECTED',
+            tabs.every(([view, { button }]) => acc(button)?.get_role() === Atk.Role.PAGE_TAB && acc(button)?.get_name() &&
+                has(button, Atk.StateType.SELECTED) === (view === panel.view)), panel.view);
+        const [first, second] = panel.rows;
+        t.check('result rows are list items named by their title', acc(first.actor)?.get_role() === Atk.Role.LIST_ITEM &&
+            acc(first.actor)?.get_name() === first.result.title, `${acc(first.actor)?.get_role()} ${acc(first.actor)?.get_name()}`);
+        t.check('only the selected row is SELECTED', has(first.actor, Atk.StateType.SELECTED) && !has(second.actor, Atk.StateType.SELECTED));
+        await pressKeys(Clutter.KEY_Down);
+        t.check('moving the selection moves the SELECTED state', !has(first.actor, Atk.StateType.SELECTED) && has(second.actor, Atk.StateType.SELECTED));
+        await pressKeys(Clutter.KEY_Up);
+    }
     // Category chips are clicked the same way.
     {
         const button = panel._tabButtons.get('categories').button;
@@ -73,6 +93,11 @@ export async function run() {
         await clickAt(cx + last.width / 2, cy + last.height / 2);
         t.check('clicking a category chip selects that category', chips.length > 1 && await waitFor(() => panel.activeCategory === last._categoryId, 1000),
             `${chips.length} chips, active ${panel.activeCategory}, clicked ${last._categoryId}`);
+        const chipState = () => panel._chips.get_children().filter(c => c.visible)
+            .map(c => `${c._categoryId}:${c.get_accessible()?.get_name()}:${c.get_accessible()?.ref_state_set().contains_state(Atk.StateType.CHECKED)}`);
+        t.check('category chips are named, and only the active one is CHECKED', panel._chips.get_children().filter(c => c.visible).every(c => c.get_accessible()?.get_name() &&
+            c.get_accessible().ref_state_set().contains_state(Atk.StateType.CHECKED) === (c._categoryId === panel.activeCategory)),
+            `active ${panel.activeCategory}: ${chipState().join(' ')}`);
     }
     launcher.close('test');
     await sleep(300);
