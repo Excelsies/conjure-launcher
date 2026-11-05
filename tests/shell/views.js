@@ -123,6 +123,26 @@ export async function run() {
     await waitFor(() => panel.view === 'all', 1000);
     t.equal('All puts pinned apps first', titles()[0], 'Conjure Test Alpha');
 
+    // --- Ctrl+Up/Down reorders pins in the Pinned view ---
+    own.set_strv('pinned', [ALPHA, BETA]);
+    await pressKeys(Clutter.KEY_Control_L, Clutter.KEY_2);
+    await waitFor(() => panel.view === 'pinned' && titles().length === 2, 1000);
+    panel.selectedIndex = 0;
+    const selectedTitle = () => panel.rows[panel.selectedIndex]?.result?.title;
+    await pressKeys(Clutter.KEY_Control_L, Clutter.KEY_Down);
+    t.check('Ctrl+Down moves the selected pin down',
+        await waitFor(() => own.get_strv('pinned')[1] === ALPHA && titles()[1] === 'Conjure Test Alpha', 1000), JSON.stringify(own.get_strv('pinned')));
+    t.equal('and the selection follows it', selectedTitle(), 'Conjure Test Alpha');
+    await pressKeys(Clutter.KEY_Control_L, Clutter.KEY_Down);
+    await sleep(100);
+    t.equal('at the bottom, Ctrl+Down changes nothing', own.get_strv('pinned'), [BETA, ALPHA]);
+    await pressKeys(Clutter.KEY_Control_L, Clutter.KEY_Up);
+    t.check('Ctrl+Up moves it back up', await waitFor(() => own.get_strv('pinned')[0] === ALPHA, 1000), JSON.stringify(own.get_strv('pinned')));
+    t.equal('still selected', selectedTitle(), 'Conjure Test Alpha');
+    own.set_strv('pinned', [ALPHA]);
+    await pressKeys(Clutter.KEY_Control_L, Clutter.KEY_3);
+    await waitFor(() => panel.view === 'all', 1000);
+
     // --- Running a desktop action closes and launches it ---
     panel.setText('conjure test alpha');
     await sleep(50);

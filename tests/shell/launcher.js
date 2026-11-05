@@ -9,6 +9,7 @@ import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { Suite, extension, pressKeys, clickAt, waitFor, sleep, waitForToggleBinding } from './lib/harness.js';
+import { BUILTIN_TRIGGERS } from '../../lib/builtins.js';
 
 const gnomeKeys = new Gio.Settings({ schema_id: 'org.gnome.shell.keybindings' });
 const APP_VIEW = 'toggle-application-view';
@@ -84,7 +85,7 @@ export async function run() {
     panel.setText('/');
     await sleep(50);
     t.equal('a bare "/" is the provider overview (providers, not apps)',
-        launcher.panel.rows.map(r => r.result.title), ['/calc', '/emo', '/win', '/session', '/wall']);
+        launcher.panel.rows.map(r => r.result.title), BUILTIN_TRIGGERS.map(x => `/${x}`));
     panel.setText('');
     await sleep(50);
 

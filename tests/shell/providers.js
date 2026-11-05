@@ -11,6 +11,7 @@ import * as Scripting from 'resource:///org/gnome/shell/ui/scripting.js';
 import * as SystemActions from 'resource:///org/gnome/shell/misc/systemActions.js';
 
 import { Suite, extension, pressKeys, waitFor, sleep } from './lib/harness.js';
+import { BUILTIN_TRIGGERS } from '../../lib/builtins.js';
 import { parseColor, systemDefaults, toCss } from '../../lib/theme.js';
 
 // SAFETY FIRST. The sandbox shares the machine's system bus, so a real activateSuspend /
@@ -85,7 +86,7 @@ export async function run() {
 
     // --- Provider overview ---
     await type('/');
-    t.equal('a bare "/" lists the providers', titles(), ['/calc', '/emo', '/win', '/session', '/wall']);
+    t.equal('a bare "/" lists the providers', titles(), BUILTIN_TRIGGERS.map(x => `/${x}`));
     await type('/em');
     t.equal('the overview filters as you type', titles(), ['/emo']);
     await pressKeys(Clutter.KEY_Return);
@@ -127,6 +128,39 @@ export async function run() {
     await pressKeys(Clutter.KEY_Return);
     t.check('Enter focuses that window', await waitFor(() => global.display.focus_window === target, 5000),
         `focus ${global.display.focus_window?.get_title()} (before: ${before?.get_title()})`);
+
+    // --- Window actions (Shift+Enter on a /win result) ---
+    const menuFor = async win => {
+        await openWith('/win');
+        const row = launcher.panel.rows.find(r => r.result?.window === win);
+        launcher.panel.selectedIndex = row.index;
+        await pressKeys(Clutter.KEY_Shift_L, Clutter.KEY_Return);
+        await sleep(100);
+        return launcher.panel.rows.map(r => r.action?.label).filter(Boolean);
+    };
+    const runLabel = async label => {
+        const row = launcher.panel.rows.find(r => r.action?.label === label);
+        launcher.panel.selectedIndex = row.index;
+        await pressKeys(Clutter.KEY_Return);
+        await waitFor(() => !launcher.isOpen, 1000);
+    };
+    let labels = await menuFor(target);
+    t.check('the window menu offers switch, minimize, move and close',
+        ['Switch To', 'Minimize', 'Close'].every(l => labels.includes(l)) && labels.some(l => /^Move to Workspace \d+$/.test(l)), JSON.stringify(labels));
+    await runLabel('Minimize');
+    t.check('Minimize minimizes it', await waitFor(() => target.minimized, 2000));
+    labels = await menuFor(target);
+    t.check('a minimized window offers Restore instead', labels.includes('Restore') && !labels.includes('Minimize'), JSON.stringify(labels));
+    await runLabel('Restore');
+    t.check('Restore brings it back', await waitFor(() => !target.minimized, 2000));
+    labels = await menuFor(target);
+    const move = labels.find(l => /^Move to Workspace \d+$/.test(l));
+    const toIndex = Number(move.match(/\d+/)[0]) - 1;
+    await runLabel(move);
+    t.check(`${move} moves it there`, await waitFor(() => target.get_workspace()?.index() === toIndex, 2000), `on ${target.get_workspace()?.index()}`);
+    await menuFor(target);
+    await runLabel('Close');
+    t.check('Close closes it', await waitFor(() => !target.get_compositor_private(), 5000));
     await Scripting.destroyTestWindows();
 
     // --- GNOME search providers (fixture) ---

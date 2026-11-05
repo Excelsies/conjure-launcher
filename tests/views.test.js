@@ -2,7 +2,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyView, categoryFor, tabOrder, availableCategories, togglePin, VIEWS } from '../lib/views.js';
+import { applyView, categoryFor, tabOrder, availableCategories, togglePin, movePin, VIEWS } from '../lib/views.js';
 import { moveSelection } from '../lib/navigation.js';
 
 const r = (id, o = {}) => ({ id, providerId: 'apps', title: id, score: 0, pinned: false, recentIndex: 0, category: null, ...o });
@@ -92,4 +92,12 @@ test('grid navigation: rows of 5, Left/Right by one, partial last row', () => {
     assert.equal(moveSelection(2, 'up', o), 0);
     assert.equal(moveSelection(11, 'right', o), 11);
     assert.equal(moveSelection(0, 'left', o), 0);
+});
+
+test('movePin swaps a pin with its neighbor and stops at the ends', () => {
+    assert.deepEqual(movePin(['a', 'b', 'c'], 'a', 1), ['b', 'a', 'c']);
+    assert.deepEqual(movePin(['a', 'b', 'c'], 'c', -1), ['a', 'c', 'b']);
+    assert.deepEqual(movePin(['a', 'b'], 'a', -1), ['a', 'b']);
+    assert.deepEqual(movePin(['a', 'b'], 'b', 1), ['a', 'b']);
+    assert.deepEqual(movePin(['a'], 'zz', 1), ['a']);
 });

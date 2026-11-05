@@ -12,7 +12,7 @@ import { PanelLifecycle } from '../lib/lifecycle.js';
 import { QueryController } from '../lib/queryController.js';
 import { resolveTheme, styles, systemDefaults, COLOR_TOKENS } from '../lib/theme.js';
 import { panelRect } from '../lib/placement.js';
-import { togglePin } from '../lib/views.js';
+import { togglePin, movePin } from '../lib/views.js';
 import { LauncherPanel, PANEL_HEIGHT } from '../ui/panel.js';
 import { UsageFile } from './usageFile.js';
 import { DmenuProvider } from '../providers/dmenu.js';
@@ -192,6 +192,7 @@ export class Launcher {
             onActions: result => this._providerFor(result)?.actions?.(result) ?? [],
             onRunAction: (result, actionId) => this._runAction(result, actionId),
             onTogglePin: result => this._togglePin(result),
+            onMovePin: (result, delta) => this._movePin(result, delta),
             onToggleGrid: () => this._settings.set_boolean('app-grid', !this._settings.get_boolean('app-grid')),
             onCancel: reason => this._lifecycle.close(reason),
             onGone: p => this._fading.delete(p),
@@ -298,6 +299,13 @@ export class Launcher {
         const next = togglePin(this._settings.get_strv('pinned'), result.id);
         if (!this._settings.set_strv('pinned', next))
             this._logError(`could not save pinned apps (setting not writable)`, null);
+    }
+
+    _movePin(result, delta) {
+        const pinned = this._settings.get_strv('pinned');
+        const next = movePin(pinned, result.id, delta);
+        if (next.some((id, i) => id !== pinned[i]) && !this._settings.set_strv('pinned', next))
+            this._logError('could not save pinned apps (setting not writable)', null);
     }
 
     _recordUsage(provider, result) {

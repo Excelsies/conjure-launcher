@@ -1,4 +1,6 @@
 // Open windows: "/win <title or app>", most recently used first; Enter switches to the window.
+// Shift+Enter or right-click offers: switch to, minimize or restore, move to another workspace, close.
+// Close asks the window to close (Meta.Window.delete), so the app's own "save changes?" prompt applies.
 
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
@@ -41,9 +43,57 @@ export class WindowsProvider {
     }
 
     activate(result) {
-        // The window may have closed while the launcher was open.
+        Main.activateWindow(this._live(result));
+    }
+
+    /** The window, if it is still open (it may have closed while the launcher was open). */
+    _live(result) {
         if (!result.window?.get_compositor_private())
             throw new Error('that window has closed');
-        Main.activateWindow(result.window);
+        return result.window;
+    }
+
+    /** @returns {{id: string, label: string, icon?: string}[]} */
+    actions(result) {
+        const win = result.window;
+        if (!win?.get_compositor_private())
+            return [];
+        const out = [{ id: 'switch', label: 'Switch To', icon: 'media-playback-start-symbolic' }];
+        if (win.minimized)
+            out.push({ id: 'unminimize', label: 'Restore', icon: 'window-restore-symbolic' });
+        else if (win.can_minimize())
+            out.push({ id: 'minimize', label: 'Minimize', icon: 'window-minimize-symbolic' });
+        const current = win.get_workspace()?.index() ?? -1;
+        const count = global.workspace_manager.get_n_workspaces();
+        if (!win.is_on_all_workspaces()) {
+            for (let i = 0; i < count; i++) {
+                if (i !== current)
+                    out.push({ id: `move:${i}`, label: `Move to Workspace ${i + 1}`, icon: 'go-next-symbolic' });
+            }
+        }
+        if (win.can_close())
+            out.push({ id: 'close', label: 'Close', icon: 'window-close-symbolic' });
+        return out;
+    }
+
+    runAction(result, actionId) {
+        const win = this._live(result);
+        if (actionId === 'switch') {
+            Main.activateWindow(win);
+        } else if (actionId === 'minimize') {
+            win.minimize();
+        } else if (actionId === 'unminimize') {
+            win.unminimize();
+            Main.activateWindow(win);
+        } else if (actionId === 'close') {
+            win.delete(global.get_current_time());
+        } else if (actionId.startsWith('move:')) {
+            const index = Number(actionId.slice('move:'.length));
+            if (!Number.isInteger(index) || index < 0 || index >= global.workspace_manager.get_n_workspaces())
+                throw new Error(`no workspace ${index + 1}`);
+            win.change_workspace_by_index(index, false);
+        } else {
+            throw new Error(`unknown action ${actionId}`);
+        }
     }
 }

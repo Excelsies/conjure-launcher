@@ -11,6 +11,7 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { Suite, extension, pressKeys, waitFor, sleep } from './lib/harness.js';
+import { BUILTIN_TRIGGERS } from '../../lib/builtins.js';
 
 const STATE = GLib.getenv('XDG_STATE_HOME');
 const ROOT = GLib.getenv('CONJURE_TEST_ROOT');
@@ -97,7 +98,7 @@ export async function run() {
 
     await openWith('/');
     t.check('the overview lists the command entries and /wall',
-        ['/calc', '/emo', '/win', '/session', '/wall', '/hosts', '/copy', '/web', '/slow'].every(x => titles().includes(x)),
+        [...BUILTIN_TRIGGERS.map(x => `/${x}`), '/hosts', '/copy', '/web', '/slow'].every(x => titles().includes(x)),
         titles().join(', '));
 
     await type('/hosts', 400);

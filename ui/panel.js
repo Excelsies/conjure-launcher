@@ -112,7 +112,7 @@ export class LauncherPanel {
      *          onActivate: (result, opts: {newWindow: boolean}) => void,
      *          onActions: (result) => {id: string, label: string, icon?: string}[],
      *          onRunAction: (result, actionId: string) => void,
-     *          onTogglePin: (result) => void,
+     *          onTogglePin: (result) => void, onMovePin?: (result, delta: number) => void,
      *          onToggleGrid: () => void,
      *          onCancel: (reason: string) => void,
      *          onGone?: (panel: LauncherPanel) => void,
@@ -387,6 +387,13 @@ export class LauncherPanel {
             this.selectedIndex = Math.min(1, count - 1);  // first action, not the "back" header
         else
             this.selectedIndex = keepSelection ? Math.min(Math.max(prevSelected, 0), count - 1) : 0;
+        if (this._selectAfterRender && count && !this.menu) {
+            const follow = this._items.findIndex(item => item.result?.id === this._selectAfterRender);
+            if (follow >= 0) {
+                this.selectedIndex = follow;
+                this._selectAfterRender = null;
+            }
+        }
         for (const item of this._items)
             item.restyle();
         this._scroll.vadjustment.value = 0;
@@ -637,6 +644,15 @@ export class LauncherPanel {
         }
         if (ctrl && (sym === Clutter.KEY_g || sym === Clutter.KEY_G)) {
             this._opts.onToggleGrid();
+            return Clutter.EVENT_STOP;
+        }
+        // Ctrl+Up/Down reorders pins in the Pinned view; the selection follows the moved app.
+        if (ctrl && (sym === Clutter.KEY_Up || sym === Clutter.KEY_Down) && this.view === 'pinned' && !this.text.trim() && !this.menu) {
+            const result = this._items[this.selectedIndex]?.result;
+            if (result && this._opts.onMovePin) {
+                this._selectAfterRender = result.id;
+                this._opts.onMovePin(result, sym === Clutter.KEY_Up ? -1 : 1);
+            }
             return Clutter.EVENT_STOP;
         }
         if (ctrl && (sym === Clutter.KEY_Left || sym === Clutter.KEY_Right))
