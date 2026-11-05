@@ -1,8 +1,8 @@
 # Theming contract
 
-Conjure Launcher draws every colour, corner radius and font from a set of **theme tokens**. The
+Conjure Launcher draws every color, corner radius and font from a set of **theme tokens**. The
 default is Ubuntu's look, following the system: Ubuntu Light or Ubuntu Dark from the system's style,
-with the shell's accent colour. Any program can override tokens by writing the
+with the shell's accent color. Any program can override tokens by writing the
 launcher's GSettings keys; the panel restyles live, with no reload.
 
 This file is the public interface. Key names, types and meanings below are stable: renaming or
@@ -11,11 +11,11 @@ removing one is a breaking change.
 Schema: `org.gnome.shell.extensions.conjure-launcher`
 (path `/org/gnome/shell/extensions/conjure-launcher/`).
 
-## Colour tokens
+## Color tokens
 
 Type `s`. The empty string (the default) means "use the built-in value", which follows the system:
 it is the Ubuntu Light value, or the Ubuntu Dark value when `org.gnome.desktop.interface color-scheme`
-is `prefer-dark`, and `primary` is the accent colour GNOME Shell draws (Settings → Appearance), live.
+is `prefer-dark`, and `primary` is the accent color GNOME Shell draws (Settings → Appearance), live.
 An empty key keeps following the system while others are set. Accepted formats:
 `#rgb`, `#rrggbb`, `#rrggbbaa`. An unparseable value is logged with its key name and that one token
 falls back to its default. The rest of the theme is unaffected.
@@ -23,7 +23,7 @@ falls back to its default. The rest of the theme is unaffected.
 | Key | Used for | Built-in default: Light / Dark |
 |---|---|---|
 | `theme-primary` | Selected row fill, focus accents | the system accent (Ubuntu orange `#d34615` if unreadable) |
-| `theme-on-primary` | Text and glyphs on `primary` | the shell's accent text colour if it reaches 4.5:1, else white, else black |
+| `theme-on-primary` | Text and glyphs on `primary` | the shell's accent text color if it reaches 4.5:1, else white, else black |
 | `theme-surface` | Panel background | `#ffffff` / `#36363a` |
 | `theme-surface-container` | Search toolbar and card backgrounds | `#ededed` / `#414144` |
 | `theme-on-surface` | Primary text | `#222222` / `#ffffff` |
@@ -43,8 +43,8 @@ falls back to its default. The rest of the theme is unaffected.
 ## Presets
 
 Settings → Appearance offers Ubuntu plus 20 built-in themes (`lib/palettes.js`). Picking one writes
-the nine colour keys above, exactly as an integration would. "Ubuntu" with "Use Ubuntu's style and
-accent colour" on (the default) writes empty strings, so it follows the system; with it off, Ubuntu
+the nine color keys above, exactly as an integration would. "Ubuntu" with "Use Ubuntu's style and
+accent color" on (the default) writes empty strings, so it follows the system; with it off, Ubuntu
 Light or Ubuntu Dark is written as fixed values with Ubuntu orange. The picker shows "Custom" when the
 keys match no preset. A preset is not a separate
 setting, so an integration that writes the keys simply replaces it. The picker does not check

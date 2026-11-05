@@ -45,7 +45,7 @@ export async function run() {
     launcher.open();
     await sleep(50);
     t.check('opens on the monitor of the focused window', inside(launcher.lastRect, m1), JSON.stringify(launcher.lastRect));
-    t.equal('centred on that monitor', launcher.lastRect.x + launcher.lastRect.width / 2, m1.x + m1.width / 2);
+    t.equal('centered on that monitor', launcher.lastRect.x + launcher.lastRect.width / 2, m1.x + m1.width / 2);
     launcher.close('test');
 
     own.set_string('monitor', 'primary');

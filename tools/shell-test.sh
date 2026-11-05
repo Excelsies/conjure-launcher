@@ -30,7 +30,7 @@ sandbox_pids() {
     grep -l -a -s -F -- "CONJURE_SANDBOX=$sandbox" /proc/[0-9]*/environ 2>/dev/null | cut -d/ -f3 || true
 }
 # Wait for the nested session's helpers to exit; after the grace period, terminate the ones
-# that remain. Only processes carrying this run's CONJURE_SANDBOX marker are ever signalled.
+# that remain. Only processes carrying this run's CONJURE_SANDBOX marker are ever signaled.
 # Called between scripts too: leftover helpers otherwise pile up and exhaust per-user limits
 # (measured: "Cannot initialize inotify: Too many open files" stalled the next shell's startup).
 reap_sandbox() {

@@ -15,8 +15,8 @@ const schemaXml = readFileSync(join(root, 'schemas', `${schemaId}.gschema.xml`),
 
 const keyNames = [...schemaXml.matchAll(/<key name="([^"]+)"/g)].map(m => m[1]);
 
-// The documented colour roles. Renaming or removing one breaks integrations that write them.
-const COLOUR_TOKENS = [
+// The documented color roles. Renaming or removing one breaks integrations that write them.
+const COLOR_TOKENS = [
     'primary', 'on-primary', 'surface', 'surface-container', 'on-surface',
     'on-surface-variant', 'outline-variant', 'hover', 'on-hover',
 ];
@@ -36,8 +36,8 @@ test('targets GNOME Shell 50+ only', () => {
         assert.ok(Number(v) >= 50, `unexpected shell-version ${v}`);
 });
 
-test('every colour token has a key that defaults to empty (= built-in palette)', () => {
-    for (const token of COLOUR_TOKENS) {
+test('every color token has a key that defaults to empty (= built-in palette)', () => {
+    for (const token of COLOR_TOKENS) {
         const re = new RegExp(`<key name="theme-${token}" type="s">\\s*<default>''</default>`);
         assert.match(schemaXml, re, `theme-${token} missing or not defaulting to ''`);
     }
@@ -45,7 +45,7 @@ test('every colour token has a key that defaults to empty (= built-in palette)',
 
 test('no undocumented theme-* keys', () => {
     const documented = new Set([
-        ...COLOUR_TOKENS.map(t => `theme-${t}`),
+        ...COLOR_TOKENS.map(t => `theme-${t}`),
         'theme-radius-scale', 'theme-font-family', 'theme-overrides-locked',
     ]);
     const extra = keyNames.filter(k => k.startsWith('theme-') && !documented.has(k));

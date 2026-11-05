@@ -43,7 +43,7 @@ export async function run() {
     const panel = launcher.panel;
     t.check('empty query lists installed apps', panel.rows.length > 0, `${panel.rows.length} rows`);
 
-    // --- Placement: bottom centre of the screen, inside the work area ---
+    // --- Placement: bottom center of the screen, inside the work area ---
     // Measure after the 200 ms open slide, which moves the panel by translation_y.
     await waitFor(() => panel.panelActor.translation_y === 0 && panel.panelActor.opacity === 255, 1000);
     const actor = panel.panelActor;
@@ -51,8 +51,8 @@ export async function run() {
     const mon = Main.layoutManager.primaryMonitor;
     const work = Main.layoutManager.getWorkAreaForMonitor(Main.layoutManager.primaryIndex);
     t.equal('default position setting is bottom', own.get_string('position'), 'bottom');
-    t.check('the panel is horizontally centred on the screen',
-        Math.abs(ax + actor.width / 2 - (mon.x + mon.width / 2)) <= 1, `centre x ${ax + actor.width / 2}`);
+    t.check('the panel is horizontally centered on the screen',
+        Math.abs(ax + actor.width / 2 - (mon.x + mon.width / 2)) <= 1, `center x ${ax + actor.width / 2}`);
     t.check('the panel bottom sits just above the work area bottom',
         Math.abs(ay + actor.height - (work.y + work.height - 24)) <= 1,
         `bottom ${ay + actor.height}, work area bottom ${work.y + work.height}`);
@@ -101,7 +101,7 @@ export async function run() {
     await sleep(50);
     t.check('a theme token change restyles the open panel',
         panel.rows[0].actor.get_style().includes('rgba(1, 2, 3, 1)'), panel.rows[0].actor.get_style());
-    own.set_string('theme-hover', 'not-a-colour');
+    own.set_string('theme-hover', 'not-a-color');
     await sleep(50);
     t.check('an invalid token does not break the panel', launcher.isOpen && panel.rows.length > 0);
     own.reset('theme-primary');

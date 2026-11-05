@@ -29,7 +29,7 @@ export class WindowsProvider {
             if (q && !isMatch(s))
                 return;
             const ws = win.get_workspace();
-            const parts = [appName, ws ? `Workspace ${ws.index() + 1}` : null, win.minimized ? 'Minimised' : null];
+            const parts = [appName, ws ? `Workspace ${ws.index() + 1}` : null, win.minimized ? 'Minimized' : null];
             out.push({ id: `window-${win.get_stable_sequence()}`, title, subtitle: parts.filter(Boolean).join('  ·  '),
                 window: win, app, score: s });
         });

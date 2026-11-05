@@ -1,4 +1,4 @@
-// Panel placement (bottom centre by default).
+// Panel placement (bottom center by default).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -8,7 +8,7 @@ const monitor = { x: 0, y: 0, width: 1600, height: 1000 };
 // A 32px top bar and a 64px bottom dock.
 const workArea = { x: 0, y: 32, width: 1600, height: 904 };
 
-test('default is bottom centre, above a bottom dock', () => {
+test('default is bottom center, above a bottom dock', () => {
     const r = panelRect({ monitor, workArea, width: 760, height: 620 });
     assert.equal(r.position, 'bottom');
     assert.equal(r.x, (1600 - 760) / 2);
@@ -17,7 +17,7 @@ test('default is bottom centre, above a bottom dock', () => {
     assert.equal(r.height, 620);
 });
 
-test('centred on the monitor even when a side dock narrows the work area', () => {
+test('centered on the monitor even when a side dock narrows the work area', () => {
     const r = panelRect({ monitor, workArea: { x: 72, y: 32, width: 1528, height: 968 }, width: 760, height: 620 });
     assert.equal(r.x + r.width / 2, 800);
 });

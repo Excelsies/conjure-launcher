@@ -30,7 +30,7 @@
         <choice value="top"/>
       </choices>
       <default>'bottom'</default>
-      <summary>Where the panel opens: bottom centre (default), centre, or top centre of the screen</summary>
+      <summary>Where the panel opens: bottom center (default), center, or top center of the screen</summary>
     </key>
     <key name="search-position" type="s">
       <choices>

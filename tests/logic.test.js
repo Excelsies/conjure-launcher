@@ -6,7 +6,7 @@ import { route } from '../lib/router.js';
 import { rank, usageBoost, TYPED_USAGE_SCORE_CAP } from '../lib/ranking.js';
 import { scoreApp, NAME_MATCH_PRIORITY, LOCALIZED_NAME_MATCH_PRIORITY } from '../lib/appScore.js';
 import { UsageModel, RECENT_LIMIT } from '../lib/usage.js';
-import { resolveTheme, parseColour, styles, systemDefaults, textOn, contrastRatio, UBUNTU, UBUNTU_ORANGE, COLOUR_TOKENS } from '../lib/theme.js';
+import { resolveTheme, parseColor, styles, systemDefaults, textOn, contrastRatio, UBUNTU, UBUNTU_ORANGE, COLOR_TOKENS } from '../lib/theme.js';
 
 const apps = { id: 'apps' };
 const calc = { id: 'calc', trigger: 'calc', global: true, acceptsGlobal: t => /\d/.test(t) };
@@ -155,19 +155,19 @@ test('usage: unreadable files throw so the caller can quarantine them', () => {
 });
 
 // --- theme ---
-test('theme: colour parsing', () => {
-    assert.deepEqual(parseColour('#abc'), { r: 0xaa, g: 0xbb, b: 0xcc, a: 1 });
-    assert.deepEqual(parseColour('#FFF59B'), { r: 255, g: 245, b: 155, a: 1 });
-    assert.equal(parseColour('#00000080').a, 0.502);
+test('theme: color parsing', () => {
+    assert.deepEqual(parseColor('#abc'), { r: 0xaa, g: 0xbb, b: 0xcc, a: 1 });
+    assert.deepEqual(parseColor('#FFF59B'), { r: 255, g: 245, b: 155, a: 1 });
+    assert.equal(parseColor('#00000080').a, 0.502);
     for (const bad of ['', 'red', '#12', '#12345', 'rgb(1,2,3)', '#gggggg', null, 5])
-        assert.equal(parseColour(bad), null, String(bad));
+        assert.equal(parseColor(bad), null, String(bad));
 });
 
 test('theme: empty values use the defaults (Ubuntu Light with no system information); invalid ones fall back and are reported', () => {
     const t = resolveTheme({ 'primary': '#89b4fa', 'hover': 'nope', 'radius-scale': 9, 'font-family': 'x; color: red' });
-    assert.deepEqual(t.colours['primary'], parseColour('#89b4fa'));
-    assert.deepEqual(t.colours['hover'], parseColour(COLOUR_TOKENS['hover']));
-    assert.deepEqual(t.colours['surface'], parseColour(COLOUR_TOKENS['surface']));
+    assert.deepEqual(t.colors['primary'], parseColor('#89b4fa'));
+    assert.deepEqual(t.colors['hover'], parseColor(COLOR_TOKENS['hover']));
+    assert.deepEqual(t.colors['surface'], parseColor(COLOR_TOKENS['surface']));
     assert.equal(t.radiusScale, 1);
     assert.equal(t.fontFamily, '');
     assert.deepEqual(t.invalid.sort(), ['font-family', 'hover', 'radius-scale']);
@@ -177,9 +177,9 @@ test('theme: empty values use the defaults (Ubuntu Light with no system informat
 test('theme: empty values resolve against the system defaults passed in; set ones are kept', () => {
     const dark = systemDefaults({ dark: true, accent: '#7764d8', accentFg: '#ffffff' });
     const t = resolveTheme({ 'surface': '#123456' }, dark);
-    assert.deepEqual(t.colours['surface'], parseColour('#123456'));
-    assert.deepEqual(t.colours['primary'], parseColour('#7764d8'));
-    assert.deepEqual(t.colours['surface-container'], parseColour(UBUNTU.dark['surface-container']));
+    assert.deepEqual(t.colors['surface'], parseColor('#123456'));
+    assert.deepEqual(t.colors['primary'], parseColor('#7764d8'));
+    assert.deepEqual(t.colors['surface-container'], parseColor(UBUNTU.dark['surface-container']));
 });
 
 test('systemDefaults: dark picks Ubuntu Dark, otherwise Ubuntu Light; the accent replaces orange', () => {
@@ -195,7 +195,7 @@ test('systemDefaults: dark picks Ubuntu Dark, otherwise Ubuntu Light; the accent
         assert.equal(systemDefaults({ dark: true, accent: bad })['primary'], UBUNTU_ORANGE, String(bad));
 });
 
-test('textOn: the preferred colour when it reaches 4.5:1, then white, then black', () => {
+test('textOn: the preferred color when it reaches 4.5:1, then white, then black', () => {
     assert.equal(textOn('#7764d8', '#ffffff'), '#ffffff');          // 4.56:1
     assert.equal(textOn('#3584e4', '#ffffff'), '#000000');          // white is under 4.5:1 on GNOME blue
     assert.equal(textOn('#ffff00', '#ffffff'), '#000000');
@@ -203,7 +203,7 @@ test('textOn: the preferred colour when it reaches 4.5:1, then white, then black
     assert.equal(textOn('#000080', 'nope'), '#ffffff');
     for (const fill of ['#777777', '#808080', '#e95420', '#3584e4', '#ed5b00', '#c88800']) {
         const fg = textOn(fill, null);
-        assert.ok(contrastRatio(parseColour(fg), parseColour(fill)) >= 4.5, `${fg} on ${fill}`);
+        assert.ok(contrastRatio(parseColor(fg), parseColor(fill)) >= 4.5, `${fg} on ${fill}`);
     }
 });
 
@@ -213,10 +213,10 @@ test('theme: font family rejects every CSS breakout character', () => {
     assert.equal(resolveTheme({ 'font-family': ' Inter Display ' }).fontFamily, 'Inter Display');
 });
 
-test('theme: every style is free of hard-coded hex colours and uses rgba()', () => {
+test('theme: every style is free of hard-coded hex colors and uses rgba()', () => {
     const s = styles(resolveTheme({ 'primary': '#010203' }));
     for (const [name, css] of Object.entries(s))
-        assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, `${name} has a hex colour`);
+        assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, `${name} has a hex color`);
     assert.match(s.rowSelected, /rgba\(1, 2, 3, 1\)/);
 });
 

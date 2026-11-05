@@ -1,4 +1,4 @@
-// The system's light/dark style and accent colour, as GNOME Shell itself uses them.
+// The system's light/dark style and accent color, as GNOME Shell itself uses them.
 // The empty theme keys resolve against this, so the default Ubuntu theme follows the system live.
 import St from 'gi://St';
 
@@ -29,7 +29,7 @@ export class SystemStyle {
         } catch (e) {
             // Fall back to Ubuntu orange (systemDefaults), logged once; the panel still opens.
             if (!this._loggedAccentFailure)
-                this._logError('could not read the system accent colour; using Ubuntu orange', e);
+                this._logError('could not read the system accent color; using Ubuntu orange', e);
             this._loggedAccentFailure = true;
             return { dark, accent: null, accentFg: null };
         }

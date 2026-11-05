@@ -116,7 +116,7 @@ export class SearchProvidersBridge {
         if (!timedOut)
             GLib.source_remove(timer);
 
-        if (timedOut && !token.cancelled) {
+        if (timedOut && !token.canceled) {
             for (const { p, done } of perProvider) {
                 // Once per provider per session (or every time with debug), so a slow provider
                 // is visible without flooding the journal.

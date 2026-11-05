@@ -1,5 +1,5 @@
 // Fixture GNOME search provider (org.gnome.Shell.SearchProvider2) for the headless tests.
-// Activated by D-Bus inside the test sandbox only. Behaviour:
+// Activated by D-Bus inside the test sandbox only. Behavior:
 //   "zebrafile"  -> two results;  "slowzebra" -> answers after 2 s (tests the timeout)
 // Every GetInitialResultSet call and every ActivateResult is appended to
 // $XDG_STATE_HOME/conjure-test-search.log so the test can count and verify them.

@@ -56,7 +56,7 @@ test('results from a superseded query are dropped', async () => {
     assert.ok(!all.includes('stale'), 'a stale result reached the screen');
 });
 
-test('cancel() (close) drops in-flight results and marks the token cancelled', async () => {
+test('cancel() (close) drops in-flight results and marks the token canceled', async () => {
     const slow = deferred();
     let token;
     const { qc, emitted } = setup([{ id: 'slow', query: (_q, t) => {
@@ -66,7 +66,7 @@ test('cancel() (close) drops in-flight results and marks the token cancelled', a
     qc.setQuery('x');
     const before = emitted.length;
     qc.cancel();
-    assert.equal(token.cancelled, true);
+    assert.equal(token.canceled, true);
     slow.resolve([{ id: 'a', title: 'late', score: 1 }]);
     await new Promise(r => setImmediate(r));
     assert.equal(emitted.length, before);
@@ -116,10 +116,10 @@ test('onCancel callbacks run once when the query goes stale, or at once if alrea
     qc.setQuery('a');
     assert.deepEqual(runs, [0]);
     qc.setQuery('ab');
-    assert.deepEqual(runs, [1, 0], 'the superseded query is cancelled, the new one is not');
+    assert.deepEqual(runs, [1, 0], 'the superseded query is canceled, the new one is not');
     qc.cancel();
     qc.cancel();
-    assert.deepEqual(runs, [1, 1], 'each token is cancelled exactly once');
+    assert.deepEqual(runs, [1, 1], 'each token is canceled exactly once');
     let late = 0;
     tokens[0].onCancel(() => late++);
     assert.equal(late, 1, 'registering on a stale token runs at once');

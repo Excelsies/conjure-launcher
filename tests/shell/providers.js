@@ -11,7 +11,7 @@ import * as Scripting from 'resource:///org/gnome/shell/ui/scripting.js';
 import * as SystemActions from 'resource:///org/gnome/shell/misc/systemActions.js';
 
 import { Suite, extension, pressKeys, waitFor, sleep } from './lib/harness.js';
-import { parseColour, systemDefaults, toCss } from '../../lib/theme.js';
+import { parseColor, systemDefaults, toCss } from '../../lib/theme.js';
 
 // SAFETY FIRST. The sandbox shares the machine's system bus, so a real activateSuspend /
 // activatePowerOff here would act on the real computer. Replace every session action with a
@@ -64,9 +64,9 @@ export async function run() {
     // --- Calculator ---
     await openWith('12*3');
     t.equal('arithmetic in global search shows the result first', titles()[0], '= 36');
-    t.check('the selected symbolic icon takes the selected text colour',
+    t.check('the selected symbolic icon takes the selected text color',
         launcher.panel.iconOf(launcher.panel.rows[0])?.get_style()?.includes(
-            toCss(parseColour(systemDefaults(launcher.systemStyle.get())['on-primary']))),
+            toCss(parseColor(systemDefaults(launcher.systemStyle.get())['on-primary']))),
         launcher.panel.iconOf(launcher.panel.rows[0])?.get_style());
     await pressKeys(Clutter.KEY_Return);
     t.check('Enter on the result closes the launcher', await waitFor(() => !launcher.isOpen, 1000));

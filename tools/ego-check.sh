@@ -51,7 +51,7 @@ missing = [k for k in need if not m.get(k)]
 print('FAIL: metadata missing ' + ', '.join(missing) if missing else 'ok - metadata has ' + ', '.join(need))
 sys.exit(1 if missing else 0)
 PY
-head -1 "$work/LICENSE" | grep -q 'MIT License' && ok "licence is MIT (GPL-compatible)" || bad "licence not found"
+head -1 "$work/LICENSE" | grep -q 'MIT License' && ok "license is MIT (GPL-compatible)" || bad "license not found"
 
 echo "== smoke tests against the installed zip"
 CONJURE_TEST_ZIP="$zip" "$root/tools/shell-test.sh" "$root/tests/shell/defaults.js" "$root/tests/shell/providers.js" || fail=1

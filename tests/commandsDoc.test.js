@@ -44,7 +44,7 @@ test('validation matches the extension, including built-in prefixes', () => {
     assert.equal(validateDoc(doc).length, 1);
 });
 
-test('serialised documents parse back identically', () => {
+test('serialized documents parse back identically', () => {
     const doc = upsertEntry(emptyDoc(), null, { id: 'g', prefix: 'g', label: 'Web', exec: 'xdg-open https://x/?q={query}' });
     assert.deepEqual(parseDoc(serializeDoc(doc)).doc, doc);
     assert.ok(serializeDoc(doc).endsWith('\n'));

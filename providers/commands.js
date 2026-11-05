@@ -57,7 +57,7 @@ function runCommand(command, { onCancel }) {
             kill(`timed out after ${COMMAND_TIMEOUT_MS} ms`);
             return GLib.SOURCE_REMOVE;
         });
-        onCancel(() => kill('cancelled'));
+        onCancel(() => kill('canceled'));
         (async () => {
             try {
                 for (;;) {
@@ -114,7 +114,7 @@ export class CommandProvider {
         this._cancelRun = () => callbacks.splice(0).forEach(fn => fn());
         return runCommand(this.entry.command, { onCancel: fn => callbacks.push(fn) }).then(r => {
             if (!r.ok) {
-                if (r.error !== 'cancelled')
+                if (r.error !== 'canceled')
                     this._logError(`command for "${this.entry.id}" failed: ${r.error}`, null);
                 return [];
             }

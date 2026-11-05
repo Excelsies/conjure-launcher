@@ -1,5 +1,5 @@
-// The default theme follows the system: with every colour key empty the panel is Ubuntu Light or
-// Dark from the system's style, with the shell's accent colour, and restyles live when either changes.
+// The default theme follows the system: with every color key empty the panel is Ubuntu Light or
+// Dark from the system's style, with the shell's accent color, and restyles live when either changes.
 // Any chosen theme stops that. Disabling disconnects the system watchers.
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -10,10 +10,10 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { Suite, extension, sleep, waitFor } from './lib/harness.js';
 import { paletteValues } from '../../lib/palettes.js';
-import { parseColour, toCss, UBUNTU } from '../../lib/theme.js';
+import { parseColor, toCss, UBUNTU } from '../../lib/theme.js';
 
-const css = hex => toCss(parseColour(hex));
-// Anchored on the fill: Ubuntu Dark's panel style also contains #ffffff, as its text colour.
+const css = hex => toCss(parseColor(hex));
+// Anchored on the fill: Ubuntu Dark's panel style also contains #ffffff, as its text color.
 const fill = hex => `background-color: ${css(hex)}`;
 
 export async function run() {
@@ -30,7 +30,7 @@ export async function run() {
         await sleep(300);
     };
 
-    t.check('every colour key starts empty (following the system)',
+    t.check('every color key starts empty (following the system)',
         Object.keys(paletteValues('ubuntu')).every(k => own.get_string(`theme-${k}`) === ''));
 
     await setSystem('prefer-dark', 'orange');

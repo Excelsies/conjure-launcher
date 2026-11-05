@@ -10,7 +10,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { PanelLifecycle } from '../lib/lifecycle.js';
 import { QueryController } from '../lib/queryController.js';
-import { resolveTheme, styles, systemDefaults, COLOUR_TOKENS } from '../lib/theme.js';
+import { resolveTheme, styles, systemDefaults, COLOR_TOKENS } from '../lib/theme.js';
 import { panelRect } from '../lib/placement.js';
 import { togglePin } from '../lib/views.js';
 import { LauncherPanel, PANEL_HEIGHT } from '../ui/panel.js';
@@ -19,7 +19,7 @@ import { DmenuProvider } from '../providers/dmenu.js';
 import { AutoPaste } from './autoPaste.js';
 import { SystemStyle } from './systemStyle.js';
 
-const THEME_KEYS = [...Object.keys(COLOUR_TOKENS).map(k => `theme-${k}`), 'theme-radius-scale', 'theme-font-family'];
+const THEME_KEYS = [...Object.keys(COLOR_TOKENS).map(k => `theme-${k}`), 'theme-radius-scale', 'theme-font-family'];
 
 export class Launcher {
     /**
@@ -154,7 +154,7 @@ export class Launcher {
 
     _computeStyles() {
         const values = {};
-        for (const name of Object.keys(COLOUR_TOKENS))
+        for (const name of Object.keys(COLOR_TOKENS))
             values[name] = this._settings.get_string(`theme-${name}`);
         values['radius-scale'] = this._settings.get_double('theme-radius-scale');
         values['font-family'] = this._settings.get_string('theme-font-family');

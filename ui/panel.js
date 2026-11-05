@@ -51,8 +51,8 @@ class Item {
             icon = panel.createIcon(result, grid ? GRID_ICON_SIZE : ICON_SIZE);
         else if (action?.icon)
             icon = new St.Icon({ icon_name: action.icon, icon_size: 16 });
-        // Symbolic icons (actions, calculator, session...) are recoloured with the row's text
-        // colour so they stay visible on the selected and hovered fills.
+        // Symbolic icons (actions, calculator, session...) are recolored with the row's text
+        // color so they stay visible on the selected and hovered fills.
         if (action?.icon || result?.iconName)
             this._symbolicIcon = icon;
         const iconSize = grid ? GRID_ICON_SIZE : action ? 24 : ICON_SIZE;
@@ -68,7 +68,7 @@ class Item {
         this._title = new St.Label({ text: (result?.title ?? action?.label) || '' });
         this._title.clutter_text.ellipsize = ELLIPSIZE_END;
         if (grid) {
-            // Noctalia's grid caption: up to two lines, centred.
+            // Noctalia's grid caption: up to two lines, centered.
             this._title.clutter_text.line_wrap = true;
             this._title.clutter_text.line_wrap_mode = WRAP_WORD_CHAR;
             this._title.clutter_text.line_alignment = 1; // Pango.Alignment.CENTER

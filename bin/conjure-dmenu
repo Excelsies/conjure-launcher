@@ -1,7 +1,7 @@
 #!/usr/bin/gjs -m
 // conjure-dmenu [-p PROMPT]: read choices from stdin (one per line; "title<TAB>subtitle" shows the
 // subtitle, the whole line is printed), let the user pick one in Conjure Launcher, print it.
-// Exit status: 0 picked, 1 cancelled, 2 Conjure Launcher not running or another error.
+// Exit status: 0 picked, 1 canceled, 2 Conjure Launcher not running or another error.
 
 import Gio from 'gi://Gio';
 import GioUnix from 'gi://GioUnix';

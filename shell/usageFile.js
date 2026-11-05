@@ -7,7 +7,7 @@
 // - Any other read error (permissions, I/O): start empty and do NOT write this session, so an
 //   unreadable but intact file is never replaced by a near-empty one.
 // - Writes go through g_file_replace, which writes a temporary file and renames it over the
-//   target, so a crash mid-write cannot leave a truncated file. Saves are serialised.
+//   target, so a crash mid-write cannot leave a truncated file. Saves are serialized.
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';

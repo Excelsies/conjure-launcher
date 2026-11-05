@@ -159,8 +159,8 @@ export async function run() {
     t.equal('a broken file keeps the previous entries', registry.entries.map(e => e.id), ['hosts', 'web', 'slow']);
 
     // --- dmenu mode through the real CLI ---
-    const colours = 'red\nGreen\tcolour\nblue\n';
-    let pending = runDmenu(colours, ['-p', 'Pick a colour']);
+    const colors = 'red\nGreen\tcolor\nblue\n';
+    let pending = runDmenu(colors, ['-p', 'Pick a color']);
     t.check('conjure-dmenu opens the launcher', await waitFor(() => launcher.isOpen && launcher.panel?.rows.length === 3, 3000));
     t.equal('scoped to the candidates', titles(), ['red', 'Green', 'blue']);
     t.equal('no settings gear in dmenu mode', launcher.panel.settingsIcon, null);
@@ -168,15 +168,15 @@ export async function run() {
     await type('gre');
     await pressKeys(Clutter.KEY_Return);
     let r = await pending;
-    t.equal('Enter prints the whole line and exits 0', [r.status, r.stdout], [0, 'Green\tcolour\n']);
+    t.equal('Enter prints the whole line and exits 0', [r.status, r.stdout], [0, 'Green\tcolor\n']);
 
-    pending = runDmenu(colours);
+    pending = runDmenu(colors);
     await waitFor(() => launcher.isOpen, 3000);
     await pressKeys(Clutter.KEY_Escape);
     r = await pending;
     t.equal('Esc exits 1 with no output', [r.status, r.stdout], [1, '']);
 
-    pending = runDmenu(colours);
+    pending = runDmenu(colors);
     await waitFor(() => launcher.isOpen, 3000);
     await type('purple');
     t.equal('with no match the typed text is offered', titles(), ['purple']);

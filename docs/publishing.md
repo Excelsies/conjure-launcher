@@ -9,7 +9,7 @@ before it is scripted.
    - checks the zip has only runtime files plus `LICENSE` and `THIRD_PARTY_NOTICES.md`;
    - checks the automatable review rules: no legacy `imports.*`, no `eval`, no GNOME objects
      created at import time, no shell libraries in the preferences process, no extension
-     constructor, required metadata, and an MIT licence;
+     constructor, required metadata, and an MIT license;
    - installs the **zip** into a headless sandbox and runs smoke tests against it.
 3. Bump `version-name` in `metadata.json`. The site assigns the integer `version`.
 4. Upload the zip at https://extensions.gnome.org/upload/.

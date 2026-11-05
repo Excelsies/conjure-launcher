@@ -19,7 +19,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 | Entry point | `extension.js` (enable / disable, provider list) |
 | Pure logic (no `gi://` imports; unit-tested under Node, enforced by ESLint) | `lib/`: `fzy`, `appScore`, `ranking`, `router`, `queryController`, `usage`, `views`, `navigation`, `lifecycle`, `takeover`, `placement`, `theme`, `palettes`, `calc`, `emoji`, `session`, `commands`, `commandsDoc`, `paste`, `overview`, `builtins`, `prefsHelpers` |
 | Shell integration | `shell/launcher.js` (panel lifecycle, query wiring, theming), `shell/keybinding.js`, `shell/systemStyle.js`, `shell/usageFile.js`, `shell/settingsAdapters.js`, `shell/clipboard.js`, `shell/autoPaste.js`, `shell/dbusService.js` |
-| UI | `ui/panel.js`, `stylesheet.css` (layout only; every colour is a theme token) |
+| UI | `ui/panel.js`, `stylesheet.css` (layout only; every color is a theme token) |
 | Providers | `providers/apps.js`, `calc.js`, `emoji.js`, `windows.js`, `session.js`, `searchProviders.js`, `commands.js`, `wallpaper.js`, `dmenu.js` |
 | Settings | `schemas/*.gschema.xml`, `prefs.js`, `common/commandsStore.js` |
 | dmenu client | `bin/conjure-dmenu` (GJS) |
@@ -33,7 +33,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
   that hold the accelerator, such as GNOME's default input-source switch on Super+Space, are logged
   and left alone; the launcher does not receive the key until that binding is changed.
 - **Monitor.** The `monitor` setting picks the focused window's monitor (default), the pointer's, or
-  the primary. Within that monitor's work area the panel sits at the bottom centre, or centre or top
+  the primary. Within that monitor's work area the panel sits at the bottom center, or center or top
   (`position`), 24 px from the edge (`lib/placement.js`), so a bottom dock never covers it.
 - **Modal grab.** While open, the panel holds a modal grab. Every close path (Esc, activating a
   result, clicking outside, focus loss, a monitor change, the overview opening, the screen locking,
@@ -84,7 +84,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 
 ## Providers
 
-| Trigger | Provider | Behaviour |
+| Trigger | Provider | Behavior |
 |---|---|---|
 | (global) | Apps | `Shell.AppSystem`. Enter calls `app.activate()`: it focuses a running app or starts it. Ctrl+Enter or middle-click opens a new window |
 | `/calc` (also global) | Calculator | A recursive-descent parser over a fixed table of operators, functions and constants (`lib/calc.js`). No `eval`, no `Function`, no property lookups; input over 200 characters or nested deeper than 64 is refused. Enter copies the result |
@@ -136,19 +136,19 @@ that window. If focus lands anywhere else, or nothing was focused, nothing is ty
 
 ## Theming
 
-Every colour, corner radius and the font come from theme tokens, which are GSettings keys
+Every color, corner radius and the font come from theme tokens, which are GSettings keys
 (`theme-*`). The public contract is in `docs/theming.md`.
 
-- **Following the system.** With every colour key empty (the default), the tokens resolve to Ubuntu
-  Light or Ubuntu Dark from the system's style (`color-scheme`), with the accent colour GNOME Shell
+- **Following the system.** With every color key empty (the default), the tokens resolve to Ubuntu
+  Light or Ubuntu Dark from the system's style (`color-scheme`), with the accent color GNOME Shell
   draws. `shell/systemStyle.js` reads `St.Settings` and the stage's theme context, and the panel
   restyles live on `notify::color-scheme` and `notify::accent-color`. Text on the accent is the
-  shell's accent text colour when it reaches 4.5:1, otherwise white, otherwise black.
+  shell's accent text color when it reaches 4.5:1, otherwise white, otherwise black.
 - **Presets** (`lib/palettes.js`): Ubuntu Light and Dark (from the Yaru shell theme), ten palettes from
   Noctalia and ten darker ones from the Gogh collection. Each is checked against a contrast floor as
   the launcher draws it: 4.5:1 for text on the accent, the background, the field and the hover fill,
   and 3:1 for secondary text.
-- **Settings → Appearance** lists one "Ubuntu" entry. "Use Ubuntu's style and accent colour" (on by
+- **Settings → Appearance** lists one "Ubuntu" entry. "Use Ubuntu's style and accent color" (on by
   default) keeps the keys empty; turning it off writes Light or Dark as fixed values with Ubuntu
   orange (`#d34615`). Any other theme writes its values. Any key edited by hand shows "Custom".
 - Tokens are applied as inline styles (`lib/theme.js` `styles()`), so a change never reloads the
@@ -184,7 +184,7 @@ inside the monitor's work area.
 
 | File | Written by | Notes |
 |---|---|---|
-| `~/.local/state/conjure-launcher/usage.json` | the extension, on launch | Launch counts and the recent list. Written to a temporary file and renamed; saves are serialised |
+| `~/.local/state/conjure-launcher/usage.json` | the extension, on launch | Launch counts and the recent list. Written to a temporary file and renamed; saves are serialized |
 | `~/.config/conjure-launcher/commands.json` | the user, or Settings → Commands | Command entries. The folder is created at enable so the file watch works at once |
 
 ## Invariants
@@ -211,7 +211,7 @@ Code comments and tests refer to these by number.
 | A GNOME search provider is slow | Its results are dropped for that query after 500 ms; named in the log once per session (every time with `debug`) |
 | A command entry times out | Its process group is killed; no candidates from it |
 | An app fails to launch | A notification names the app |
-| A theme key is not a colour | Logged with the key name; that token uses its default |
+| A theme key is not a color | Logged with the key name; that token uses its default |
 | The system accent cannot be read | Logged once; Ubuntu orange is used |
 
 ## Time limits
@@ -273,7 +273,7 @@ of standard GNOME apps.
   between the check and the delivery could receive them.
 - The preferences window's widgets are not driven by automation (it is a separate GTK process). The
   logic behind them is unit-tested; the widgets are checked by screenshots.
-- Settings previews the accent with libadwaita's colour, which can be a shade off from the one GNOME
+- Settings previews the accent with libadwaita's color, which can be a shade off from the one GNOME
   Shell draws.
 - CI does not run the shell tests: hosted runners have GNOME 46, and the GNOME 50 container
   (`pnpm test:shell:container`, `ci/`) stalls on about half of its starts.
