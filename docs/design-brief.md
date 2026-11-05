@@ -1,11 +1,13 @@
 # Design brief: Conjure Launcher
 
-Status: APPROVED 2026-11-04 with decisions D1-D6 (section 12).
+Status: APPROVED 2026-11-04 with decisions D1-D6, extended by D7-D17 (section 12 and the phase
+specs). Phases 0-6 are built (version 0.6.0); the later sections are the records of each phase.
 
 ## 1. Goal and non-goals
 - **Goal:** a GNOME Shell 50+ extension that provides a Noctalia-style launcher. It searches apps
-  and other sources, uses fuzzy ranking, and is fully keyboard-driven. It replaces "Show Apps" on
-  `Super+Space` and on the dock button.
+  and other sources, uses fuzzy ranking, and is fully keyboard-driven. It opens on
+  `Super+Space` in place of the "Show Apps" grid. The dock's Show Apps button is not intercepted
+  (section 15).
 - **Non-goals:**
   - a bar, dock or panel;
   - Noctalia's Luau plugins;
@@ -24,13 +26,13 @@ Status: APPROVED 2026-11-04 with decisions D1-D6 (section 12).
 ## 3. Scope clusters
 | Cluster | Files | Kind |
 |---|---|---|
-| Core logic (pure JS, no `gi://` imports, unit-tested under node) | `lib/fzy.js`, `lib/router.js`, `lib/ranking.js`, `lib/usage.js` | core |
-| Shell integration | `extension.js`, `shell/keybinding.js`, `shell/showApps.js`, `shell/modal.js` | core |
-| UI | `ui/panel.js`, `ui/row.js`, `ui/grid.js`, `ui/nav.js`, `ui/contextMenu.js`, `stylesheet.css` | core |
-| Providers | `providers/apps.js` (core); `windows.js`, `session.js`, `calc.js`, `emoji.js`, `searchProviders.js` (GNOME SearchProvider2 bridge), `commands.js` (dmenu-style entries), `wallpaper.js` | apps core, rest separable |
+| Core logic (pure JS, no `gi://` imports, unit-tested under node) | `lib/*.js`: `fzy`, `router`, `ranking`, `appScore`, `usage`, `lifecycle`, `takeover`, `navigation`, `views`, `queryController`, `placement`, `theme`, `palettes`, `calc`, `emoji`, `session`, `commands`, `commandsDoc`, `paste`, `overview`, `builtins`, `prefsHelpers` | core |
+| Shell integration | `extension.js`, `shell/launcher.js`, `shell/keybinding.js`, `shell/usageFile.js`, `shell/settingsAdapters.js`, `shell/clipboard.js`, `shell/autoPaste.js`, `shell/dbusService.js` | core |
+| UI | `ui/panel.js`, `stylesheet.css` | core |
+| Providers | `providers/apps.js` (core); `windows.js`, `session.js`, `calc.js`, `emoji.js`, `searchProviders.js` (GNOME SearchProvider2 bridge), `commands.js` (command entries), `dmenu.js`, `wallpaper.js` | apps core, rest separable |
 | Settings | `schemas/*.gschema.xml`, `prefs.js` (libadwaita) | core |
-| Tooling | `tools/install.sh`, `tools/devkit.sh`, `tools/pack.sh`, ESLint config, `node --test` | core |
-| dmenu CLI over D-Bus | `bin/conjure-launcher-dmenu`, D-Bus interface | separable |
+| Tooling | `tools/*.sh` (install, devkit, preview, pack, ego-check, shell-test, container-shell-test, screenshots), ESLint config, `node --test`, `tests/gjs` | core |
+| dmenu CLI over D-Bus | `bin/conjure-dmenu`, `shell/dbusService.js`, `providers/dmenu.js` | separable |
 
 ## 4. Invariants
 1. **The user's `toggle-application-view` binding is always recoverable, and only what collides
@@ -54,9 +56,10 @@ Status: APPROVED 2026-11-04 with decisions D1-D6 (section 12).
    `close()` that pops the modal and is idempotent. Enforced in `lib/lifecycle.js`.
 3. **Nothing that is untrusted is executed.**
    - Commands come only from the user's own settings.
-   - Calculator input is never passed to a shell.
-   - If `qalc` is used, it runs through `Gio.Subprocess` with an argv array and its file and command
-     functions disabled, as Noctalia does.
+   - Calculator input is never passed to a shell, and never to `eval` or `Function`: `lib/calc.js`
+     parses it itself (D4; `qalc` is not used).
+   - Command entries run only the user's own `exec` with the selection passed as separate
+     arguments (section 18).
 4. **A slow provider never blocks typing.** Providers are async and run under a per-query generation
    counter; results for an older generation are dropped.
 
@@ -67,7 +70,7 @@ Status: APPROVED 2026-11-04 with decisions D1-D6 (section 12).
 | Usage counts and recent list (`~/.local/state/conjure-launcher/usage.json`) | `usage.js` on activation | ranking, the Recent view | user "clear history" action; the recent list is capped at 20 per provider |
 | Pinned list (gsettings `pinned`) | context menu, prefs | Pinned view | user |
 | Query generation counter | panel | providers' callbacks | incremented on every input change and on close |
-| Panel open flag and modal grab | `modal.js` | keybinding toggle | `close()` |
+| Panel open flag and modal grab | `lib/lifecycle.js` via `shell/launcher.js` | keybinding toggle | `close()` |
 
 ## 6. Failure table
 | Call | On error / empty | Side | Why |
@@ -75,7 +78,6 @@ Status: APPROVED 2026-11-04 with decisions D1-D6 (section 12).
 | Reading `usage.json` | log a warning and start with empty usage, without overwriting the file until the first successful write | open | ranking still works; history is not destroyed |
 | Writing `usage.json` | write to a temporary file and rename it; on error, log and keep the data in memory | open | a write that fails must not corrupt the file |
 | A SearchProvider2 D-Bus call | 500ms timeout, then drop that provider's results for this query | open | the same as the GNOME overview |
-| `qalc` spawn | hide the calculator result | open | it is advisory |
 | `app.launch` throws | show a notification naming the app id, and keep the launcher closed | n/a | it is visible to the user |
 
 ## 7. Races and ordering
@@ -87,15 +89,15 @@ Status: APPROVED 2026-11-04 with decisions D1-D6 (section 12).
 
 ## 8. Time budget
 - Input debounce: 0ms for the app provider (in memory) and 80ms for D-Bus and subprocess providers.
-- Search-provider timeout: 500ms. qalc timeout: 200ms, as in Noctalia.
+- Search-provider timeout: 500ms.
 - Animations: 200ms open and close.
 - Worst case from keystroke to complete results: 80 + 500 = 580ms. App results always appear within
   one frame.
 
 ## 9. Rollout
 - Install with `tools/install.sh` into `~/.local/share/gnome-shell/extensions/<uuid>`. Development
-  runs in `gnome-shell --devkit`; that flag is present, but the mutter devkit viewer may need the
-  `mutter-dev-bin` package. Verify this before Phase 0 ends.
+  runs in `gnome-shell --devkit` (`tools/devkit.sh`, `tools/preview.sh`); the viewer comes from the
+  `mutter-dev-bin` package (installed and verified in Phase 0). Automated tests run headless.
 - Rollback: disable the extension. Invariant 1 restores `Super+Space`.
 - A bad setting value (for example a width outside the allowed range) is clamped with a warning and
   must not throw in `enable()`.
@@ -120,7 +122,8 @@ Status: APPROVED 2026-11-04 with decisions D1-D6 (section 12).
   - Esc, click outside, and lock while open;
   - disable while open;
   - check that `Super+Space` is restored after disable.
-- CI: a GitHub Actions job running ESLint and `node --test`, once there is a remote.
+- CI: `.github/workflows` runs `pnpm run check` (ESLint, unit tests, GJS tests, schema). The shell
+  tests run locally only (section 15, known gaps).
 
 ## 12. Decisions for the owner
 Decisions ledger (answered 2026-11-04; do not re-ask):
@@ -144,7 +147,7 @@ Decisions ledger (answered 2026-11-04; do not re-ask):
 - **[D8] Tiling extensions.** DECIDED (2026-11-04): the launcher must stay floating under the
   owner's tiling extension. It is shell chrome, not a window, so no tiling extension can tile,
   move or resize it, and no float rule is needed (or possible: there is no window to match).
-  Verified headless with Plaid, Ubuntu Dock and DING enabled: geometry identical to the computed
+  Verified headless with the owner's tiling extension, Ubuntu Dock and DING enabled: geometry identical to the computed
   rectangle, unchanged after 1.5 s and across queries, and no window is created. The launcher
   contains no code that refers to any other extension.
 
@@ -180,8 +183,12 @@ Decisions ledger (answered 2026-11-04; do not re-ask):
 | 3 | Providers: windows, session, calculator, emoji, search-provider bridge | ~2 days |
 | 4 | Commands/dmenu entries, D-Bus dmenu CLI, wallpaper | ~1-2 days |
 | 5 | Multi-monitor polish, auto-paste, extensions.gnome.org packaging | ~1 day |
+| 6 | Commands editor in prefs (D13) | ~0.5 day |
 
-Estimated size: 3-4k lines of JS. That is less than Noctalia's 6.5k lines of C++, because GNOME
+All six phases are done. After them: the settings gear and Ctrl+, (D12, amended), colour themes
+(D17) and the screenshot tool.
+
+Estimated size: 3-4k lines of JS (actual after Phase 6: about 4.6k, excluding tests). That is less than Noctalia's 6.5k lines of C++, because GNOME
 already provides app discovery and launching (`Shell.AppSystem`), search providers, and the
 clipboard (`St.Clipboard`).
 
@@ -459,3 +466,11 @@ Phase 6 record (2026-11-04):
     row is gone). Ten darker themes are added from the Gogh collection as bundled with Ptyxis (MIT).
     They are mapped to the nine roles by one documented rule, and every one is darker than the
     original set's median background and passes the same contrast floor.
+
+Post-phase record (2026-11-04):
+- **Known gap, owner decision "wait and see if it happens live":** in the devkit preview (real GPU, real
+  pointer, a tiling extension tiling the preview window), Clutter logged 5x "Can't update stage views actor unnamed
+  [ClutterActor] ... needs an allocation" once, early in the session. It is cosmetic, and two headless
+  hypotheses did not reproduce it (interaction paths, fast typing). An unverified candidate: a close
+  for monitors-changed still fades out on a reconfigured stage. Revisit only if it shows up in the
+  installed extension.

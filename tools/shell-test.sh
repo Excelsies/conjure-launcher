@@ -8,6 +8,8 @@
 #        CONJURE_EXTRA_EXTENSIONS="uuid ..." also enables those extensions (user-installed ones are
 #        linked into the sandbox read-only by path; they get sandboxed settings like everything else).
 #        CONJURE_TEST_VERBOSE=1 prints each script's full shell log.
+#        CONJURE_TEST_NO_FIXTURES=1, CONJURE_TEST_APP_ALLOWLIST="ids", CONJURE_TEST_EXTRA_ALLOWED="regex"
+#        (extra log lines the criticals check accepts) are used by tools/screenshots.sh.
 # exit:  0 when every script passed; non-zero otherwise.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -79,13 +81,27 @@ for extra in ${CONJURE_EXTRA_EXTENSIONS:-}; do
     enabled="$enabled, '$extra'"
 done
 # Fixture apps give the tests known names to rank, independent of what the machine has installed.
+# CONJURE_TEST_NO_FIXTURES=1 leaves them (and the fixture search provider) out, e.g. for screenshots.
 mkdir -p "$XDG_DATA_HOME/applications"
-cp "$root"/tests/shell/fixtures/applications/*.desktop "$XDG_DATA_HOME/applications/"
-# A fixture GNOME search provider, D-Bus-activated on the sandbox bus only.
+[[ -z "${CONJURE_TEST_NO_FIXTURES:-}" ]] && cp "$root"/tests/shell/fixtures/applications/*.desktop "$XDG_DATA_HOME/applications/"
+# CONJURE_TEST_APP_ALLOWLIST="a.desktop b.desktop": hide every other system app, in the sandbox only
+# (an override with NoDisplay=true under the sandbox's XDG_DATA_HOME shadows the system entry).
+if [[ -n "${CONJURE_TEST_APP_ALLOWLIST:-}" ]]; then
+    IFS=: read -r -a data_dirs <<<"${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+    for dir in "${data_dirs[@]}"; do
+        for f in "$dir"/applications/*.desktop; do
+            [[ -e "$f" ]] || continue
+            id="$(basename "$f")"
+            [[ " $CONJURE_TEST_APP_ALLOWLIST " == *" $id "* ]] && continue
+            printf '[Desktop Entry]\nType=Application\nName=hidden\nNoDisplay=true\nExec=true\n' > "$XDG_DATA_HOME/applications/$id"
+        done
+    done
+fi
+# A fixture GNOME search provider, D-Bus-activated on the sandbox bus only (skipped with no fixtures).
 # The shell reads search-provider files from system data dirs only, so the fixture goes into a
 # sandbox dir that is prepended to XDG_DATA_DIRS for the nested session.
 mkdir -p "$sandbox/sysdata/gnome-shell/search-providers" "$XDG_DATA_HOME/dbus-1/services"
-cp "$root"/tests/shell/fixtures/search-providers/*.ini "$sandbox/sysdata/gnome-shell/search-providers/"
+[[ -z "${CONJURE_TEST_NO_FIXTURES:-}" ]] && cp "$root"/tests/shell/fixtures/search-providers/*.ini "$sandbox/sysdata/gnome-shell/search-providers/"
 export XDG_DATA_DIRS="$sandbox/sysdata:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 printf '[D-BUS Service]\nName=org.conjure.TestSearch\nExec=/usr/bin/gjs -m %s\n' \
     "$root/tests/shell/fixtures/search-provider.js" > "$XDG_DATA_HOME/dbus-1/services/org.conjure.TestSearch.service"
@@ -133,7 +149,8 @@ for script in "$@"; do
     # only logs. Allowed, with reasons: our own "[conjure-launcher]" lines (tests inject failures on
     # purpose and the extension logs them) and the harness's own "Script failed" line.
     crit="$(grep -E 'CRITICAL \*\*|JS ERROR|JS WARNING|Failed to set text .* from markup' "$log" \
-        | grep -v -E '\[conjure-launcher\]|Script failed' || true)"
+        | grep -v -E '\[conjure-launcher\]|Script failed' \
+        | { if [[ -n "${CONJURE_TEST_EXTRA_ALLOWED:-}" ]]; then grep -v -E "$CONJURE_TEST_EXTRA_ALLOWED"; else cat; fi; } || true)"
     if [[ -n "$crit" ]]; then
         echo "FAILED ($(basename "$script")): runtime criticals in the shell log:"
         sed 's/^/    /' <<<"$crit" | head -n 20

@@ -36,6 +36,15 @@ falls back to its default. The rest of the theme is unaffected.
 | `theme-font-family` | `s` | Font family; empty uses the system interface font | `''` |
 | `theme-overrides-locked` | `b` | The user asked integrations not to change tokens | `false` |
 
+## Presets
+
+Settings → Appearance offers 20 built-in themes (`lib/palettes.js`). Picking one writes the nine
+colour keys above, exactly as an integration would. The default theme, Noctalia, writes empty
+strings. The picker shows "Custom" when the keys match no preset. A preset is not a separate
+setting, so an integration that writes the keys simply replaces it. The picker does not check
+`theme-overrides-locked`: the lock is there to protect what the user chose, and the picker is the
+user choosing.
+
 ## Rules for integrations
 
 1. **Check the lock first.** If `theme-overrides-locked` is `true`, do not write any `theme-*` key.
