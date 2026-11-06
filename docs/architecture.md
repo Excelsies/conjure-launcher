@@ -178,8 +178,8 @@ Every color, corner radius and the font come from theme tokens, which are GSetti
   draws. `shell/systemStyle.js` reads `St.Settings` and the stage's theme context, and the panel
   restyles live on `notify::color-scheme` and `notify::accent-color`. Text on the accent is the
   shell's accent text color when it reaches 4.5:1, otherwise white, otherwise black.
-- **Presets** (`lib/palettes.js`): System Light and Dark (from the Yaru shell theme), ten palettes from
-  Noctalia and ten darker ones from the Gogh collection. Each is checked against a contrast floor as
+- **Presets** (`lib/palettes.js`): System Light and Dark (from the Yaru shell theme), Jeweltone (the
+  launcher's own), ten palettes from Noctalia and ten darker ones from the Gogh collection. Each is checked against a contrast floor as
   the launcher draws it: 4.5:1 for text on the accent, the background, the field and the hover fill,
   and 3:1 for secondary text.
 - **Settings → Appearance** lists one "System" entry (colors from Ubuntu's Yaru theme). "Use the

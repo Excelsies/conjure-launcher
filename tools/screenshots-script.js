@@ -120,9 +120,10 @@ export async function run() {
     await sleep(300);
 
     const { paletteValues } = await import(`file://${ROOT}/lib/palettes.js`);
-    // Theme gallery: the same search in several presets (written to the same keys the picker writes).
+    // Theme gallery: the same search in several presets (written to the same keys the picker writes),
+    // in the order the theme list shows them (tests/palettes.test.js checks it against the README).
     // Ubuntu Dark is the default, shown in every other shot.
-    for (const id of ['ubuntu-light', 'noctalia', 'catppuccin', 'dracula', 'gruvbox', 'kanagawa', 'nord', 'rose-pine', 'tokyo-night', 'moonfly', 'oxocarbon-dark']) {
+    for (const id of ['ubuntu-light', 'jeweltone', 'noctalia', 'catppuccin', 'dracula', 'gruvbox', 'kanagawa', 'nord', 'rose-pine', 'tokyo-night', 'moonfly', 'oxocarbon-dark']) {
         for (const [k, v] of Object.entries(paletteValues(id)))
             own.set_string(`theme-${k}`, v);
         launcher.open();

@@ -31,14 +31,14 @@ The shots above use the default, System, following the system's style (here dark
 
 | | | |
 |---|---|---|
-| ![System Light](docs/screenshots/theme-ubuntu-light.png) | ![Noctalia](docs/screenshots/theme-noctalia.png) | ![Catppuccin](docs/screenshots/theme-catppuccin.png) |
-| System Light | Noctalia | Catppuccin |
-| ![Dracula](docs/screenshots/theme-dracula.png) | ![Gruvbox](docs/screenshots/theme-gruvbox.png) | ![Kanagawa](docs/screenshots/theme-kanagawa.png) |
-| Dracula | Gruvbox | Kanagawa |
-| ![Nord](docs/screenshots/theme-nord.png) | ![Rosé Pine](docs/screenshots/theme-rose-pine.png) | ![Tokyo Night](docs/screenshots/theme-tokyo-night.png) |
-| Nord | Rosé Pine | Tokyo Night |
-| ![Moonfly](docs/screenshots/theme-moonfly.png) | ![Oxocarbon](docs/screenshots/theme-oxocarbon-dark.png) | |
-| Moonfly | Oxocarbon | |
+| ![System Light](docs/screenshots/theme-ubuntu-light.png) | ![Jeweltone](docs/screenshots/theme-jeweltone.png) | ![Noctalia](docs/screenshots/theme-noctalia.png) |
+| System Light | Jeweltone | Noctalia |
+| ![Catppuccin](docs/screenshots/theme-catppuccin.png) | ![Dracula](docs/screenshots/theme-dracula.png) | ![Gruvbox](docs/screenshots/theme-gruvbox.png) |
+| Catppuccin | Dracula | Gruvbox |
+| ![Kanagawa](docs/screenshots/theme-kanagawa.png) | ![Nord](docs/screenshots/theme-nord.png) | ![Rosé Pine](docs/screenshots/theme-rose-pine.png) |
+| Kanagawa | Nord | Rosé Pine |
+| ![Tokyo Night](docs/screenshots/theme-tokyo-night.png) | ![Moonfly](docs/screenshots/theme-moonfly.png) | ![Oxocarbon](docs/screenshots/theme-oxocarbon-dark.png) |
+| Tokyo Night | Moonfly | Oxocarbon |
 
 ### Settings
 
@@ -178,6 +178,7 @@ Color themes (Settings → Appearance), each shown with its swatches in the list
   it follows GNOME Settings → Appearance live: Light or Dark, and the accent color you picked there.
   Turn it off to choose System Light or System Dark yourself, with an orange accent. Choosing any other
   theme also stops following.
+- **Jeweltone**, the launcher's own: a gold accent on near-black plum.
 - Noctalia's palettes: Noctalia, Ayu, Catppuccin, Dracula, Eldritch, Gruvbox, Kanagawa,
   Nord, Rosé Pine and Tokyo Night.
 - Ten darker ones from the Gogh collection: One Half Black, Moonfly, Gotham, Jellybeans, Night Owl,

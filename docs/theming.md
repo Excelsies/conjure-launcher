@@ -42,7 +42,7 @@ falls back to its default. The rest of the theme is unaffected.
 
 ## Presets
 
-Settings → Appearance offers System plus 20 built-in themes (`lib/palettes.js`). Picking one writes
+Settings → Appearance offers System plus 21 built-in themes (`lib/palettes.js`). Picking one writes
 the nine color keys above, exactly as an integration would. "System" with "Use the system style and
 accent color" on (the default) writes empty strings, so it follows the system; with it off, System
 Light or System Dark is written as fixed values with an orange accent (`#d34615`). The picker shows "Custom" when the

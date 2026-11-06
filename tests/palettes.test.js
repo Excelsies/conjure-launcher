@@ -3,6 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { PALETTES, DEFAULT_PALETTE_ID, FOLLOW_SYSTEM_ID, matchPalette, paletteValues } from '../lib/palettes.js';
 import { COLOR_TOKENS, UBUNTU, UBUNTU_ORANGE, parseColor, resolveTheme, systemDefaults } from '../lib/theme.js';
 
@@ -24,11 +25,12 @@ function contrast(a, b) {
 const FLOOR = [['on-primary', 'primary', 4.5], ['on-surface', 'surface', 4.5], ['on-hover', 'hover', 4.5],
     ['on-surface', 'surface-container', 4.5], ['on-surface-variant', 'surface', 3.0]];
 
-test('22 palettes: Ubuntu Light and Dark first, then the Noctalia set and ten darker ones; ids unique', () => {
-    assert.equal(PALETTES.length, 22);
+test('23 palettes: Ubuntu Light and Dark first, then Jeweltone, the Noctalia set and ten darker ones; ids unique', () => {
+    assert.equal(PALETTES.length, 23);
     assert.deepEqual(PALETTES.slice(0, 2).map(p => p.id), ['ubuntu-light', 'ubuntu-dark']);
     assert.equal(PALETTES.filter(p => p.family === 'ubuntu').length, 2);
-    assert.equal(PALETTES[2].id, 'noctalia');
+    assert.deepEqual(PALETTES.slice(2, 4).map(p => p.id), ['jeweltone', 'noctalia']);
+    assert.deepEqual(PALETTES.filter(p => p.source === 'conjure').map(p => p.id), ['jeweltone']);
     assert.equal(PALETTES.filter(p => p.source === 'gogh').length, 10);
     assert.equal(new Set([...PALETTES.map(p => p.id), FOLLOW_SYSTEM_ID]).size, PALETTES.length + 1);
 });
@@ -114,4 +116,23 @@ test('the added themes are darker than the median of the original set', () => {
     const median = original[Math.floor(original.length / 2)];
     for (const p of PALETTES.filter(x => x.source === 'gogh'))
         assert.ok(lum(p) < median, `${p.name} background is not darker than the original median`);
+});
+
+// The README theme gallery and the screenshot script that renders it show themes in the order the
+// Settings → Appearance list shows them (PALETTES order; System appears as System Light).
+test('the README theme gallery and the screenshot script follow the theme list order', () => {
+    const read = rel => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
+    const readme = [...read('README.md').matchAll(/docs\/screenshots\/theme-([a-z0-9-]+)\.png/g)].map(m => m[1]);
+    const block = read('tools/screenshots-script.js').match(/for \(const id of \[([^\]]*)\]\)/);
+    assert.ok(block, 'the screenshot script has no theme gallery loop');
+    const script = [...block[1].matchAll(/'([a-z0-9-]+)'/g)].map(m => m[1]);
+    assert.ok(readme.length >= 2 && script.length >= 2, `found ${readme.length} README and ${script.length} script themes`);
+    assert.deepEqual(readme, script);
+    const order = id => {
+        const i = PALETTES.findIndex(p => p.id === id);
+        assert.ok(i >= 0, `${id} is not a theme`);
+        return i;
+    };
+    const indexes = readme.map(order);
+    assert.deepEqual(indexes, [...indexes].sort((a, b) => a - b), `out of order: ${readme.join(', ')}`);
 });

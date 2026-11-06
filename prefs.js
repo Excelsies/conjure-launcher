@@ -371,7 +371,7 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
         // settings, so changes made elsewhere show here too. "System" is one entry: following the
         // system (every color key empty, the default), or, with following off, a fixed Light or Dark.
         const themes = new Adw.PreferencesGroup({ title: 'Color theme' });
-        const themeRow = new Adw.ActionRow({ title: 'Theme', subtitle: 'System, Noctalia and Gogh palettes' });
+        const themeRow = new Adw.ActionRow({ title: 'Theme', subtitle: 'System, Jeweltone, Noctalia and Gogh palettes' });
         // What the empty keys resolve to, read the way the shell reads it: prefer-dark is dark, and
         // the accent as libadwaita draws it (on Ubuntu, the Yaru hue; St's orange is a shade darker).
         const iface = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
