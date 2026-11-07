@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Pre-upload checks for extensions.gnome.org (docs/publishing.md):
+# Checks on the release zip:
 #   1. build the zip (tools/pack.sh)
 #   2. check its contents: runtime files only, notices included, no compiled schemas
-#   3. check the automatable review rules on the packaged sources
+#   3. check the automatable GNOME Shell extension guidelines on the packaged sources, and run shexli
 #   4. install the ZIP (not the checkout) into a headless sandbox and run smoke tests
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -24,15 +24,15 @@ for pat in '^tests/' '^tools/' '^ci/' '^docs/' '^examples/' 'example' '^node_mod
     grep -qE "$pat" <<<"$listing" && bad "zip contains files matching $pat" || ok "no files matching $pat"
 done
 
-work="$(mktemp -d "${TMPDIR:-/var/tmp}/conjure-ego.XXXXXX")"
+work="$(mktemp -d "${TMPDIR:-/var/tmp}/conjure-package.XXXXXX")"
 trap 'rm -rf "$work"' EXIT
 unzip -q "$zip" -d "$work"
 js="$(cd "$work" && find . -name '*.js' -not -path './bin/*' | sort)"
 
-# Legacy imports and eval-like constructs are rejected in review.
+# Legacy imports and eval-like constructs are against the guidelines.
 grep -nE "imports\.(gi|misc|ui)|\beval\(|new Function\(" $(cd "$work" && echo $js | sed "s#\./#$work/#g") && bad "legacy imports or eval" || ok "no legacy imports or eval"
 # No GNOME objects or shell state touched at import time (plain JS constants such as Map/Set
-# tables are fine; Gio._promisify is accepted by reviewers).
+# tables are fine; so is Gio._promisify).
 if grep -nE "^(const|let|var) [A-Za-z_]+ = (new (St|Clutter|Gio|GLib|Meta|Shell|GObject)\.|global\.|Main\.|(St|Gio)\.[A-Za-z]+\.get_default\()" $(cd "$work" && echo $js | sed "s#\./#$work/#g"); then
     bad "objects created at module level"
 else
@@ -53,7 +53,7 @@ sys.exit(1 if missing else 0)
 PY
 head -1 "$work/LICENSE" | grep -q 'MIT License' && ok "license is MIT (GPL-compatible)" || bad "license not found"
 
-echo "== shexli (the analyzer extensions.gnome.org runs on uploads)"
+echo "== shexli (static analyzer for the GNOME Shell extension guidelines)"
 shexli="${SHEXLI:-${XDG_CACHE_HOME:-$HOME/.cache}/conjure-launcher/shexli-venv/bin/shexli}"
 if [[ ! -x "$shexli" ]]; then
     bad "shexli is not installed: run tools/shexli-setup.sh (a per-user virtual environment, no admin rights)"
@@ -65,5 +65,5 @@ fi
 echo "== smoke tests against the installed zip"
 CONJURE_TEST_ZIP="$zip" "$root/tools/shell-test.sh" "$root/tests/shell/defaults.js" "$root/tests/shell/providers.js" || fail=1
 
-(( fail == 0 )) && echo "ego-check: all checks passed ($zip)" || echo "ego-check: FAILED"
+(( fail == 0 )) && echo "package-check: all checks passed ($zip)" || echo "package-check: FAILED"
 exit "$fail"

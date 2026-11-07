@@ -63,7 +63,7 @@ export XDG_CONFIG_HOME="$sandbox/config" XDG_DATA_HOME="$sandbox/data"
 export XDG_STATE_HOME="$sandbox/state" XDG_CACHE_HOME="$sandbox/cache"
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME/gnome-shell/extensions"
 if [[ -n "${CONJURE_TEST_ZIP:-}" ]]; then
-    # Test the packaged extension instead of the checkout (tools/ego-check.sh).
+    # Test the packaged extension instead of the checkout (tools/package-check.sh).
     mkdir -p "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
     unzip -q "$CONJURE_TEST_ZIP" -d "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
     glib-compile-schemas "$XDG_DATA_HOME/gnome-shell/extensions/$uuid/schemas"

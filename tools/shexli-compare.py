@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare a shexli JSON report with tools/shexli-baseline.json (run by tools/ego-check.sh).
+"""Compare a shexli JSON report with tools/shexli-baseline.json (run by tools/package-check.sh).
 
 usage: shexli-compare.py <shexli report.json> <baseline.json>
 exit 0 when there are no errors and every finding is accepted in the baseline, 1 otherwise.

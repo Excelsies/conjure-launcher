@@ -1,10 +1,10 @@
 {
-  "comment": "Shexli findings accepted for extensions.gnome.org review, each with the reason. tools/ego-check.sh fails on any error, and on any finding not listed here (same rule, files a subset of the listed ones).",
+  "comment": "Shexli findings accepted, each with the reason. tools/package-check.sh fails on any error, and on any finding not listed here (same rule, files a subset of the listed ones).",
   "accepted": [
     {
       "rule_id": "EGO-A-005",
       "files": ["providers/clipboard.js", "shell/clipboard.js"],
-      "reason": "Clipboard access is declared in the metadata description, as the review guidelines require: results are copied when picked, and /clip keeps an in-memory history of text copies (off in Settings; never for copies carrying x-kde-passwordManagerHint)."
+      "reason": "Clipboard access is declared in the metadata description, as the GNOME Shell extension guidelines require: results are copied when picked, and /clip keeps an in-memory history of text copies (off in Settings; never for copies carrying x-kde-passwordManagerHint)."
     },
     {
       "rule_id": "EGO-L-002",

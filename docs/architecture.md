@@ -286,10 +286,10 @@ default Noctalia palette), with these differences:
 
 | Suite | Command | Covers |
 |---|---|---|
-| Unit | `pnpm test` | Everything in `lib/` under Node, including fzy parity with upstream cases and every palette against the contrast floor |
+| Unit | `pnpm test` | Everything in `lib/` and the pure `prefs/` modules under Node, including fzy parity with upstream cases and every palette against the contrast floor |
 | GJS | `pnpm run test:gjs` | `prefs/commandsStore.js` against the real filesystem |
 | Shell | `pnpm test:shell` | Headless GNOME Shell scripts in `tests/shell`, one sandboxed shell each |
-| Packaging | `tools/ego-check.sh` | The zip's contents, the automatable extensions.gnome.org review rules, and smoke tests against the installed zip |
+| Packaging | `tools/package-check.sh` | The zip's contents, the automatable GNOME Shell extension guidelines, shexli, and smoke tests against the installed zip |
 
 `pnpm run check` runs lint, unit, GJS and schema validation, and is what CI runs.
 

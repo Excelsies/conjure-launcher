@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the zip that extensions.gnome.org and `gnome-extensions install` accept, into dist/.
+# Build the zip that `gnome-extensions install` accepts, into dist/.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mkdir -p "$root/dist"
