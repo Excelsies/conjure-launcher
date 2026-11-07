@@ -1,5 +1,5 @@
 // Clipboard history: "/clip <text>" lists recent text copies, newest first; Enter copies one back (and
-// auto-paste applies). Memory only; a copy marked secret is never stored (invariant 7, lib/clipHistory.js).
+// auto-paste applies). Memory only; a copy marked secret is never stored (lib/clipHistory.js).
 // GNOME disables extensions while the screen is locked, so the history also clears on every lock.
 
 import Meta from 'gi://Meta';

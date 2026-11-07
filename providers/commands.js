@@ -1,5 +1,4 @@
-// Custom command entries from ~/.config/conjure-launcher/commands.json (docs/architecture.md,
-// Command entries).
+// Custom command entries from ~/.config/conjure-launcher/commands.json.
 // CommandsRegistry watches the file and keeps one CommandProvider per valid entry in the
 // launcher's provider list (edited in place, so the query controller sees changes at once).
 
@@ -189,7 +188,7 @@ export class CommandsRegistry {
         try {
             this._file.get_parent().make_directory_with_parents(null);
         } catch (e) {
-            if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
+            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
                 logError(`cannot create ${this._file.get_parent().get_path()}`, e);
         }
         this._monitor = this._file.monitor_file(Gio.FileMonitorFlags.WATCH_MOVES, null);
@@ -234,7 +233,7 @@ export class CommandsRegistry {
         } catch (e) {
             if (generation !== this._reloadGeneration)
                 return;
-            if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
+            if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
                 this.errors = [];
                 this._apply([]);
                 return;

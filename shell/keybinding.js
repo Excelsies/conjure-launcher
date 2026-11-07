@@ -1,4 +1,4 @@
-// Owns our toggle-launcher binding and the app-grid takeover (invariant 1, lib/takeover.js).
+// Owns our toggle-launcher binding and the app-grid takeover (lib/takeover.js).
 
 import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
@@ -22,7 +22,7 @@ const CONFLICT_SCHEMAS = [
 
 /**
  * Find other bindings that hold one of our accelerators. Read-only: changing them is the
- * user's decision (invariant 1, docs/architecture.md). A schema that is not installed is skipped.
+ * user's decision. A schema that is not installed is skipped.
  * @returns {string[]} "schema key" pairs
  */
 export function findConflicts(ours) {

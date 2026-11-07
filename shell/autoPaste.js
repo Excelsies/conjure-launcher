@@ -1,4 +1,4 @@
-// Auto-paste (invariant 5, docs/architecture.md): after a copying result, paste into the
+// Auto-paste: after a copying result, paste into the
 // window that was focused before the launcher opened, and only into that window.
 
 import Clutter from 'gi://Clutter';

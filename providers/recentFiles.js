@@ -36,7 +36,7 @@ export class RecentFilesProvider {
         try {
             [bytes] = await file.load_contents_async(null);
         } catch (e) {
-            if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
+            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
                 this._failed(e);
             return [];
         }

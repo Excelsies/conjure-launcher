@@ -1,7 +1,7 @@
 // GNOME search providers (files, Settings, Characters, Software, ...) in global search, through
 // the shell's own remoteSearch.js, so the user's Search settings (enabled list and order) apply.
 //
-// Budget (docs/architecture.md, Time limits): wait DEBOUNCE_MS after the last keystroke, then give
+// Budget: wait DEBOUNCE_MS after the last keystroke, then give
 // every provider TIMEOUT_MS to answer GetInitialResultSet + GetResultMetas. A provider that is
 // late or fails contributes nothing to this query; a newer query cancels the D-Bus calls.
 
@@ -131,10 +131,10 @@ export class SearchProvidersBridge {
 
     createIcon(result, size) {
         // Results without their own icon show the provider app's icon (as in GNOME's overview).
-        const own = result.meta?.createIcon?.(size);
+        const own = result.meta.createIcon(size);
         if (own)
             return own;
-        const gicon = result.remote?.appInfo?.get_icon();
+        const gicon = result.remote.appInfo.get_icon();
         return gicon ? new St.Icon({ gicon, icon_size: size }) : null;
     }
 

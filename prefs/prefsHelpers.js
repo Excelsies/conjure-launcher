@@ -1,6 +1,6 @@
 // Pure helpers for prefs.js (kept here so node can test them).
 
-import { parseColor } from './theme.js';
+import { parseColor } from '../lib/theme.js';
 import { FOLLOW_SYSTEM_ID, PALETTES } from './palettes.js';
 
 const UBUNTU_IDS = Object.freeze([FOLLOW_SYSTEM_ID, ...PALETTES.filter(p => p.family === 'ubuntu').map(p => p.id)]);

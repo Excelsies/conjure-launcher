@@ -22,7 +22,7 @@ falls back to its default. The rest of the theme is unaffected.
 
 | Key | Used for | Built-in default: Light / Dark |
 |---|---|---|
-| `theme-primary` | Selected row fill, focus accents | the system accent (Ubuntu orange `#d34615` if unreadable) |
+| `theme-primary` | Selected row fill, focus accents | the system accent color |
 | `theme-on-primary` | Text and glyphs on `primary` | the shell's accent text color if it reaches 4.5:1, else white, else black |
 | `theme-surface` | Panel background | `#ffffff` / `#36363a` |
 | `theme-surface-container` | Search toolbar and card backgrounds | `#ededed` / `#414144` |
@@ -42,7 +42,7 @@ falls back to its default. The rest of the theme is unaffected.
 
 ## Presets
 
-Settings → Appearance offers System plus 21 built-in themes (`lib/palettes.js`). Picking one writes
+Settings → Appearance offers System plus 21 built-in themes (`prefs/palettes.js`). Picking one writes
 the nine color keys above, exactly as an integration would. "System" with "Use the system style and
 accent color" on (the default) writes empty strings, so it follows the system; with it off, System
 Light or System Dark is written as fixed values with an orange accent (`#d34615`). The picker shows "Custom" when the

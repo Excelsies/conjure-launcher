@@ -11,10 +11,10 @@ import Gtk from 'gi://Gtk';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import { COLOR_TOKENS, systemDefaults } from './lib/theme.js';
-import { rgbaToHex, hexToRgba, swatchMarkup, ubuntuControls, themeForFollow } from './lib/prefsHelpers.js';
-import { upsertEntry, removeEntry, errorsFor, suggestId } from './lib/commandsDoc.js';
-import { CommandsStore } from './common/commandsStore.js';
-import { PALETTES, FOLLOW_SYSTEM_ID, matchPalette, paletteValues } from './lib/palettes.js';
+import { rgbaToHex, hexToRgba, swatchMarkup, ubuntuControls, themeForFollow } from './prefs/prefsHelpers.js';
+import { upsertEntry, removeEntry, errorsFor, suggestId } from './prefs/commandsDoc.js';
+import { CommandsStore } from './prefs/commandsStore.js';
+import { PALETTES, FOLLOW_SYSTEM_ID, matchPalette, paletteValues } from './prefs/palettes.js';
 
 const TOKEN_LABELS = {
     'primary': ['Accent', 'Selected row and active tab'],

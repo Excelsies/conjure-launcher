@@ -9,7 +9,7 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { Suite, extension, sleep, waitFor } from './lib/harness.js';
-import { paletteValues } from '../../lib/palettes.js';
+import { paletteValues } from '../../prefs/palettes.js';
 import { parseColor, toCss, UBUNTU } from '../../lib/theme.js';
 
 const css = hex => toCss(parseColor(hex));

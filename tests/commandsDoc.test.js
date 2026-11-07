@@ -2,7 +2,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseDoc, validateDoc, errorsFor, upsertEntry, removeEntry, moveEntry, serializeDoc, suggestId, emptyDoc } from '../lib/commandsDoc.js';
+import { parseDoc, validateDoc, errorsFor, upsertEntry, removeEntry, moveEntry, serializeDoc, suggestId, emptyDoc } from '../prefs/commandsDoc.js';
 import { BUILTIN_TRIGGERS } from '../lib/builtins.js';
 
 test('parse: empty text is an empty document; malformed text is an error, not an empty doc', () => {

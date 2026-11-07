@@ -24,10 +24,10 @@ export class SettingsPanelsProvider {
 
     _list() {
         this._panels ??= Gio.AppInfo.get_all()
-            .filter(info => (info.get_categories?.() ?? '').split(';').includes(PANEL_CATEGORY))
+            .filter(info => (info.get_categories() ?? '').split(';').includes(PANEL_CATEGORY))
             .map(info => ({
                 info, name: info.get_name(), nameLower: info.get_name().toLowerCase(),
-                keywordsLower: (info.get_keywords?.() ?? []).map(k => k.toLowerCase()),
+                keywordsLower: (info.get_keywords() ?? []).map(k => k.toLowerCase()),
             }))
             .sort((a, b) => a.name.localeCompare(b.name));
         return this._panels;

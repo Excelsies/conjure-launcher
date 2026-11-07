@@ -174,7 +174,7 @@
     <key name="theme-overrides-locked" type="b">
       <default>false</default>
       <summary>Ask integrations not to change theme tokens</summary>
-      <description>Advisory: integrations that write theme-* keys must check this first and leave the tokens alone when it is true. See docs/theming.md.</description>
+      <description>Advisory: integrations that write theme-* keys must check this first and leave the tokens alone when it is true.</description>
     </key>
     <key name="debug" type="b">
       <default>false</default>

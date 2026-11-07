@@ -1,6 +1,6 @@
 // Launch-history persistence for lib/usage.js.
 //
-// Failure handling (docs/architecture.md, Failure handling):
+// Failure handling:
 // - Missing file: start empty.
 // - Unparseable file: move it aside as usage.json.corrupt-<time>, so the history is kept for
 //   inspection instead of being silently overwritten, then start empty.
@@ -42,7 +42,7 @@ export class UsageFile {
             const [bytes] = await this._file.load_contents_async(null);
             text = new TextDecoder().decode(bytes);
         } catch (e) {
-            if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
+            if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
                 this._writable = true;
                 return;
             }
@@ -79,7 +79,7 @@ export class UsageFile {
                 try {
                     this._dir.make_directory_with_parents(null);
                 } catch (e) {
-                    if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
+                    if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
                         throw e;
                 }
                 await this._file.replace_contents_bytes_async(

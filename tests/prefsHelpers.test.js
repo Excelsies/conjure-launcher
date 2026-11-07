@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rgbaToHex, hexToRgba, ubuntuControls, themeForFollow } from '../lib/prefsHelpers.js';
-import { matchPalette, paletteValues } from '../lib/palettes.js';
+import { rgbaToHex, hexToRgba, ubuntuControls, themeForFollow } from '../prefs/prefsHelpers.js';
+import { matchPalette, paletteValues } from '../prefs/palettes.js';
 import { systemDefaults } from '../lib/theme.js';
 import { COLOR_TOKENS } from '../lib/theme.js';
 
@@ -24,7 +24,7 @@ test('round trip for every default token', () => {
 });
 
 test('swatchMarkup: one block per role, normalized hex, invalid values skipped', async () => {
-    const { swatchMarkup, SWATCH_ROLES } = await import('../lib/prefsHelpers.js');
+    const { swatchMarkup, SWATCH_ROLES } = await import('../prefs/prefsHelpers.js');
     const html = swatchMarkup({ ...COLOR_TOKENS, primary: '#ABC' });
     assert.equal((html.match(/<span /g) ?? []).length, SWATCH_ROLES.length);
     assert.match(html, /background="#aabbcc"/);

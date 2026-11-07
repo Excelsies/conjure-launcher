@@ -30,8 +30,8 @@ export default [
         },
     },
     {
-        // lib/ is shared with node unit tests, so it must not touch GJS or Shell APIs.
-        files: ['lib/**/*.js'],
+        // lib/ and the pure Settings modules are unit-tested under node, so they must not touch GJS or Shell APIs.
+        files: ['lib/**/*.js', 'prefs/palettes.js', 'prefs/prefsHelpers.js', 'prefs/commandsDoc.js'],
         rules: {
             'no-restricted-imports': ['error', { patterns: ['gi://*', 'resource://*'] }],
             'no-restricted-globals': ['error', 'global', 'imports', 'log', 'logError'],

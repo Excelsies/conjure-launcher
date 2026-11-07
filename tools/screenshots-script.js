@@ -119,7 +119,7 @@ export async function run() {
     launcher.close('screenshots');
     await sleep(300);
 
-    const { paletteValues } = await import(`file://${ROOT}/lib/palettes.js`);
+    const { paletteValues } = await import(`file://${ROOT}/prefs/palettes.js`);
     // Theme gallery: the same search in several presets (written to the same keys the picker writes),
     // in the order the theme list shows them (tests/palettes.test.js checks it against the README).
     // Ubuntu Dark is the default, shown in every other shot.

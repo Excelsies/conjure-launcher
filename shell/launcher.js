@@ -1,6 +1,5 @@
-// The launcher controller: wires the modal lifecycle (invariant 2), the query controller
-// (invariant 4), the panel, the providers and the launch history together. Every close path
-// goes through this._lifecycle.close(reason).
+// The launcher controller: wires the modal lifecycle, the query controller, the panel, the providers
+// and the launch history together. Every close path goes through this._lifecycle.close(reason).
 
 import GLib from 'gi://GLib';
 import Shell from 'gi://Shell';
@@ -44,7 +43,7 @@ export class Launcher {
             { log, logError });
         this._usageLoaded = this._usage.load();
 
-        this.systemStyle = new SystemStyle({ logError, onChange: () => this._restyle() });
+        this.systemStyle = new SystemStyle({ onChange: () => this._restyle() });
         this._styles = this._computeStyles();
         this._settingsIds = [settings.connect('changed', (_s, key) => {
             if (THEME_KEYS.includes(key)) {
@@ -239,7 +238,7 @@ export class Launcher {
         this._signals = [];
         this._query.cancel();
         this._query.setScope(null);
-        // A dmenu call still waiting gets its answer on every close path (invariant 6).
+        // A dmenu call still waiting gets its answer on every close path.
         if (reason === 'disable')
             this._finishDmenu(null, new Error('Conjure Launcher was disabled'));
         else

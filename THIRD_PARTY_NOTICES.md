@@ -36,7 +36,7 @@ THE SOFTWARE.
 Behavior (provider model, query routing, scoring weights, views, categories, defaults and
 palette) is ported from https://github.com/noctalia-dev/noctalia at commit 60861c9.
 `data/emoji.json` is Noctalia's `assets/emoji.json`, minified (same entries and fields).
-The color themes in `lib/palettes.js` are Noctalia's built-in dark palettes
+The color themes in `prefs/palettes.js` are Noctalia's built-in dark palettes
 (`src/theme/builtin_palettes.cpp`), reduced to the nine colors the launcher uses; one text color is
 adjusted for contrast, as noted in that file.
 
@@ -66,7 +66,7 @@ SOFTWARE.
 
 ## Gogh
 
-Ten of the color themes in `lib/palettes.js` (One Half Black, Moonfly, Gotham, Jellybeans, Night
+Ten of the color themes in `prefs/palettes.js` (One Half Black, Moonfly, Gotham, Jellybeans, Night
 Owl, Aura, Oxocarbon, Oceanic Next, Molokai, Tomorrow Night) are mapped from terminal palettes in the
 Gogh collection (https://github.com/Gogh-Co/Gogh), as bundled with Ptyxis 50.1. Gogh is dual-licensed
 under the MIT License and the Apache License 2.0; these are used under the MIT License.

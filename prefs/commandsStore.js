@@ -1,11 +1,11 @@
-// Reading and writing commands.json for the preferences editor (docs/architecture.md, Command entries).
+// Reading and writing commands.json for the preferences editor.
 // Gio only, so it runs in the preferences process. Writes are atomic and refuse to overwrite a
 // file that changed on disk since it was read (etag), or one that could not be parsed.
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
-import { parseDoc, serializeDoc } from '../lib/commandsDoc.js';
+import { parseDoc, serializeDoc } from './commandsDoc.js';
 
 export function defaultCommandsPath() {
     return GLib.build_filenamev([GLib.get_user_config_dir(), 'conjure-launcher', 'commands.json']);
@@ -27,7 +27,7 @@ export class CommandsStore {
         try {
             [, bytes, etag] = this._file.load_contents(null);
         } catch (e) {
-            if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
+            if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
                 this._etag = null;
                 this._state = 'missing';
                 return { state: 'missing', doc: parseDoc('').doc };
@@ -53,17 +53,18 @@ export class CommandsStore {
         try {
             this._file.get_parent().make_directory_with_parents(null);
         } catch (e) {
-            if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
+            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
                 return { ok: false, error: e.message };
         }
+        const bytes = new TextEncoder().encode(serializeDoc(doc));
         try {
-            const [, etag] = this._file.replace_contents(new TextEncoder().encode(serializeDoc(doc)),
-                this._state === 'ok' ? this._etag : null, false, Gio.FileCreateFlags.NONE, null);
+            const [, etag] = this._file.replace_contents(bytes, this._state === 'ok' ? this._etag : null, false,
+                Gio.FileCreateFlags.NONE, null);
             this._etag = etag;
             this._state = 'ok';
             return { ok: true };
         } catch (e) {
-            if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.WRONG_ETAG))
+            if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.WRONG_ETAG))
                 return { ok: false, conflict: true, error: 'the file changed on disk since it was read' };
             return { ok: false, error: e.message };
         }

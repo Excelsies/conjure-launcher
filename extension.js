@@ -1,7 +1,7 @@
 // Conjure Launcher: GNOME Shell extension entry point.
 //
 // enable(): build the launcher, then take our keybinding (which takes over only the colliding
-// part of GNOME's app-grid binding, invariant 1). disable(): the reverse, in reverse order.
+// part of GNOME's app-grid binding). disable(): the reverse, in reverse order.
 // The shell calls disable() on lock and enable() again on unlock, so both must be repeatable.
 
 import GLib from 'gi://GLib';

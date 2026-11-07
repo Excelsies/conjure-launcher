@@ -1,9 +1,9 @@
-// The commands.json document as the preferences editor sees it (docs/architecture.md, Command entries).
+// The commands.json document as the preferences editor sees it.
 // Pure: parsing, editing that keeps unknown keys, validation with the extension's own rules,
 // and serialization.
 
-import { validateCommands, COMMANDS_FORMAT_VERSION } from './commands.js';
-import { BUILTIN_TRIGGERS } from './builtins.js';
+import { validateCommands, COMMANDS_FORMAT_VERSION } from '../lib/commands.js';
+import { BUILTIN_TRIGGERS } from '../lib/builtins.js';
 
 export const EDITABLE_FIELDS = Object.freeze(['id', 'label', 'prefix', 'icon', 'command', 'exec', 'freeform', 'global', 'cache']);
 

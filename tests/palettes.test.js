@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PALETTES, DEFAULT_PALETTE_ID, FOLLOW_SYSTEM_ID, matchPalette, paletteValues } from '../lib/palettes.js';
+import { PALETTES, DEFAULT_PALETTE_ID, FOLLOW_SYSTEM_ID, matchPalette, paletteValues } from '../prefs/palettes.js';
 import { COLOR_TOKENS, UBUNTU, UBUNTU_ORANGE, parseColor, resolveTheme, systemDefaults } from '../lib/theme.js';
 
 // WCAG 2.x relative luminance and contrast ratio, written here independently of the generator.

@@ -273,7 +273,7 @@ export class LauncherPanel {
 
     /**
      * Remove the panel. The caller has already released the grab, so the backdrop stops taking
-     * input immediately and only the visual fade-out remains (invariant 2).
+     * input immediately and only the visual fade-out remains.
      */
     dismiss({ animate }) {
         const backdrop = this.backdrop;

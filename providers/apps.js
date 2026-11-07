@@ -47,20 +47,20 @@ export class AppsProvider {
             if (!id || !info.should_show() || !this._parental.shouldShowApp(info))
                 continue;
             const name = info.get_display_name() ?? info.get_name() ?? id;
-            const raw = typeof info.get_string === 'function' ? info.get_string('Name') : null;
+            const raw = info.get_string('Name');
             const exec = info.get_executable() ?? '';
-            const categoryTokens = (info.get_categories?.() ?? '').split(';').filter(Boolean);
+            const categoryTokens = (info.get_categories() ?? '').split(';').filter(Boolean);
             entries.push({
                 id,
                 name,
                 category: categoryFor(categoryTokens),
-                subtitle: info.get_generic_name?.() || info.get_description() || '',
+                subtitle: info.get_generic_name() || info.get_description() || '',
                 score: {
                     nameLower: lower(name),
                     altNamesLower: raw && lower(raw) !== lower(name) ? [lower(raw)] : [],
-                    genericLower: lower(info.get_generic_name?.()),
-                    keywordsLower: (info.get_keywords?.() ?? []).map(lower),
-                    categoriesLower: lower(info.get_categories?.()).split(';').filter(Boolean),
+                    genericLower: lower(info.get_generic_name()),
+                    keywordsLower: (info.get_keywords() ?? []).map(lower),
+                    categoriesLower: lower(info.get_categories()).split(';').filter(Boolean),
                     idLower: lower(id.replace(/\.desktop$/, '')),
                     execLower: lower(GLib.path_get_basename(exec)),
                 },
@@ -106,7 +106,7 @@ export class AppsProvider {
         if (app.can_open_new_window())
             out.push({ id: 'new-window', label: 'New Window', icon: 'window-new-symbolic' });
         const info = app.get_app_info();
-        for (const action of info?.list_actions?.() ?? []) {
+        for (const action of info?.list_actions() ?? []) {
             if (action === 'new-window')
                 continue;  // already offered above, with GNOME's own handling
             out.push({ id: `action:${action}`, label: info.get_action_name(action) ?? action });

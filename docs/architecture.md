@@ -17,11 +17,11 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 | Area | Files |
 |---|---|
 | Entry point | `extension.js` (enable / disable, provider list) |
-| Pure logic (no `gi://` imports; unit-tested under Node, enforced by ESLint) | `lib/`: `fzy`, `appScore`, `ranking`, `router`, `queryController`, `usage`, `views`, `navigation`, `lifecycle`, `takeover`, `placement`, `theme`, `palettes`, `calc`, `emoji`, `session`, `commands`, `commandsDoc`, `paste`, `overview`, `builtins`, `prefsHelpers`, `appActivation`, `typo`, `units`, `clipHistory`, `thumbnails` |
+| Pure logic (no `gi://` imports; unit-tested under Node, enforced by ESLint) | `lib/`: `fzy`, `appScore`, `ranking`, `router`, `queryController`, `usage`, `views`, `navigation`, `lifecycle`, `takeover`, `placement`, `theme`, `calc`, `emoji`, `session`, `commands`, `paste`, `overview`, `builtins`, `appActivation`, `typo`, `units`, `clipHistory`, `thumbnails` |
 | Shell integration | `shell/launcher.js` (panel lifecycle, query wiring, theming), `shell/keybinding.js`, `shell/systemStyle.js`, `shell/usageFile.js`, `shell/settingsAdapters.js`, `shell/clipboard.js`, `shell/autoPaste.js`, `shell/dbusService.js` |
 | UI | `ui/panel.js`, `stylesheet.css` (layout only; every color is a theme token) |
 | Providers | `providers/apps.js`, `calc.js`, `emoji.js`, `windows.js`, `session.js`, `searchProviders.js`, `commands.js`, `wallpaper.js`, `clipboard.js`, `settingsPanels.js`, `recentFiles.js`, `dmenu.js` |
-| Settings | `schemas/*.gschema.xml`, `prefs.js`, `common/commandsStore.js` |
+| Settings | `schemas/*.gschema.xml`, `prefs.js`, and `prefs/` (loaded only by `prefs.js`): `palettes`, `prefsHelpers` and `commandsDoc` (pure, unit-tested under Node), `commandsStore` |
 | dmenu client | `bin/conjure-dmenu` (GJS) |
 | Data | `data/emoji.json` (runtime); `examples/commands.json` (example command entries, not packed) |
 
@@ -123,7 +123,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 - The file is watched and reloaded 200 ms after it changes. An unreadable or invalid file keeps
   the last good entries and logs the path and error. A missing file means no entries.
 - The Settings editor never overwrites a file that does not parse, or one that changed on disk since
-  it was read (etag); it keeps keys it does not know; writes are atomic (`common/commandsStore.js`).
+  it was read (etag); it keeps keys it does not know; writes are atomic (`prefs/commandsStore.js`).
 
 ### dmenu mode
 
@@ -178,7 +178,7 @@ Every color, corner radius and the font come from theme tokens, which are GSetti
   draws. `shell/systemStyle.js` reads `St.Settings` and the stage's theme context, and the panel
   restyles live on `notify::color-scheme` and `notify::accent-color`. Text on the accent is the
   shell's accent text color when it reaches 4.5:1, otherwise white, otherwise black.
-- **Presets** (`lib/palettes.js`): System Light and Dark (from the Yaru shell theme), Jeweltone (the
+- **Presets** (`prefs/palettes.js`): System Light and Dark (from the Yaru shell theme), Jeweltone (the
   launcher's own), ten palettes from Noctalia and ten darker ones from the Gogh collection. Each is checked against a contrast floor as
   the launcher draws it: 4.5:1 for text on the accent, the background, the field and the hover fill,
   and 3:1 for secondary text.
@@ -252,7 +252,6 @@ Code comments and tests refer to these by number.
 | A command entry times out | Its process group is killed; no candidates from it |
 | An app fails to launch | A notification names the app |
 | A theme key is not a color | Logged with the key name; that token uses its default |
-| The system accent cannot be read | Logged once; Ubuntu orange is used |
 | A clipboard copy cannot be read | Not stored; logged once |
 | A wallpaper thumbnail is missing, stale or cannot be made | Generic image icon; the full image is never decoded for an icon |
 | `recently-used.xbel` missing or unreadable | No `/rec` results; logged once when unreadable |
@@ -288,7 +287,7 @@ default Noctalia palette), with these differences:
 | Suite | Command | Covers |
 |---|---|---|
 | Unit | `pnpm test` | Everything in `lib/` under Node, including fzy parity with upstream cases and every palette against the contrast floor |
-| GJS | `pnpm run test:gjs` | `common/commandsStore.js` against the real filesystem |
+| GJS | `pnpm run test:gjs` | `prefs/commandsStore.js` against the real filesystem |
 | Shell | `pnpm test:shell` | Headless GNOME Shell scripts in `tests/shell`, one sandboxed shell each |
 | Packaging | `tools/ego-check.sh` | The zip's contents, the automatable extensions.gnome.org review rules, and smoke tests against the installed zip |
 

@@ -5,8 +5,8 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import System from 'system';
 
-import { CommandsStore } from '../../common/commandsStore.js';
-import { upsertEntry, emptyDoc } from '../../lib/commandsDoc.js';
+import { CommandsStore } from '../../prefs/commandsStore.js';
+import { upsertEntry, emptyDoc } from '../../prefs/commandsDoc.js';
 
 let failures = 0;
 function check(name, cond, detail = '') {
