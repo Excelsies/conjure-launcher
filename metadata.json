@@ -7,5 +7,5 @@
     ],
     "url": "https://github.com/Excelsies/conjure-launcher",
     "settings-schema": "org.gnome.shell.extensions.conjure-launcher",
-    "version-name": "0.8.2"
+    "version-name": "0.8.3"
 }

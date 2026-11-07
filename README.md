@@ -5,7 +5,7 @@ A keyboard-first application launcher for GNOME Shell 50+, modeled on the launch
 because Mutter does not implement `wlr-layer-shell`, so a standalone Wayland launcher cannot draw
 over the desktop. It opens on Super+Space, in place of GNOME's "Show Apps" grid.
 
-Version 0.8.2. How it works is described in `docs/architecture.md`; the theming interface for
+Version 0.8.3. How it works is described in `docs/architecture.md`; the theming interface for
 other programs is in `docs/theming.md`.
 
 ## Screenshots

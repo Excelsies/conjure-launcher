@@ -40,7 +40,7 @@ export default class ConjureLauncherExtension extends Extension {
             new WindowsProvider(),
             new SessionProvider(),
             new WallpaperProvider(this._settings),
-            new ClipboardProvider(this._settings, logError),
+            new ClipboardProvider(this._settings),
             new SettingsPanelsProvider(),
             new RecentFilesProvider(logError),
             new SearchProvidersBridge({ settings: this._settings, log, logError }),
@@ -54,22 +54,22 @@ export default class ConjureLauncherExtension extends Extension {
         });
         this.dbus = new ConjureDBusService({ dmenu: (prompt, lines) => this.launcher.dmenu(prompt, lines), logError });
         this.keybindings = new KeybindingManager({
-            settings: this._settings, onToggle: () => this.launcher?.toggle(), log, logError,
+            settings: this._settings, onToggle: () => this.launcher.toggle(), log, logError,
         });
         this.keybindings.enable();
         log(`enabled (${this.metadata['version-name']})`);
     }
 
     disable() {
-        this.dbus?.destroy();
+        this.dbus.destroy();
         this.dbus = null;
-        this.keybindings?.disable();
+        this.keybindings.disable();
         this.keybindings = null;
-        this.launcher?.destroy();
+        this.launcher.destroy();
         this.launcher = null;
-        this.commands?.destroy();
+        this.commands.destroy();
         this.commands = null;
-        for (const p of this._providers ?? [])
+        for (const p of this._providers)
             p.destroy?.();
         this._providers = null;
         this._settings = null;

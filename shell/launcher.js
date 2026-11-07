@@ -203,14 +203,9 @@ export class Launcher {
         });
         panel.build(monitor, rect);
         this.lastRect = rect;
-        try {
-            const grab = Main.pushModal(panel.backdrop, { actionMode: Shell.ActionMode.POPUP });
-            this._panel = panel;
-            return grab;
-        } catch (e) {
-            panel.destroy();
-            throw e;
-        }
+        const grab = Main.pushModal(panel.backdrop, { actionMode: Shell.ActionMode.POPUP });
+        this._panel = panel;
+        return grab;
     }
 
     _onOpen() {

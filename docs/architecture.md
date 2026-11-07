@@ -252,7 +252,7 @@ Code comments and tests refer to these by number.
 | A command entry times out | Its process group is killed; no candidates from it |
 | An app fails to launch | A notification names the app |
 | A theme key is not a color | Logged with the key name; that token uses its default |
-| A clipboard copy cannot be read | Not stored; logged once |
+| A clipboard copy cannot be read | Not stored |
 | A wallpaper thumbnail is missing, stale or cannot be made | Generic image icon; the full image is never decoded for an icon |
 | `recently-used.xbel` missing or unreadable | No `/rec` results; logged once when unreadable |
 | A `usage.json` decay entry is invalid | That entry decays from the time the file was read, starting at its count |

@@ -12,15 +12,13 @@ import { copyToClipboard } from '../shell/clipboard.js';
 const CLIPBOARD = Meta.SelectionType.SELECTION_CLIPBOARD;
 
 export class ClipboardProvider {
-    constructor(settings, logError) {
+    constructor(settings) {
         this.id = 'clipboard';
         this.trigger = 'clip';
         this.displayName = 'Clipboard history';
         this.icon = 'edit-paste-symbolic';
         this.trackUsage = false;
         this._settings = settings;
-        this._logError = logError;
-        this._loggedReadFailure = false;
         this.history = new ClipHistory(settings.get_int('clipboard-history-size'));
         this._generation = 0;  // a read that finishes after a newer copy (or disable) is dropped
         this.reads = 0;        // clipboard reads issued (tests)
@@ -41,13 +39,7 @@ export class ClipboardProvider {
         const generation = ++this._generation;
         if (type !== CLIPBOARD || !source || !this._settings.get_boolean('clipboard-history'))
             return;
-        let mimetypes;
-        try {
-            mimetypes = source.get_mimetypes();
-        } catch (e) {
-            this._readFailed(e);
-            return;
-        }
+        const mimetypes = source.get_mimetypes();
         // Checked before reading: a secret is never even read into the extension.
         if (!shouldStore(mimetypes, 'x'))
             return;
@@ -58,12 +50,6 @@ export class ClipboardProvider {
             if (shouldStore(mimetypes, text))
                 this.history.add(text);
         });
-    }
-
-    _readFailed(e) {
-        if (!this._loggedReadFailure)
-            this._logError('could not read a clipboard copy; it was not stored', e);
-        this._loggedReadFailure = true;
     }
 
     query(text) {

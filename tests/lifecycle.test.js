@@ -53,6 +53,9 @@ test('the open flag is false before the grab is released (toggle mid-close sees 
         pop: () => {
             seenDuringPop = lc.isOpen;
         },
+        onOpen: () => {},
+        onClose: () => {},
+        logError: () => {},
     });
     lc.open();
     lc.close('escape');
