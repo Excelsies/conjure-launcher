@@ -46,7 +46,7 @@ test('every color token has a key that defaults to empty (= built-in palette)', 
 test('no undocumented theme-* keys', () => {
     const documented = new Set([
         ...COLOR_TOKENS.map(t => `theme-${t}`),
-        'theme-radius-scale', 'theme-font-family', 'theme-overrides-locked',
+        'theme-radius-scale', 'theme-font-family', 'theme-overrides-locked', 'theme-override-source',
     ]);
     const extra = keyNames.filter(k => k.startsWith('theme-') && !documented.has(k));
     assert.deepEqual(extra, []);

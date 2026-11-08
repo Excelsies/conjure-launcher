@@ -11,6 +11,7 @@ import Gtk from 'gi://Gtk';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import { COLOR_TOKENS, systemDefaults } from './lib/theme.js';
+import { appearanceOverridden, overridingApp } from './lib/themeOverride.js';
 import { rgbaToHex, hexToRgba, swatchMarkup, ubuntuControls, themeForFollow } from './prefs/prefsHelpers.js';
 import { upsertEntry, removeEntry, errorsFor, suggestId } from './prefs/commandsDoc.js';
 import { CommandsStore } from './prefs/commandsStore.js';
@@ -365,6 +366,12 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
     _appearancePage(settings) {
         const page = new Adw.PreferencesPage({ title: 'Appearance', icon_name: 'applications-graphics-symbolic', name: 'appearance' });
 
+        // While another application overrides the theme, only this notice and "Keep my colors" show.
+        const notice = new Adw.PreferencesGroup();
+        const noticeLabel = new Gtk.Label({ wrap: true, xalign: 0, css_classes: ['title-3', 'accent'] });
+        notice.add(noticeLabel);
+        page.add(notice);
+
         // Color themes: picking one writes all nine color keys; editing any color below
         // shows "Custom". A menu button opens a tall list (taller than GTK's dropdown allows) where
         // every theme shows its swatches and the active one is ticked. The list follows the
@@ -548,8 +555,22 @@ export default class ConjureLauncherPreferences extends ExtensionPreferences {
 
         const lock = new Adw.PreferencesGroup();
         lock.add(switchRow(settings, 'theme-overrides-locked', 'Keep my colors',
-            'Ask other extensions not to change the theme (they are expected to honor this)'));
+            'Use your own theme, and ask other applications not to change it'));
         page.add(lock);
+
+        const syncOverride = () => {
+            const source = settings.get_string('theme-override-source');
+            const overridden = appearanceOverridden({ locked: settings.get_boolean('theme-overrides-locked'), source });
+            if (overridden) {
+                noticeLabel.set_markup(`Your launcher colors are being set by <b>${GLib.markup_escape_text(overridingApp(source), -1)}</b>. ` +
+                    'Turn on Keep my colors to go back to your own.');
+            }
+            notice.visible = overridden;
+            for (const group of [themes, colors, shape])
+                group.visible = !overridden;
+        };
+        watch(settings, 'theme-override-source', notice, syncOverride);
+        watch(settings, 'theme-overrides-locked', notice, syncOverride);
         return page;
     }
 }

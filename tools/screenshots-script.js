@@ -145,6 +145,12 @@ export async function run() {
     await waitFor(prefs, 20000);
     await sleep(4000);
     const r = prefs().meta_window.get_frame_rect();
+    // An application overriding the theme: only the notice and "Keep my colors" show.
+    own.set_string('theme-override-source', 'My Theme App');
+    await sleep(800);
+    await capture('15-settings-overridden', r, 0);
+    own.reset('theme-override-source');
+    await sleep(800);
     await capture('13-settings', r, 0);
     const pointer = Clutter.get_default_backend().get_default_seat().create_virtual_device(Clutter.InputDeviceType.POINTER_DEVICE);
     globalThis._shotPointer = pointer;

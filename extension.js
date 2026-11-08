@@ -9,6 +9,7 @@ import GLib from 'gi://GLib';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import { KeybindingManager } from './shell/keybinding.js';
+import { ThemeOverrideWatcher } from './shell/themeOverride.js';
 import { Launcher } from './shell/launcher.js';
 import { AppsProvider } from './providers/apps.js';
 import { CalcProvider } from './providers/calc.js';
@@ -57,10 +58,13 @@ export default class ConjureLauncherExtension extends Extension {
             settings: this._settings, onToggle: () => this.launcher.toggle(), log, logError,
         });
         this.keybindings.enable();
+        this.themeOverride = new ThemeOverrideWatcher({ settings: this._settings, log });
         log(`enabled (${this.metadata['version-name']})`);
     }
 
     disable() {
+        this.themeOverride.destroy();
+        this.themeOverride = null;
         this.dbus.destroy();
         this.dbus = null;
         this.keybindings.disable();

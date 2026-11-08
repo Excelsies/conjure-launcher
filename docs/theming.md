@@ -38,7 +38,20 @@ falls back to its default. The rest of the theme is unaffected.
 |---|---|---|---|
 | `theme-radius-scale` | `d` (0.0-3.0) | Multiplies every corner radius (base radii 3 / 6 / 9 / 12 px) | `1.0` |
 | `theme-font-family` | `s` | Font family; empty uses the system interface font | `''` |
-| `theme-overrides-locked` | `b` | The user asked integrations not to change tokens | `false` |
+| `theme-overrides-locked` | `b` | The user asked integrations not to change tokens ("Keep my colors") | `false` |
+| `theme-override-source` | `s` | Display name of the application currently driving the tokens; empty when none | `''` |
+
+## When an application overrides the theme
+
+An integration that drives the tokens names itself in `theme-override-source`. While that key is set and
+`theme-overrides-locked` is off, Settings → Appearance shows only a notice naming the application and the
+"Keep my colors" switch.
+
+While no application overrides the theme, the launcher keeps a copy of the user's tokens (the nine colors,
+`theme-radius-scale` and `theme-font-family`) in its own key, `saved-user-theme`. Turning "Keep my colors" on
+while an application overrides the theme clears `theme-override-source` and writes that copy back, so the
+user gets their own theme again, and every appearance setting shows. This needs the launcher to be enabled;
+with no copy saved yet, the current values stay.
 
 ## Presets
 
@@ -53,22 +66,31 @@ user choosing.
 
 ## Rules for integrations
 
-1. **Check the lock first.** If `theme-overrides-locked` is `true`, do not write any `theme-*` key.
-   The lock is advisory; GSettings cannot enforce it.
-2. **Write only what you own.** Set only the tokens you want to drive. Leave the others empty so the
+1. **Check the lock first.** If `theme-overrides-locked` is `true`, do not write any `theme-*` key,
+   except to reset your own `theme-override-source`. The lock is advisory; GSettings cannot enforce it.
+2. **Name yourself before writing tokens.** Set `theme-override-source` to your application's display
+   name first, then write the tokens, and reset it when you stop driving the theme. The launcher saves the
+   user's theme only while this key is empty, so writing tokens before it would save yours as theirs.
+   Launchers older than this key do not have it: check `has_key('theme-override-source')` on the schema
+   before writing it.
+3. **Write only what you own.** Set only the tokens you want to drive. Leave the others empty so the
    launcher's defaults apply.
-3. **Reset by writing the empty string** (or `gsettings reset`), never by writing a copy of the
+4. **Reset by writing the empty string** (or `gsettings reset`), never by writing a copy of the
    default value; that way a future default change still reaches the user.
-4. **Never write other keys** in this schema. They are the launcher's own state.
+5. **Never write other keys** in this schema, `saved-user-theme` included. They are the launcher's own state.
 
 ## Example
 
 ```sh
 schema=org.gnome.shell.extensions.conjure-launcher
 if [ "$(gsettings get $schema theme-overrides-locked)" = "false" ]; then
+    gsettings set $schema theme-override-source 'My Theme App'
     gsettings set $schema theme-primary '#89b4fa'
     gsettings set $schema theme-radius-scale 1.5
 fi
+
+# Stopping: hand the theme back.
+gsettings reset $schema theme-override-source
 ```
 
 From GJS, the same applies through `new Gio.Settings({schema_id: 'org.gnome.shell.extensions.conjure-launcher'})`.

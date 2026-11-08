@@ -17,8 +17,8 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 | Area | Files |
 |---|---|
 | Entry point | `extension.js` (enable / disable, provider list) |
-| Pure logic (no `gi://` imports; unit-tested under Node, enforced by ESLint) | `lib/`: `fzy`, `appScore`, `ranking`, `router`, `queryController`, `usage`, `views`, `navigation`, `lifecycle`, `takeover`, `placement`, `theme`, `calc`, `emoji`, `session`, `commands`, `paste`, `overview`, `builtins`, `appActivation`, `typo`, `units`, `clipHistory`, `thumbnails` |
-| Shell integration | `shell/launcher.js` (panel lifecycle, query wiring, theming), `shell/keybinding.js`, `shell/systemStyle.js`, `shell/usageFile.js`, `shell/settingsAdapters.js`, `shell/clipboard.js`, `shell/autoPaste.js`, `shell/dbusService.js` |
+| Pure logic (no `gi://` imports; unit-tested under Node, enforced by ESLint) | `lib/`: `fzy`, `appScore`, `ranking`, `router`, `queryController`, `usage`, `views`, `navigation`, `lifecycle`, `takeover`, `placement`, `theme`, `calc`, `emoji`, `session`, `commands`, `paste`, `overview`, `builtins`, `appActivation`, `typo`, `units`, `clipHistory`, `thumbnails`, `themeOverride` |
+| Shell integration | `shell/launcher.js` (panel lifecycle, query wiring, theming), `shell/keybinding.js`, `shell/systemStyle.js`, `shell/usageFile.js`, `shell/settingsAdapters.js`, `shell/clipboard.js`, `shell/autoPaste.js`, `shell/dbusService.js`, `shell/themeOverride.js` |
 | UI | `ui/panel.js`, `stylesheet.css` (layout only; every color is a theme token) |
 | Providers | `providers/apps.js`, `calc.js`, `emoji.js`, `windows.js`, `session.js`, `searchProviders.js`, `commands.js`, `wallpaper.js`, `clipboard.js`, `settingsPanels.js`, `recentFiles.js`, `dmenu.js` |
 | Settings | `schemas/*.gschema.xml`, `prefs.js`, and `prefs/` (loaded only by `prefs.js`): `palettes`, `prefsHelpers` and `commandsDoc` (pure, unit-tested under Node), `commandsStore` |
@@ -185,6 +185,10 @@ Every color, corner radius and the font come from theme tokens, which are GSetti
 - **Settings → Appearance** lists one "System" entry (colors from Ubuntu's Yaru theme). "Use the
   system style and accent color" (on by default) keeps the keys empty; turning it off writes Light or
   Dark as fixed values with an orange accent (`#d34615`). Any other theme writes its values. Any key edited by hand shows "Custom".
+- **An application overriding the theme** names itself in `theme-override-source`. Settings then shows only a
+  notice and "Keep my colors". `shell/themeOverride.js` keeps a copy of the user's theme in `saved-user-theme`
+  while that key is empty (read the values, then check the key, so an integration's tokens are never saved as
+  the user's), and writes it back when "Keep my colors" is turned on while an application overrides the theme.
 - Tokens are applied as inline styles (`lib/theme.js` `styles()`), so a change never reloads the
   stylesheet.
 
