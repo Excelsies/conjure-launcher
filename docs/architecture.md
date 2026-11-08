@@ -340,7 +340,9 @@ of standard GNOME apps.
   saved copy, because the copy is taken 200 ms after the last change and only while no application is named.
   Turning "Keep my colors" on or off while the extension is disabled saves and restores nothing until it is
   turned on or off again with the extension running. An application uninstalled while "Keep my colors" is on
-  gets its last theme handed back when it is turned off; turning it on again restores the user's.
+  gets its last theme handed back when it is turned off; turning it on again restores the user's. An
+  application that ignores the lock and keeps writing while it is on gets its older, saved theme written back
+  when it is turned off.
 - The stale-read guard of clipboard history is not covered by a test. Headless, every clipboard read
   finishes in the same main-loop turn, so a test cannot produce a read that finishes after a newer copy.
 - Hot-plugging a monitor while the launcher is open is not tested headless; the close path is the

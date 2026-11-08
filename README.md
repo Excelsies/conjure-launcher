@@ -5,7 +5,7 @@ A keyboard-first application launcher for GNOME Shell 50, modeled on the launche
 because Mutter does not implement `wlr-layer-shell`, so a standalone Wayland launcher cannot draw
 over the desktop. It opens on Super+Space, in place of GNOME's "Show Apps" grid.
 
-Version 0.8.4. How it works is described in `docs/architecture.md`; the theming interface for
+Version 0.8.5. How it works is described in `docs/architecture.md`; the theming interface for
 other programs is in `docs/theming.md`.
 
 ## Screenshots
@@ -202,6 +202,10 @@ Each theme is checked for readable contrast as the launcher draws it, System wit
 accent colors in both styles. Adjusting any single color
 after picking a theme shows "Custom". A theme writes the same `theme-*` keys that other programs
 can set (`docs/theming.md`).
+
+When another application sets the launcher's theme, Settings → Appearance shows only a notice naming
+it and **Keep my colors**. Turning Keep my colors on brings your own theme back and shows every setting;
+turning it off again hands the theme back to that application.
 
 Auto-paste (off by default) pastes copied results (calculator, conversions, emoji, clipboard
 history, command entries without `exec`) into the window you were in, and never into any other window.
