@@ -65,7 +65,7 @@
     <key name="history-clear-request" type="x">
       <default>0</default>
       <summary>Internal: written by the preferences window to ask the extension to clear launch history</summary>
-      <description>Unix time of the latest request. The extension clears its history whenever the value changes.</description>
+      <description>Time of the latest request, in microseconds since the Unix epoch. The extension clears its history whenever the value changes.</description>
     </key>
     <key name="clipboard-history" type="b">
       <default>true</default>
@@ -101,7 +101,7 @@
     </key>
     <key name="auto-paste" type="b">
       <default>false</default>
-      <summary>Paste copied results (calculator, emoji) into the window you were in</summary>
+      <summary>Paste copied results (calculator, conversions, emoji, clipboard history, command entries without exec) into the window you were in</summary>
       <description>Only ever into the window that was focused before the launcher opened. Terminals get Ctrl+Shift+V.</description>
     </key>
     <key name="provider-prefix" type="s">
@@ -119,47 +119,47 @@
     <key name="theme-primary" type="s">
       <default>''</default>
       <summary>Theme token: primary</summary>
-      <description>Accent fill for the selected row. Empty uses the built-in default (#fff59b). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+      <description>Accent fill for the selected row. Empty follows the accent color GNOME Shell draws. Accepts #rgb, #rrggbb or #rrggbbaa.</description>
     </key>
     <key name="theme-on-primary" type="s">
       <default>''</default>
       <summary>Theme token: on-primary</summary>
-      <description>Text and glyphs on the primary fill. Empty uses the built-in default (#0e0e43). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+      <description>Text and glyphs on the primary fill. Empty uses the shell's accent text color if it reaches 4.5:1, else white, else black. Accepts #rgb, #rrggbb or #rrggbbaa.</description>
     </key>
     <key name="theme-surface" type="s">
       <default>''</default>
       <summary>Theme token: surface</summary>
-      <description>Panel background. Empty uses the built-in default (#070722). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+      <description>Panel background. Empty follows the system style (#ffffff light, #36363a dark). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
     </key>
     <key name="theme-surface-container" type="s">
       <default>''</default>
       <summary>Theme token: surface-container</summary>
-      <description>Card and toolbar background. Empty uses the built-in default (#11112d). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+      <description>Card and toolbar background. Empty follows the system style (#ededed light, #414144 dark). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
     </key>
     <key name="theme-on-surface" type="s">
       <default>''</default>
       <summary>Theme token: on-surface</summary>
-      <description>Primary text. Empty uses the built-in default (#f3edf7). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+      <description>Primary text. Empty follows the system style (#222222 light, #ffffff dark). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
     </key>
     <key name="theme-on-surface-variant" type="s">
       <default>''</default>
       <summary>Theme token: on-surface-variant</summary>
-      <description>Secondary text (subtitles, hints). Empty uses the built-in default (#7c80b4). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+      <description>Secondary text (subtitles, hints). Empty follows the system style (#7b7b7b light, #9b9b9d dark). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
     </key>
     <key name="theme-outline-variant" type="s">
       <default>''</default>
       <summary>Theme token: outline-variant</summary>
-      <description>1px card borders. Empty uses the built-in default (#21215f). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+      <description>1px card and panel borders. Empty follows the system style (#ededed light, #424247 dark). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
     </key>
     <key name="theme-hover" type="s">
       <default>''</default>
       <summary>Theme token: hover</summary>
-      <description>Hovered row fill. Empty uses the built-in default (#9bfece). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+      <description>Hovered row fill. Empty follows the system style (#e9e9e9 light, #4e4e52 dark). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
     </key>
     <key name="theme-on-hover" type="s">
       <default>''</default>
       <summary>Theme token: on-hover</summary>
-      <description>Text on the hovered row. Empty uses the built-in default (#0e0e43). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
+      <description>Text on the hovered row. Empty follows the system style (#222222 light, #ffffff dark). Accepts #rgb, #rrggbb or #rrggbbaa.</description>
     </key>
     <key name="theme-radius-scale" type="d">
       <range min="0.0" max="3.0"/>
@@ -174,7 +174,7 @@
     <key name="theme-overrides-locked" type="b">
       <default>false</default>
       <summary>Ask integrations not to change theme tokens</summary>
-      <description>Advisory: integrations that write theme-* keys must check this first and leave the tokens alone when it is true. Turning it on while an application overrides the theme restores saved-user-theme and clears theme-override-source.</description>
+      <description>Advisory: integrations that write theme-* keys must check this first and leave the tokens alone when it is true. Turning it on while an application overrides the theme (with the extension enabled) restores saved-user-theme and clears theme-override-source.</description>
     </key>
     <key name="theme-override-source" type="s">
       <default>''</default>
@@ -188,7 +188,7 @@
     </key>
     <key name="debug" type="b">
       <default>false</default>
-      <summary>Log per-query provider timings</summary>
+      <summary>Log every slow search provider (not only the first time) and the reason the launcher closed</summary>
     </key>
   </schema>
 </schemalist>

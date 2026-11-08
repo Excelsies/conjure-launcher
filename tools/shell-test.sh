@@ -62,6 +62,11 @@ real_ext_dir="${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions"
 export XDG_CONFIG_HOME="$sandbox/config" XDG_DATA_HOME="$sandbox/data"
 export XDG_STATE_HOME="$sandbox/state" XDG_CACHE_HOME="$sandbox/cache"
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME/gnome-shell/extensions"
+# A private runtime dir: GNOME Shell keeps per-session files there (the crash marker
+# gnome-shell-disable-extensions, the Wayland socket), and a headless shell started by any other
+# harness at the same time would otherwise share them, and remove ones this shell still needs.
+export XDG_RUNTIME_DIR="$sandbox/runtime"
+mkdir -m 700 -p "$XDG_RUNTIME_DIR"
 if [[ -n "${CONJURE_TEST_ZIP:-}" ]]; then
     # Test the packaged extension instead of the checkout (tools/package-check.sh).
     mkdir -p "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"

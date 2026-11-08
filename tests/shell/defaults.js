@@ -1,6 +1,6 @@
 // Stock GNOME keybindings (no setup file): the app grid is on <Super>a and input-source
 // switching holds <Super>space. The launcher must take nothing from the app grid and must
-// report, not change, the input-source conflict.
+// report, not change, the input-source conflict. The shell runs with the sandbox's own runtime dir.
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -16,6 +16,9 @@ export async function run() {
     const gnomeKeys = new Gio.Settings({ schema_id: 'org.gnome.shell.keybindings' });
     const wmKeys = new Gio.Settings({ schema_id: 'org.gnome.desktop.wm.keybindings' });
     const appGrid = gnomeKeys.get_strv('toggle-application-view');
+
+    t.equal('the shell uses the sandbox\'s own runtime dir, not the user\'s',
+        GLib.get_user_runtime_dir(), `${GLib.getenv('CONJURE_SANDBOX')}/runtime`);
 
     t.check('the stock app-grid binding does not collide and is left alone',
         !appGrid.some(a => /space/i.test(a)) && appGrid.length > 0, JSON.stringify(appGrid));

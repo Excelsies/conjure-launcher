@@ -1,6 +1,6 @@
 # Conjure Launcher
 
-A keyboard-first application launcher for GNOME Shell 50+, modeled on the launcher in
+A keyboard-first application launcher for GNOME Shell 50, modeled on the launcher in
 [Noctalia](https://github.com/noctalia-dev/noctalia) (MIT). It is built as a GNOME Shell extension
 because Mutter does not implement `wlr-layer-shell`, so a standalone Wayland launcher cannot draw
 over the desktop. It opens on Super+Space, in place of GNOME's "Show Apps" grid.
@@ -105,10 +105,10 @@ gives it back when disabled.
 | `12*3`, `sqrt(2)*10` | The calculator result first (Enter copies it). `/calc …` for anything else |
 | `10 km to mi`, `72 f in c` | A unit conversion, like the calculator (Enter copies the number) |
 | `/emo heart` | Emoji (Enter copies) |
-| `/win term` | Open windows, most recent first (Enter switches; Shift+Enter for more) |
-| `/clip` | Clipboard history: your recent text copies, newest first (Enter copies one back) |
+| `/win term` | Open windows, most recent first, by match when you type (Enter switches; Shift+Enter for more) |
+| `/clip` | Clipboard history: your recent text copies, newest first, by match when you type (Enter copies one back) |
 | `/set wifi` | GNOME Settings pages (Enter opens that page) |
-| `/rec report` | Recent files, newest first (Enter opens one) |
+| `/rec report` | Recent files, newest first, by match when you type (Enter opens one) |
 | `/session sleep` | Lock, log out, suspend, switch user, restart, power off |
 | `/` | The list of providers; Enter fills in the prefix |
 | `/wall sunset` | Images in `~/Pictures/Wallpapers` (setting `wallpaper-dir`); Enter sets the background |
@@ -163,7 +163,7 @@ pick back, like `rofi -dmenu`:
 choice=$(printf 'red\ngreen\nblue\n' | conjure-dmenu -p 'Pick a color') && echo "$choice"
 ```
 
-Exit status: 0 picked (the whole line is printed), 1 canceled, 2 Conjure Launcher not running.
+Exit status: 0 picked (the whole line is printed), 1 canceled, 2 Conjure Launcher not running or another error.
 With no match, Enter returns what you typed.
 
 Calculator: `+ - * / % ^ !`, parentheses, `sqrt cbrt abs round floor ceil sin cos tan asin acos
@@ -204,7 +204,7 @@ after picking a theme shows "Custom". A theme writes the same `theme-*` keys tha
 can set (`docs/theming.md`).
 
 Auto-paste (off by default) pastes copied results (calculator, conversions, emoji, clipboard
-history) into the window you were in, and never into any other window.
+history, command entries without `exec`) into the window you were in, and never into any other window.
 
 Wallpapers in `/wall` show their thumbnails (made in the background the first time, as GNOME's
 file manager does), so even folders of 4K or 8K images open quickly.
@@ -218,9 +218,9 @@ file manager does), so even folders of 4K or 8K images open quickly.
 | `pnpm test:shell` | Headless GNOME Shell integration tests (`tests/shell`): no window, its own D-Bus session and temporary XDG dirs, and session actions stubbed. Runs under your uid, so it shares your per-user kernel limits (inotify) while it runs. Not run by CI (`docs/architecture.md`, Known limitations) |
 | `pnpm test:shell:container` | The same tests in a GNOME Shell 50 container under a separate uid. **Experimental:** about half of container starts stall before `startup-complete` (see `docs/architecture.md`, Known limitations) |
 | `tools/preview.sh` | Opens the launcher in a nested GNOME Shell window to look at and try, without installing or logging out. It uses temporary settings, your apps read-only, and nothing launches (actions show a notice). Close the window to stop |
-| `CONJURE_PREVIEW_DRIVE=tools/preview-check.js tools/preview.sh` | The same preview, driven by a script instead of by hand: clicks, keys, providers, the shortcut and Settings, checked on your real GPU with your apps, shortcut and theme settings. Prints one line per check and closes when done |
+| `CONJURE_PREVIEW_DRIVE=tools/preview-check.js tools/preview.sh` | The same preview, driven by a script instead of by hand: clicks, keys, providers, the shortcut and Settings, checked on your real GPU with your apps, your shortcuts, and your system style and accent color. Prints one line per check and closes when done |
 | `tools/install.sh` | Symlink this checkout into `~/.local/share/gnome-shell/extensions/` |
-| `tools/devkit.sh` | Run a nested GNOME Shell with only this extension enabled, using a temporary settings database. Needs `sudo apt install mutter-dev-bin` |
+| `tools/devkit.sh` | Run a nested GNOME Shell with only this extension enabled, using a temporary settings database. Needs `sudo apt install mutter-dev-bin`. It first runs `tools/install.sh`, so the checkout is also linked into your real extensions folder |
 | `tools/pack.sh` | Build the installable zip into `dist/` |
 | `tools/package-check.sh` | Build the zip, check it against the GNOME Shell extension guidelines and with shexli, and smoke-test the installed zip headless |
 | `tools/shexli-setup.sh` | Install shexli for `package-check` into a per-user virtual environment (no admin rights) |

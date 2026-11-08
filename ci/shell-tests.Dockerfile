@@ -1,5 +1,5 @@
-# GNOME Shell 50 for the headless integration tests (tests/shell). Used by CI and locally:
-#   pnpm test:shell            (tools/container-shell-test.sh)
+# GNOME Shell 50 for the headless integration tests (tests/shell), run locally (CI does not use it):
+#   pnpm test:shell:container  (tools/container-shell-test.sh)
 # The source arrives as a tar stream on stdin, so no host directory permissions are involved.
 FROM ubuntu:26.04
 ENV DEBIAN_FRONTEND=noninteractive

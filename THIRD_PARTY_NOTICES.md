@@ -36,7 +36,8 @@ THE SOFTWARE.
 Behavior (provider model, query routing, scoring weights, views, categories, defaults and
 palette) is ported from https://github.com/noctalia-dev/noctalia at commit 60861c9.
 `data/emoji.json` is Noctalia's `assets/emoji.json`, minified (same entries and fields).
-The color themes in `prefs/palettes.js` are Noctalia's built-in dark palettes
+Ten of the color themes in `prefs/palettes.js` (Noctalia, Ayu, Catppuccin, Dracula, Eldritch, Gruvbox,
+Kanagawa, Nord, Rosé Pine, Tokyo Night) are Noctalia's built-in dark palettes
 (`src/theme/builtin_palettes.cpp`), reduced to the nine colors the launcher uses; one text color is
 adjusted for contrast, as noted in that file.
 
@@ -73,7 +74,8 @@ under the MIT License and the Apache License 2.0; these are used under the MIT L
 
 ## Yaru (Ubuntu)
 
-The Ubuntu Light and Ubuntu Dark color values in `lib/theme.js` were read from the Yaru GNOME Shell
+The System Light and System Dark color values (`UBUNTU` in `lib/theme.js`), and the fixed orange accent
+`#d34615`, were read from the Yaru GNOME Shell
 theme (`yaru-theme-gnome-shell` 26.04.5.1ubuntu, https://github.com/ubuntu/yaru, GPL-3.0+). Only
-individual color values are used; no Yaru source, stylesheet or asset is included. The accent
+individual color values are used; no Yaru source, stylesheet or asset is included. Other accent
 colors are not bundled: they are read at runtime from the running GNOME Shell.

@@ -8,7 +8,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 
 - Mutter does not implement `wlr-layer-shell`, so a standalone Wayland client cannot draw over the
   desktop. The launcher is therefore an extension.
-- The panel is an actor added with `Main.layoutManager.addTopChrome`, not a window. Window managers and
+- The panel is an actor added to `Main.uiGroup` (above every other child), not a window. Window managers and
   tiling extensions never see it, so it always floats.
 - The extension has no dependency on any other extension and reads no other extension's settings.
 
@@ -96,13 +96,13 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 | (global) | Apps | `Shell.AppSystem`. An app that is not running starts. For one that is, Enter or a click opens a new window (`running-app-action`, default) or switches to it; Ctrl+Enter or middle-click does the other (`lib/appActivation.js`). An app that cannot open a second window switches |
 | `/calc` (also global) | Calculator | A recursive-descent parser over a fixed table of operators, functions and constants (`lib/calc.js`). No `eval`, no `Function`, no property lookups; input over 200 characters or nested deeper than 64 is refused. `<amount> <unit> to <unit>` converts units (`lib/units.js`: length, mass, volume, area, time, speed, data size, temperature; no currency). Enter copies the result |
 | `/emo` | Emoji | Substring scoring over names and keywords (`data/emoji.json`), at most 100 results. Enter copies |
-| `/win` | Windows | Open windows, most recently used first. Enter switches to the window; the actions menu adds minimize or restore, move to workspace N, and close (`Meta.Window.delete`, so the app's own "save changes?" prompt applies) |
+| `/win` | Windows | Open windows, most recently used first (by match when you type). Enter switches to the window; the actions menu adds minimize or restore, move to workspace N, and close (`Meta.Window.delete`, so the app's own "save changes?" prompt applies) |
 | `/session` | Session | Lock, log out, suspend, switch user, restart, power off, through GNOME's `SystemActions` (GNOME's own confirmation dialogs apply) |
 | (global) | GNOME search providers | Loaded through the shell's `remoteSearch.js`, so GNOME Settings → Search (enabled list and order) applies. `excluded-search-providers` removes more (default: GNOME Calculator). At most 5 results each, from 2 characters |
 | `/wall` | Wallpapers | Images (jpg, jpeg, png, webp, svg, avif, jxl) in `wallpaper-dir` (default `~/Pictures/Wallpapers`), up to 4 folders deep and 5000 files, at most 50 shown. Enter sets `picture-uri` and `picture-uri-dark`. See Wallpaper thumbnails |
 | `/clip` | Clipboard history | Text copies, newest first, kept in memory (Clipboard history, below). Enter copies one back |
 | `/set` | Settings pages | GNOME Settings panels from their desktop entries (category `X-GNOME-Settings-Panel`), matched by name or keywords. Enter opens the page |
-| `/rec` | Recent files | GTK's `recently-used.xbel`, newest first, read once per open off the main thread; deleted files and non-file URIs are skipped. Enter opens the file in its default app |
+| `/rec` | Recent files | GTK's `recently-used.xbel`, newest first (by match when you type), read once per open off the main thread; deleted files and non-file URIs are skipped. Enter opens the file in its default app |
 | `/<prefix>` | Command entries | The user's own entries from `commands.json` (below) |
 
 ### Command entries
@@ -134,7 +134,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 - Every pending call is answered exactly once: Esc and the other closes return `picked=false`,
   disable returns an error, and a newer call cancels the older one.
 - `conjure-dmenu [-p prompt]` reads candidates from stdin and prints the choice. It exits 0 on a
-  pick, 1 on cancel and 2 when the extension is not running.
+  pick, 1 on cancel and 2 when the extension is not running or on any other error.
 - Any process of the same user on the session bus can open a menu and read the choice. That is the
   ordinary trust boundary between a user's own processes; it cannot run commands.
 
@@ -144,7 +144,7 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
   in memory only: logout, disable and every screen lock clear it, because GNOME disables extensions while
   locked. Turning it off or Settings → History → Clear also clears it.
 - Only the clipboard is watched (Mutter's selection `owner-changed`), not the primary selection.
-- A copy is stored only when it offers a text type, is not blank, is at most 64 KiB, and carries no
+- A copy is stored only when it offers a text type, is not blank, is at most 65,536 characters, and carries no
   `x-kde-passwordManagerHint` (set by password managers on secrets, whatever its value; invariant 7).
   The check runs on the offered types before the text is read, so a secret is never read at all.
 - A read that finishes after a newer copy is dropped. Copying an entry again moves it to the top.
@@ -162,8 +162,8 @@ through GSettings (`org.gnome.shell.extensions.conjure-launcher`) and a libadwai
 
 ## Auto-paste
 
-Off by default (`auto-paste`). When on, a result that copies (calculator, emoji, command entries
-without `exec`) is also pasted into the window that was focused before the launcher opened: Ctrl+Shift+V
+Off by default (`auto-paste`). When on, a result that copies (calculator, conversions, emoji, clipboard history,
+command entries without `exec`) is also pasted into the window that was focused before the launcher opened: Ctrl+Shift+V
 for terminals, Ctrl+V otherwise. After closing, the launcher waits up to 300 ms for focus to return to
 that window. If focus lands anywhere else, or nothing was focused, nothing is typed
 (`lib/paste.js`, `shell/autoPaste.js`).
@@ -214,7 +214,7 @@ Schema `org.gnome.shell.extensions.conjure-launcher`. Theme keys are in `docs/th
 | `track-usage`, `sort-by-usage` | `true` | Record launches; boost frequent results |
 | `clipboard-history` | `true` | Keep text copies for `/clip` (memory only) |
 | `clipboard-history-size` | `50` | Copies kept, 10-200 |
-| `debug` | `false` | Log per-query provider timings |
+| `debug` | `false` | Log every slow search provider (not only the first time) and the reason the launcher closed |
 | `saved-toggle-application-view`, `has-saved-toggle-application-view` | | Internal: GNOME's app-grid binding while the launcher holds its shortcut |
 | `history-clear-request`, `clipboard-clear-request` | `0` | Internal: Settings writes a new value to ask the extension to clear the launch or clipboard history |
 
@@ -231,13 +231,13 @@ inside the monitor's work area.
 
 ## Invariants
 
-Code comments and tests refer to these by number.
+Tests refer to these by number.
 
 | # | Invariant | Enforced in |
 |---|---|---|
 | 1 | The user's app-grid binding is always recoverable: only colliding accelerators are taken, the original is saved first, restored on disable only if GNOME's key still holds what was left there, and a copy left by a crashed session is kept, not overwritten | `lib/takeover.js`, `shell/keybinding.js` |
 | 2 | The modal grab is always released, on every close path, exactly once | `lib/lifecycle.js` |
-| 3 | Nothing untrusted is executed: commands come only from the user's own file, candidate text is passed as arguments, and calculator input never reaches a shell or `eval` | `providers/commands.js`, `lib/calc.js` |
+| 3 | Nothing untrusted is executed: commands come only from the user's own file, candidate text is passed as arguments, and calculator input never reaches a shell or `eval` | `providers/commands.js`, `lib/commands.js`, `lib/calc.js` |
 | 4 | A slow provider never blocks typing: queries carry a generation number and late results are dropped | `lib/queryController.js` |
 | 5 | Auto-paste keystrokes go only to the window that was focused before opening | `lib/paste.js`, `shell/autoPaste.js` |
 | 6 | Every dmenu call is answered exactly once | `shell/launcher.js`, `shell/dbusService.js` |
@@ -268,6 +268,7 @@ Code comments and tests refer to these by number.
 | Search-provider debounce, then timeout | 80 ms, then 500 ms (worst case 580 ms from the keystroke; app results appear at once) |
 | Command entry run | 2 s |
 | `commands.json` reload after a change | 200 ms |
+| Saving the user's theme after a theme key changes | 200 ms (one save for a preset's nine writes) |
 | Open and close animations | 200 ms |
 | Auto-paste wait for focus | 300 ms |
 | Launch weight half-life | 14 days |
@@ -278,7 +279,8 @@ Code comments and tests refer to these by number.
 The launcher follows Noctalia's launcher (layout, sizes, prefixes, fzy scoring weights, views and the
 default Noctalia palette), with these differences:
 
-- Enter focuses a running app instead of always starting a new instance, as GNOME's app grid does.
+- Enter on a running app opens a new window by default, or switches to it (`running-app-action`); Ctrl+Enter or
+  middle-click does the other.
 - Space types a space; it never activates.
 - Tab and Shift+Tab move the selection.
 - A command entry's freeform text is listed after real matches, so Enter runs the visible match.
@@ -297,11 +299,14 @@ default Noctalia palette), with these differences:
 
 `pnpm run check` runs lint, unit, GJS and schema validation, and is what CI runs.
 
-The shell runner (`tools/shell-test.sh`) gives each script its own D-Bus session, temporary XDG
-directories, fixture apps and a fixture search provider. It disables the machine's own search
-providers and stubs session actions, because the sandbox shares the real system bus. It fails a
-script that logs GLib or GJS criticals, even when every check passed (`tools/lib/criticals.js`). The one
-exemption is GNOME Shell's own UI touched after disposal while the shell shuts down: an "already
+The shell runner (`tools/shell-test.sh`) gives each script its own D-Bus session and a fresh settings
+database, inside a sandbox with temporary XDG directories (a private `XDG_RUNTIME_DIR` included, so
+concurrent headless shells never share session files), fixture apps and a fixture search provider. It
+disables the machine's own search providers; `tests/shell/providers.js` replaces the session actions
+with a recorder, because the sandbox shares the real system bus. It fails a script that logs GLib or GJS
+criticals or JS warnings, even when every check passed (`tools/lib/criticals.js`). Apart from the
+extension's own log lines and lines a caller allows explicitly (`tools/screenshots.sh` allows the virtual
+pointer's Clutter crossing-event criticals), the one exemption is GNOME Shell's own UI touched after disposal while the shell shuts down: an "already
 disposed" critical after the script's last check whose whole stack is in the shell's own code. Optional `<script>.setup.sh`
 and `<script>.monitors` files seed settings and set the virtual monitors.
 
@@ -313,9 +318,9 @@ of standard GNOME apps.
 - The dock's Show Apps button is not intercepted; only the shortcut is.
 - For about 300 ms after enable, Mutter may still route the shortcut to the app grid, because the
   cleared binding applies asynchronously.
-- If the shell dies after `toggle-launcher` was changed and before disable, the next restore
-  compares against the new shortcut. The saved copy is kept, but the app-grid binding may need
-  resetting by hand.
+- If the shell dies while the launcher holds the shortcut and `toggle-launcher` is then changed before the
+  next enable, that enable discards (or replaces) the saved copy of the app-grid binding, which may then
+  need resetting by hand.
 - A GNOME search provider that starts slowly (Nautilus on its first search after login, for example)
   may miss the first query and appear from the next keystroke.
 - Auto-paste keystrokes are delivered asynchronously. A window that takes focus in the instant
@@ -325,12 +330,16 @@ of standard GNOME apps.
 - Settings previews the accent with libadwaita's color, which can be a shade off from the one GNOME
   Shell draws.
 - CI does not run the shell tests: hosted runners have GNOME 46, and the GNOME 50 container
-  (`pnpm test:shell:container`, `ci/`) stalls on about half of its starts.
+  (`pnpm test:shell:container`, `ci/`) stalls on about half of its starts, and its mock accounts
+  service logs a critical ("Could not get a proxy for user") that the log check rejects.
 - Clipboard history clears whenever the screen locks, since GNOME disables extensions while locked.
+- Theme edits made in the last 200 ms before an application takes over the theme can be missing from the
+  saved copy, because the copy is taken 200 ms after the last change and only while no application is named.
+  Turning "Keep my colors" on while the extension is disabled restores nothing until it is turned on again
+  with the extension running.
 - The stale-read guard of clipboard history is not covered by a test. Headless, every clipboard read
   finishes in the same main-loop turn, so a test cannot produce a read that finishes after a newer copy.
 - Hot-plugging a monitor while the launcher is open is not tested headless; the close path is the
   same handler as the other monitor changes.
-- Once, early in a session of the nested preview (`tools/preview.sh`), Clutter logged "Can't update
-  stage views actor ... needs an allocation" five times. It is cosmetic and has not been reproduced
-  headless; it is worth reporting if it appears in an installed session.
+- The nested preview (`tools/preview.sh`) can log "Can't update stage views actor ... needs an allocation"
+  early in a session; it is cosmetic.
