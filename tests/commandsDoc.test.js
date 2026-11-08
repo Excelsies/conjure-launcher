@@ -2,7 +2,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseDoc, validateDoc, errorsFor, upsertEntry, removeEntry, moveEntry, serializeDoc, suggestId, emptyDoc } from '../prefs/commandsDoc.js';
+import { parseDoc, validateDoc, errorsFor, upsertEntry, removeEntry, serializeDoc, suggestId, emptyDoc } from '../prefs/commandsDoc.js';
 import { BUILTIN_TRIGGERS } from '../lib/builtins.js';
 
 test('parse: empty text is an empty document; malformed text is an error, not an empty doc', () => {
@@ -22,15 +22,13 @@ test('editing keeps unknown keys, drops cleared fields, never mutates the input'
     assert.equal(next.note, 'mine');
 });
 
-test('add, remove, move', () => {
+test('add and remove', () => {
     let doc = emptyDoc();
     doc = upsertEntry(doc, null, { id: 'a', prefix: 'a', exec: 'x' });
     doc = upsertEntry(doc, null, { id: 'b', prefix: 'b', exec: 'x' });
-    doc = moveEntry(doc, 1, 0);
-    assert.deepEqual(doc.entries.map(e => e.id), ['b', 'a']);
-    assert.equal(moveEntry(doc, 0, 5), doc, 'out-of-range moves are ignored');
+    assert.deepEqual(doc.entries.map(e => e.id), ['a', 'b']);
     doc = removeEntry(doc, 0);
-    assert.deepEqual(doc.entries.map(e => e.id), ['a']);
+    assert.deepEqual(doc.entries.map(e => e.id), ['b']);
 });
 
 test('validation matches the extension, including built-in prefixes', () => {

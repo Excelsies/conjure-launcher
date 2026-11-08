@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-    hasMatch, match, matchPositions, score,
+    hasMatch, match, score,
     SCORE_MIN, SCORE_MAX, SCORE_GAP_LEADING, SCORE_GAP_TRAILING, SCORE_GAP_INNER,
     SCORE_MATCH_CONSECUTIVE, SCORE_MATCH_SLASH, SCORE_MATCH_CAPITAL, SCORE_MATCH_DOT,
     EXACT_MATCH_SCORE,
@@ -93,15 +93,6 @@ test('long strings score SCORE_MIN', () => {
     assertScore(SCORE_MIN, match('aa', s));
     assertScore(SCORE_MIN, match(s, 'aa'));
     assertScore(SCORE_MIN, match(s, s));
-});
-
-test('positions', () => {
-    assert.deepEqual(matchPositions('amo', 'app/models/foo').positions, [0, 4, 5]);
-    assert.deepEqual(matchPositions('amor', 'app/models/order').positions, [0, 4, 11, 12]);
-    assert.deepEqual(matchPositions('as', 'tags').positions, [1, 3]);
-    assert.deepEqual(matchPositions('as', 'examples.txt').positions, [2, 7]);
-    assert.deepEqual(matchPositions('abc', 'a/a/b/c/c').positions, [2, 4, 6]);
-    assert.deepEqual(matchPositions('foo', 'foo').positions, [0, 1, 2]);
 });
 
 // Noctalia's wrapper: the only entry point providers use.

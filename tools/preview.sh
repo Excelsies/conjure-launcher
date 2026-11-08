@@ -14,7 +14,7 @@ glib-compile-schemas --strict "$root/schemas"
 [[ -n "${CONJURE_PREVIEW_DRIVE:-}" ]] && export CONJURE_PREVIEW_DRIVE="$(realpath "$CONJURE_PREVIEW_DRIVE")"
 
 # Before the XDG dirs are redirected (gsettings reads the real database through them): mirror the few real settings the launcher reacts to (read only; written only into the preview's own session):
-# the shortcuts that decide who gets Super+Space, and the style and accent the Ubuntu theme follows.
+# the shortcuts that decide who gets Super+Space, and the style and accent the System theme follows.
 real() { gsettings get "$1" "$2" 2>/dev/null || echo "$3"; }
 mirror=(
     org.gnome.shell.keybindings toggle-application-view "$(real org.gnome.shell.keybindings toggle-application-view "['<Super>a']")"

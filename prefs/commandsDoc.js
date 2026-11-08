@@ -75,15 +75,6 @@ export function removeEntry(doc, index) {
     return { ...doc, entries: doc.entries.filter((_, i) => i !== index) };
 }
 
-export function moveEntry(doc, from, to) {
-    const entries = [...doc.entries];
-    if (from < 0 || from >= entries.length || to < 0 || to >= entries.length)
-        return doc;
-    const [e] = entries.splice(from, 1);
-    entries.splice(to, 0, e);
-    return { ...doc, entries };
-}
-
 export function serializeDoc(doc) {
     return `${JSON.stringify(doc, null, 2)}\n`;
 }
