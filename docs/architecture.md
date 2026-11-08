@@ -189,6 +189,9 @@ Every color, corner radius and the font come from theme tokens, which are GSetti
   notice and "Keep my colors". `shell/themeOverride.js` keeps a copy of the user's theme in `saved-user-theme`
   while that key is empty (read the values, then check the key, so an integration's tokens are never saved as
   the user's), and writes it back when "Keep my colors" is turned on while an application overrides the theme.
+  That turn also saves the application's name and tokens in `saved-app-theme`; turning "Keep my colors" off
+  sets the name and writes the tokens back. The save their changes schedule runs afterwards and sees the name,
+  so the application's theme returns and is never saved as the user's.
 - Tokens are applied as inline styles (`lib/theme.js` `styles()`), so a change never reloads the
   stylesheet.
 
@@ -335,8 +338,9 @@ of standard GNOME apps.
 - Clipboard history clears whenever the screen locks, since GNOME disables extensions while locked.
 - Theme edits made in the last 200 ms before an application takes over the theme can be missing from the
   saved copy, because the copy is taken 200 ms after the last change and only while no application is named.
-  Turning "Keep my colors" on while the extension is disabled restores nothing until it is turned on again
-  with the extension running.
+  Turning "Keep my colors" on or off while the extension is disabled saves and restores nothing until it is
+  turned on or off again with the extension running. An application uninstalled while "Keep my colors" is on
+  gets its last theme handed back when it is turned off; turning it on again restores the user's.
 - The stale-read guard of clipboard history is not covered by a test. Headless, every clipboard read
   finishes in the same main-loop turn, so a test cannot produce a read that finishes after a newer copy.
 - Hot-plugging a monitor while the launcher is open is not tested headless; the close path is the

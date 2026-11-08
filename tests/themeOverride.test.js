@@ -2,7 +2,7 @@
 // be saved, and what a saved copy restores.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SAVED_KEYS, appearanceOverridden, copyToSave, overridingApp, restoreValues } from '../lib/themeOverride.js';
+import { SAVED_KEYS, appearanceOverridden, copyToSave, handBackPlan, overridingApp, restoreValues } from '../lib/themeOverride.js';
 import { COLOR_TOKENS } from '../lib/theme.js';
 
 test('an application name, trimmed, or null for empty and whitespace', () => {
@@ -40,4 +40,13 @@ test('restoring writes known keys of the right type only, with roundness kept in
     assert.deepEqual(restoreValues({ 'theme-radius-scale': 9 }), { 'theme-radius-scale': 3 });
     assert.deepEqual(restoreValues({ 'theme-radius-scale': -1 }), { 'theme-radius-scale': 0 });
     assert.deepEqual(restoreValues({ 'theme-radius-scale': NaN }), {});
+});
+
+test('handing the theme back needs the application\'s name, and writes only valid values', () => {
+    assert.equal(handBackPlan({}), null);
+    assert.equal(handBackPlan(null), null);
+    assert.equal(handBackPlan({ 'theme-primary': '#112233' }), null, 'unnamed values would be saved as the user\'s');
+    assert.equal(handBackPlan({ 'theme-override-source': '  ', 'theme-primary': '#112233' }), null);
+    assert.deepEqual(handBackPlan({ 'theme-override-source': ' My Theme App ', 'theme-primary': '#112233', 'theme-radius-scale': 7, 'debug': true }),
+        { name: 'My Theme App', values: { 'theme-primary': '#112233', 'theme-radius-scale': 3 } });
 });

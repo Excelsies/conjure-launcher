@@ -50,8 +50,11 @@ An integration that drives the tokens names itself in `theme-override-source`. W
 While no application overrides the theme, the launcher keeps a copy of the user's tokens (the nine colors,
 `theme-radius-scale` and `theme-font-family`) in its own key, `saved-user-theme`. Turning "Keep my colors" on
 while an application overrides the theme clears `theme-override-source` and writes that copy back, so the
-user gets their own theme again, and every appearance setting shows. This needs the launcher to be enabled;
-with no copy saved yet, the current values stay.
+user gets their own theme again, and every appearance setting shows. It first saves the application's name and
+tokens in another key of its own, `saved-app-theme`. Turning "Keep my colors" off again hands the theme back: it
+sets `theme-override-source` to that name, writes the application's tokens, and clears `saved-app-theme`, so the
+notice returns and an application that applies its theme once and exits needs to do nothing. Both directions
+need the launcher to be enabled; with no copy saved yet, the current values stay.
 
 ## Presets
 
@@ -77,7 +80,7 @@ user choosing.
    launcher's defaults apply.
 4. **Reset by writing the empty string** (or `gsettings reset`), never by writing a copy of the
    default value; that way a future default change still reaches the user.
-5. **Never write other keys** in this schema, `saved-user-theme` included. They are the launcher's own state.
+5. **Never write other keys** in this schema, `saved-user-theme` and `saved-app-theme` included. They are the launcher's own state.
 
 ## Example
 

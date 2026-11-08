@@ -174,7 +174,7 @@
     <key name="theme-overrides-locked" type="b">
       <default>false</default>
       <summary>Ask integrations not to change theme tokens</summary>
-      <description>Advisory: integrations that write theme-* keys must check this first and leave the tokens alone when it is true. Turning it on while an application overrides the theme (with the extension enabled) restores saved-user-theme and clears theme-override-source.</description>
+      <description>Advisory: integrations that write theme-* keys must check this first and leave the tokens alone when it is true. Turning it on while an application overrides the theme (with the extension enabled) saves the application's theme in saved-app-theme, restores saved-user-theme and clears theme-override-source; turning it off hands the application's theme back.</description>
     </key>
     <key name="theme-override-source" type="s">
       <default>''</default>
@@ -185,6 +185,11 @@
       <default>{}</default>
       <summary>The user's theme while no application overrides it</summary>
       <description>Written by the launcher only. Restored when Keep my colors is turned on while an application overrides the theme.</description>
+    </key>
+    <key name="saved-app-theme" type="a{sv}">
+      <default>{}</default>
+      <summary>The overriding application's theme while Keep my colors is on</summary>
+      <description>Written by the launcher only: the application's name and theme, saved when Keep my colors is turned on while it overrides the theme, and handed back when Keep my colors is turned off.</description>
     </key>
     <key name="debug" type="b">
       <default>false</default>
